@@ -16,20 +16,12 @@
 | `develop` | 次のリリースに向けた統合 | `master` | - |
 | `rule` | ルール（CLAUDE.md / docs）の変更 | `master` | `master`（その後 `develop` へ取り込む） |
 | `feature` | 機能追加 | `develop` | `develop` |
-| `<担当者名>` | `feature` 上での個人作業 | `feature` | `feature` |
 | `fix` | バグ修正 | `develop` | `develop` |
 | `release` | リリース作業（バージョン表記の変更） | `develop` | `master`（その後 `develop` へ取り込む） |
 
 ### ブランチ名
 
 - `種別/内容` の形式（例: `feature/csv-import`、`fix/duplicate-check`、`rule/git-policy`）
-- `<担当者名>` ブランチは `<担当者名>/内容` の形式（例: `<担当者名>/csv-parser`）
-- `<担当者名>` は `git config --global mtrk.owner` の値を使う。未設定の場合は、担当者に次のコマンドで設定してもらう。Claude が名前を決めない
-
-  ```bash
-  git config --global mtrk.owner <担当者名>
-  ```
-
 - 英小文字とハイフンのみを使う
 
 ## コミット
