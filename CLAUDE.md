@@ -32,7 +32,7 @@ Flutter / Riverpod / go_router / drift(SQLite) / flutter_map。Android優先。�
 - UI文言は文字列定数にまとめる
 - 完了条件: `dart format --set-exit-if-changed .` / `flutter analyze` / `flutter test`（単体・ウィジェット）/ 結合テストがすべて通る
 - 実装時は単体テストと結合テストを行う（詳細は [docs/testing.md](docs/testing.md)）
-- 実装時は設計書を画面・処理・テーブル・APIごとに作成し、台帳でIDを管理する（詳細は [docs/systems.md](docs/systems.md)）
+- 実装時は設計書を画面・処理・テーブルごとに作成し、台帳でIDを管理する（詳細は [docs/systems.md](docs/systems.md)）
 
 ## 詳細ルール（`docs/`）
 
@@ -43,7 +43,7 @@ Flutter / Riverpod / go_router / drift(SQLite) / flutter_map。Android優先。�
 - [docs/route-map.md](docs/route-map.md): ICの座標マスタとルート描画。地図画面の作業時
 - [docs/specification.md](docs/specification.md): 仕様書。画面や振る舞いを変えるとき、実装と同時に更新する
 - [docs/architecture.md](docs/architecture.md): 4層のアーキテクチャ（各層の役割と依存の規則）。実装の前に確認
-- [docs/systems.md](docs/systems.md): 設計書（画面・処理・テーブル・API）の作り方、IDの付け方、台帳。実装時に確認
+- [docs/systems.md](docs/systems.md): 設計書（画面・処理・テーブル）の作り方、IDの付け方、台帳。実装時に確認
 - [docs/testing.md](docs/testing.md): テスト方針（単体・ウィジェット・結合）。テストを書くとき
 - [docs/git.md](docs/git.md): ブランチ、コミット、マージ、PRの運用。Git操作の前に確認
 - [docs/ubiquitous-language.md](docs/ubiquitous-language.md): ユビキタス言語（日本語と英語の対応）。名前を付けるときに確認
