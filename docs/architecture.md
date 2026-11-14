@@ -15,7 +15,7 @@
 
 | 種類 | ディレクトリ | 作る主体 | 役割 |
 |---|---|---|---|
-| Entity | `lib/domain/entity/` | Repository | 業務の対象（利用 `Trip` など）。値を保存するだけ |
+| Entity | `lib/domain/entity/` | Repository | 業務の対象（利用 `TripEntity` など）。値を保存するだけ |
 | Value | `lib/domain/value/` | - | 列挙型のデータ（確定・確認中など）。他に依存しない |
 | DTO | `lib/application/dto/` | Usecase | 画面に渡すデータ。表示に必要な値だけを持つ |
 
