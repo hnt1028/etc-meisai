@@ -50,9 +50,9 @@
 
 ## マージ
 
-- マージは Pull Request 経由で、Fast-forward のみ（`git merge --ff-only`）
+- マージは Pull Request 経由で、マージコミットを作る方式のみ（GitHub の「Create a merge commit」）
 - `master` への変更は `release` と `rule` のマージだけ
-- マージ前に CLAUDE.md の完了条件を通す（GitHub Actions で確認）
+- マージ前に、GitHub Actions の `quality` が通っていること（ルールセットで必須）
 - PRの本文は `.github/pull_request_template.md` に従う
 - PRのレビューはユーザーと Claude が行う
 - マージ後、作業ブランチは削除する
@@ -70,4 +70,4 @@
 
 ## 禁止事項
 
-- `master` / `develop` への force push
+- `master` / `develop` への直接の push と force push（PR 経由のみ）
