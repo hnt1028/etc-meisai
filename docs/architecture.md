@@ -20,7 +20,7 @@
 | DTO | `lib/application/dto/` | Usecase | 画面に渡すデータ。表示に必要な値だけを持つ |
 
 - Entity は値を保存するだけで、メソッドを定義しない。計算や判定は Usecase に置く
-- Entity は Value を使ってよい（例: `Trip` の状態に `ConfirmationStatus` を持つ）
+- Entity は Value を使ってよい（例: `TripEntity` の状態に `ConfirmationStatusValue` を持つ）
 - DTO は Entity に依存しない。Entity の値は Usecase が DTO に詰め替える
 - DTO は値を保存するだけで、メソッドを定義しない
 - ETCカード番号のマスクなど、画面に出す形の加工は Usecase で行い、DTO に入れる
@@ -37,6 +37,23 @@
 - Value は他に依存しない
 - 層をまたぐ依存（例: Userinterface から Repository の import）は禁止する
 - 依存の組み立て（Repository を Usecase に渡すこと）は `lib/main.dart` の1か所で行う
+
+## 命名
+
+クラスがどの層・種類に属するかが名前で分かるように、クラス名とファイル名の末尾に次の接尾辞を付ける。
+
+| 種類 | クラス名の接尾辞 | ファイル名の接尾辞 | 例 |
+|---|---|---|---|
+| Entity | `Entity` | `_entity` | `TripEntity` / `trip_entity.dart` |
+| Value | `Value` | `_value` | `ConfirmationStatusValue` / `confirmation_status_value.dart` |
+| DTO | `DTO` | `_dto` | `TripDTO` / `trip_dto.dart` |
+| Interface | `IF` | `_if` | `TripIF` / `trip_if.dart` |
+| Repository | `Repo` | `_repo` | `TripRepo` / `trip_repo.dart` |
+| Usecase | `UC` | `_uc` | `ImportStatementUC` / `import_statement_uc.dart` |
+
+- 語幹は [ubiquitous-language.md](ubiquitous-language.md) の英語に従う（`Trip` → `TripEntity`）
+- Interface と、それを実装する Repository は、接尾辞を除いた語幹を同じにする（`TripIF` を実装するのは `TripRepo`）。実装を差し替えるときは `TripRepo` を置き換え、別名の実装を並べない
+- Userinterface の命名は、ここでは定めない
 
 ## ディレクトリ内の分け方
 
