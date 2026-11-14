@@ -53,6 +53,7 @@
 - マージは Pull Request 経由で、Fast-forward のみ（`git merge --ff-only`）
 - `master` への変更は `release` と `rule` のマージだけ
 - マージ前に CLAUDE.md の完了条件を通す（GitHub Actions で確認）
+- PRの本文は `.github/pull_request_template.md` に従う
 - PRのレビューはユーザーと Claude が行う
 - マージ後、作業ブランチは削除する
 
