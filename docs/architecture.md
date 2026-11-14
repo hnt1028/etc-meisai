@@ -7,17 +7,17 @@
 | 層 | ディレクトリ | 役割 |
 |---|---|---|
 | Userinterface | `lib/userinterface/` | 画面と表示。Flutterのウィジェットを置く。業務の判断はしない |
-| Usecase | `lib/usecase/` | 画面から呼ばれる業務処理（取り込み、絞り込み、合計計算など）。Entity から DTO を作る。Flutterに依存しない |
-| Interface | `lib/interface/` | Usecaseが使う保存・取得の窓口を定めた抽象クラス。実装は Repository が持つ |
-| Repository | `lib/repository/` | Interfaceの実装。drift（DB）、CSVパーサー、地図タイルの取得など。Entityを作る |
+| Usecase | `lib/application/usecase/` | 画面から呼ばれる業務処理（取り込み、絞り込み、合計計算など）。Entity から DTO を作る。Flutterに依存しない |
+| Interface | `lib/application/interface/` | Usecaseが使う保存・取得の窓口を定めた抽象クラス。実装は Repository が持つ |
+| Repository | `lib/infrastructure/repository/` | Interfaceの実装。drift（DB）、CSVパーサー、地図タイルの取得など。Entityを作る |
 
 ## データ型
 
 | 種類 | ディレクトリ | 作る主体 | 役割 |
 |---|---|---|---|
-| Entity | `lib/entity/` | Repository | 業務の対象（利用 `Trip` など）。値を保存するだけ |
-| Value | `lib/value/` | - | 列挙型のデータ（確定・確認中など）。他に依存しない |
-| DTO | `lib/dto/` | Usecase | 画面に渡すデータ。表示に必要な値だけを持つ |
+| Entity | `lib/domain/entity/` | Repository | 業務の対象（利用 `Trip` など）。値を保存するだけ |
+| Value | `lib/domain/value/` | - | 列挙型のデータ（確定・確認中など）。他に依存しない |
+| DTO | `lib/application/dto/` | Usecase | 画面に渡すデータ。表示に必要な値だけを持つ |
 
 - Entity は値を保存するだけで、メソッドを定義しない。計算や判定は Usecase に置く
 - Entity は Value を使ってよい（例: `Trip` の状態に `ConfirmationStatus` を持つ）
