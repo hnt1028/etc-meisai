@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master, develop]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: app
+        name: Detect Flutter app
+        run: echo "exists=$([ -f pubspec.yaml ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@v2
+        if: steps.app.outputs.exists == 'true'
+        with:
+          channel: stable
+          flutter-version: "3.44.4"
+          cache: true
+
+      - run: flutter pub get
+        if: steps.app.outputs.exists == 'true'
+
+      - name: Format check
+        if: steps.app.outputs.exists == 'true'
+        run: dart format --set-exit-if-changed .
+
+      - name: Analyze
+        if: steps.app.outputs.exists == 'true'
+        run: |
+          set +e
+          flutter analyze | tee analyze.txt
+          status=${PIPESTATUS[0]}
+          bash .github/scripts/annotate-analyze.sh analyze.txt
+          exit "$status"
+
+      - name: Test
+        if: steps.app.outputs.exists == 'true'
+        run: |
+          set +e
+          flutter test --machine > test.json
+          status=$?
+          bash .github/scripts/summarize-tests.sh test.json
+          exit "$status"
