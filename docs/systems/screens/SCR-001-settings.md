@@ -12,6 +12,7 @@
 | 画面の状態と操作 | `lib/userinterface/settings/settings_controller.dart` | `SettingsController`、`SettingsState` |
 | 画面の文言 | `lib/userinterface/settings/settings_strings.dart` | `SettingsStrings` |
 | ファイル選択 | `lib/userinterface/settings/csv_picker.dart` | `CsvPicker`（関数の型）、`pickCsv` |
+| 共通のウィジェット | `lib/userinterface/common/section_title.dart`、`message_text.dart`、`confirm_dialog.dart` | `SectionTitle`、`MessageText`、`showConfirmDialog` |
 | 依存の受け口 | `lib/userinterface/settings/settings_providers.dart` | 各 `Provider`（実体は `lib/main.dart` で渡す） |
 
 ## 呼び出し箇所
@@ -22,21 +23,9 @@
 
 ### 画面イメージ
 
-```
-┌─────────────────────────────┐
-│ 設定                        │
-├─────────────────────────────┤
-│ 利用明細CSVの取り込み       │
-│ [ CSVを選んで取り込む ]     │
-│                             │
-│ 追加 12 件 / 上書き 3 件 /  │  ← 取り込み後に表示
-│ 無視 100 件                 │
-│ 取り込めませんでした: …     │  ← 失敗したときに表示
-├─────────────────────────────┤
-│ 取り込んだデータの削除      │
-│ [ すべて削除する ]          │
-└─────────────────────────────┘
-```
+画面イメージは draw.io で描く: [images/SCR-001-settings.drawio](images/SCR-001-settings.drawio)
+
+破線の枠は、取り込み後・失敗時にだけ表示する項目。
 
 ### 入出力項目一覧
 

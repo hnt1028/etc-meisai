@@ -40,18 +40,18 @@
 
 ```mermaid
 sequenceDiagram
-    participant UC as ImportStatementUC
-    participant SR as StatementRepo
-    participant DC as Windows31JDecoder
-    participant CS as Csv
+    participant UC as 取込の処理<br/>(ImportStatementUC)
+    participant SR as CSVの読み取り<br/>(StatementRepo)
+    participant DC as 文字コードの変換<br/>(Windows31JDecoder)
+    participant CS as CSVの分解<br/>(Csv)
 
-    UC->>SR: parse(bytes)
+    UC->>SR: CSVのバイト列を明細行に変換する
     activate SR
-    SR->>DC: convert(bytes)
+    SR->>DC: CP932のバイト列を文字列にする
     activate DC
     DC-->>SR: 文字列
     deactivate DC
-    SR->>CS: decode(text)
+    SR->>CS: 文字列を行と列に分ける
     activate CS
     CS-->>SR: 行と列
     deactivate CS

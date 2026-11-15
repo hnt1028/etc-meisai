@@ -28,17 +28,18 @@
 
 ```mermaid
 sequenceDiagram
-    participant UI as SettingsController
-    participant UC as DeleteAllStatementLinesUC
-    participant SL as StatementLineIF
+    participant UI as 設定画面
+    participant UC as 全削除の処理<br/>(DeleteAllStatementLinesUC)
+    participant SL as 明細行の保存窓口<br/>(StatementLineIF)
 
-    UI-)UC: execute()
+    UI-)UC: 全削除を依頼する
     activate UC
-    UC-)SL: deleteAll()
+    UC-)SL: 保存済みの明細行をすべて削除する
     activate SL
+    Note over SL: 端末内DBの明細行を全件削除する
     SL--)UC: 完了
     deactivate SL
-    UC--)UI: 完了
+    UC--)UI: 完了（失敗したら例外を返す）
     deactivate UC
 ```
 

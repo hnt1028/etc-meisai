@@ -38,36 +38,36 @@
 ```mermaid
 sequenceDiagram
     participant UI as 設定画面
-    participant UC as ImportStatementUC
-    participant ST as StatementIF
-    participant TR as StatementLineIF
+    participant UC as 取込の処理<br/>(ImportStatementUC)
+    participant ST as CSVの読み取り窓口<br/>(StatementIF)
+    participant TR as 明細行の保存窓口<br/>(StatementLineIF)
 
-    UI-)UC: execute(bytes)
+    UI-)UC: 選んだCSVの取込を依頼する
     activate UC
-    UC->>ST: parse(bytes)
+    UC->>ST: CSVを明細行に変換する
     activate ST
     ST-->>UC: 明細行のリスト
     deactivate ST
     loop 明細行ごと
-        UC-)TR: findSame(明細行)
+        UC-)TR: 同じ明細行が保存済みか調べる
         activate TR
-        TR--)UC: 保存済みの利用 / null
+        TR--)UC: 保存済みの明細行 / なし
         deactivate TR
         alt 保存済みが無い
-            UC-)TR: save(明細行)
+            UC-)TR: 明細行を追加する
             activate TR
             TR--)UC: 完了
             deactivate TR
         else 保存済みが確認中
-            UC-)TR: save(明細行)
+            UC-)TR: 明細行で上書きする
             activate TR
             TR--)UC: 完了
             deactivate TR
         else 保存済みが確定
-            Note over UC: 保存しない
+            Note over UC: 保存せず、無視として数える
         end
     end
-    UC--)UI: ImportResultDTO
+    UC--)UI: 取込結果（追加・上書き・無視の件数）
     deactivate UC
 ```
 
