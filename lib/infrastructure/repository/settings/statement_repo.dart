@@ -3,11 +3,12 @@ import 'dart:typed_data';
 import 'package:csv/csv.dart';
 import 'package:jis0208/jis0208.dart';
 
-import '../../../application/interface/statement_if.dart';
-import '../../../domain/entity/trip_entity.dart';
-import '../../../domain/value/confirmation_status_value.dart';
+import 'package:etc_meisai/application/interface/statement_if.dart';
+import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
+import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
+import 'package:etc_meisai/domain/value/vehicle_type_value.dart';
 
-/// Reads a usage statement CSV (CP932) into trips.
+/// Reads a usage statement CSV (CP932) into statement lines.
 ///
 /// Rules are in docs/csv-format.md. Error messages are shown to the user,
 /// so they are kept together in [_Messages].
@@ -36,18 +37,18 @@ class StatementRepo implements StatementIF {
   static const _statusPending = '確認中';
 
   @override
-  List<TripEntity> parse(Uint8List bytes) {
+  List<StatementLineEntity> parse(Uint8List bytes) {
     final rows = _decode(bytes);
     if (rows.isEmpty) throw FormatException(_Messages.empty);
 
     _checkHeader(rows.first);
 
-    final trips = <TripEntity>[];
+    final statementLines = <StatementLineEntity>[];
     for (var i = 1; i < rows.length; i++) {
       // Line 1 is the header, so the first data row is line 2.
-      trips.add(_parseRow(rows[i], i + 1));
+      statementLines.add(_parseRow(rows[i], i + 1));
     }
-    return trips;
+    return statementLines;
   }
 
   List<List<String>> _decode(Uint8List bytes) {
@@ -76,7 +77,7 @@ class StatementRepo implements StatementIF {
     }
   }
 
-  TripEntity _parseRow(List<String> row, int line) {
+  StatementLineEntity _parseRow(List<String> row, int line) {
     if (row.length != _headers.length) {
       throw FormatException(_Messages.rowColumnCount(line, row.length));
     }
@@ -89,7 +90,7 @@ class StatementRepo implements StatementIF {
 
     final (status, discountTypes) = _parseNote(row[14], line);
 
-    return TripEntity(
+    return StatementLineEntity(
       entranceAt: entranceAt,
       exitAt: exitAt,
       entranceIc: entranceIc,
@@ -99,12 +100,29 @@ class StatementRepo implements StatementIF {
       fare: _parseAmount(row[8], _headers[8], line),
       fareAfterRebate: _parseAmount(row[9], _headers[9], line),
       postpaidFare: _parseAmount(row[10], _headers[10], line),
-      vehicleType: row[11],
-      vehicleNumber: row[12],
+      vehicleType: _parseVehicleType(row[11], line),
+      vehicleNumber: _parseVehicleNumber(row[12], line),
       cardNumber: _required(row[13], _headers[13], line),
       status: status,
       discountTypes: discountTypes,
     );
+  }
+
+  VehicleTypeValue _parseVehicleType(String value, int line) {
+    final vehicleType = VehicleTypeValue.fromCode(int.tryParse(value) ?? -1);
+    if (vehicleType == null) {
+      throw FormatException(_Messages.vehicleType(line, value));
+    }
+    return vehicleType;
+  }
+
+  /// The error never includes the value: a vehicle number is personal data.
+  int _parseVehicleNumber(String value, int line) {
+    final number = int.tryParse(value);
+    if (number == null) {
+      throw FormatException(_Messages.vehicleNumber(line));
+    }
+    return number;
   }
 
   String _required(String value, String column, int line) {
@@ -201,6 +219,11 @@ class _Messages {
 
   static String amount(int line, String column, String value) =>
       '$line行目: 「$column」が金額として読み取れません（$value）';
+
+  static String vehicleType(int line, String value) =>
+      '$line行目: 「車種」が1〜5の番号ではありません（$value）';
+
+  static String vehicleNumber(int line) => '$line行目: 「車両番号」が数字ではありません';
 
   static String status(int line) => '$line行目: 「備考」に「確定」か「確認中」のどちらか一方が必要です';
 }

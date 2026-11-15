@@ -6,12 +6,12 @@ class ImportResultDTO {
     required this.ignoredCount,
   });
 
-  /// Trips that were not stored yet and are now stored.
+  /// Statement lines that were not stored yet and are now stored.
   final int addedCount;
 
-  /// Pending trips that were replaced by the incoming rows.
+  /// Pending statement lines that were replaced by the incoming rows.
   final int overwrittenCount;
 
-  /// Rows left out because a confirmed trip is already stored.
+  /// Rows left out because a confirmed statement line is already stored.
   final int ignoredCount;
 }

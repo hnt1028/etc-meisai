@@ -3,23 +3,21 @@
 part of 'app_database.dart';
 
 // ignore_for_file: type=lint
-class $TripsTable extends Trips with TableInfo<$TripsTable, Trip> {
+class $StatementLinesTable extends StatementLines
+    with TableInfo<$StatementLinesTable, StatementLine> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $TripsTable(this.attachedDatabase, [this._alias]);
+  $StatementLinesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
     'id',
     aliasedName,
     false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
+    type: DriftSqlType.string,
     requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
+    clientDefault: () => const Uuid().v7(),
   );
   static const VerificationMeta _duplicateKeyMeta = const VerificationMeta(
     'duplicateKey',
@@ -126,26 +124,24 @@ class $TripsTable extends Trips with TableInfo<$TripsTable, Trip> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _vehicleTypeMeta = const VerificationMeta(
-    'vehicleType',
-  );
   @override
-  late final GeneratedColumn<String> vehicleType = GeneratedColumn<String>(
+  late final GeneratedColumnWithTypeConverter<VehicleTypeValue, int>
+  vehicleType = GeneratedColumn<int>(
     'vehicle_type',
     aliasedName,
     false,
-    type: DriftSqlType.string,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
-  );
+  ).withConverter<VehicleTypeValue>($StatementLinesTable.$convertervehicleType);
   static const VerificationMeta _vehicleNumberMeta = const VerificationMeta(
     'vehicleNumber',
   );
   @override
-  late final GeneratedColumn<String> vehicleNumber = GeneratedColumn<String>(
+  late final GeneratedColumn<int> vehicleNumber = GeneratedColumn<int>(
     'vehicle_number',
     aliasedName,
     false,
-    type: DriftSqlType.string,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _cardNumberMeta = const VerificationMeta(
@@ -160,14 +156,17 @@ class $TripsTable extends Trips with TableInfo<$TripsTable, Trip> {
     requiredDuringInsert: true,
   );
   @override
-  late final GeneratedColumnWithTypeConverter<ConfirmationStatusValue, String>
-  status = GeneratedColumn<String>(
-    'status',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  ).withConverter<ConfirmationStatusValue>($TripsTable.$converterstatus);
+  late final GeneratedColumnWithTypeConverter<ConfirmationStatusValue, int>
+  status =
+      GeneratedColumn<int>(
+        'status',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      ).withConverter<ConfirmationStatusValue>(
+        $StatementLinesTable.$converterstatus,
+      );
   static const VerificationMeta _discountTypesMeta = const VerificationMeta(
     'discountTypes',
   );
@@ -202,10 +201,10 @@ class $TripsTable extends Trips with TableInfo<$TripsTable, Trip> {
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'trips';
+  static const String $name = 'statement_lines';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Trip> instance, {
+    Insertable<StatementLine> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -297,17 +296,6 @@ class $TripsTable extends Trips with TableInfo<$TripsTable, Trip> {
     } else if (isInserting) {
       context.missing(_postpaidFareMeta);
     }
-    if (data.containsKey('vehicle_type')) {
-      context.handle(
-        _vehicleTypeMeta,
-        vehicleType.isAcceptableOrUnknown(
-          data['vehicle_type']!,
-          _vehicleTypeMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_vehicleTypeMeta);
-    }
     if (data.containsKey('vehicle_number')) {
       context.handle(
         _vehicleNumberMeta,
@@ -344,11 +332,11 @@ class $TripsTable extends Trips with TableInfo<$TripsTable, Trip> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Trip map(Map<String, dynamic> data, {String? tablePrefix}) {
+  StatementLine map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Trip(
+    return StatementLine(
       id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.string,
         data['${effectivePrefix}id'],
       )!,
       duplicateKey: attachedDatabase.typeMapping.read(
@@ -391,21 +379,23 @@ class $TripsTable extends Trips with TableInfo<$TripsTable, Trip> {
         DriftSqlType.int,
         data['${effectivePrefix}postpaid_fare'],
       )!,
-      vehicleType: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}vehicle_type'],
-      )!,
+      vehicleType: $StatementLinesTable.$convertervehicleType.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}vehicle_type'],
+        )!,
+      ),
       vehicleNumber: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}vehicle_number'],
       )!,
       cardNumber: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}card_number'],
       )!,
-      status: $TripsTable.$converterstatus.fromSql(
+      status: $StatementLinesTable.$converterstatus.fromSql(
         attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
+          DriftSqlType.int,
           data['${effectivePrefix}status'],
         )!,
       ),
@@ -417,18 +407,21 @@ class $TripsTable extends Trips with TableInfo<$TripsTable, Trip> {
   }
 
   @override
-  $TripsTable createAlias(String alias) {
-    return $TripsTable(attachedDatabase, alias);
+  $StatementLinesTable createAlias(String alias) {
+    return $StatementLinesTable(attachedDatabase, alias);
   }
 
-  static JsonTypeConverter2<ConfirmationStatusValue, String, String>
-  $converterstatus = const EnumNameConverter<ConfirmationStatusValue>(
+  static TypeConverter<VehicleTypeValue, int> $convertervehicleType =
+      const VehicleTypeConverter();
+  static JsonTypeConverter2<ConfirmationStatusValue, int, int>
+  $converterstatus = const EnumIndexConverter<ConfirmationStatusValue>(
     ConfirmationStatusValue.values,
   );
 }
 
-class Trip extends DataClass implements Insertable<Trip> {
-  final int id;
+class StatementLine extends DataClass implements Insertable<StatementLine> {
+  /// UUID version 7, made when the row is first stored.
+  final String id;
 
   /// The duplicate key of docs/csv-format.md joined into one text.
   /// Entrance columns can be null, so a unique index on them would not work.
@@ -442,14 +435,19 @@ class Trip extends DataClass implements Insertable<Trip> {
   final int fare;
   final int fareAfterRebate;
   final int postpaidFare;
-  final String vehicleType;
-  final String vehicleNumber;
+
+  /// The CSV number of the vehicle type (see [VehicleTypeValue]).
+  final VehicleTypeValue vehicleType;
+  final int vehicleNumber;
   final String cardNumber;
+
+  /// Stored as the position in [ConfirmationStatusValue] (0 confirmed, 1 pending).
+  /// Do not reorder the enum.
   final ConfirmationStatusValue status;
 
   /// Discount types joined with `;`, like the CSV note. Empty when none.
   final String discountTypes;
-  const Trip({
+  const StatementLine({
     required this.id,
     required this.duplicateKey,
     this.entranceAt,
@@ -470,7 +468,7 @@ class Trip extends DataClass implements Insertable<Trip> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
+    map['id'] = Variable<String>(id);
     map['duplicate_key'] = Variable<String>(duplicateKey);
     if (!nullToAbsent || entranceAt != null) {
       map['entrance_at'] = Variable<DateTime>(entranceAt);
@@ -489,20 +487,24 @@ class Trip extends DataClass implements Insertable<Trip> {
     map['fare'] = Variable<int>(fare);
     map['fare_after_rebate'] = Variable<int>(fareAfterRebate);
     map['postpaid_fare'] = Variable<int>(postpaidFare);
-    map['vehicle_type'] = Variable<String>(vehicleType);
-    map['vehicle_number'] = Variable<String>(vehicleNumber);
+    {
+      map['vehicle_type'] = Variable<int>(
+        $StatementLinesTable.$convertervehicleType.toSql(vehicleType),
+      );
+    }
+    map['vehicle_number'] = Variable<int>(vehicleNumber);
     map['card_number'] = Variable<String>(cardNumber);
     {
-      map['status'] = Variable<String>(
-        $TripsTable.$converterstatus.toSql(status),
+      map['status'] = Variable<int>(
+        $StatementLinesTable.$converterstatus.toSql(status),
       );
     }
     map['discount_types'] = Variable<String>(discountTypes);
     return map;
   }
 
-  TripsCompanion toCompanion(bool nullToAbsent) {
-    return TripsCompanion(
+  StatementLinesCompanion toCompanion(bool nullToAbsent) {
+    return StatementLinesCompanion(
       id: Value(id),
       duplicateKey: Value(duplicateKey),
       entranceAt: entranceAt == null && nullToAbsent
@@ -530,13 +532,13 @@ class Trip extends DataClass implements Insertable<Trip> {
     );
   }
 
-  factory Trip.fromJson(
+  factory StatementLine.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Trip(
-      id: serializer.fromJson<int>(json['id']),
+    return StatementLine(
+      id: serializer.fromJson<String>(json['id']),
       duplicateKey: serializer.fromJson<String>(json['duplicateKey']),
       entranceAt: serializer.fromJson<DateTime?>(json['entranceAt']),
       exitAt: serializer.fromJson<DateTime>(json['exitAt']),
@@ -547,11 +549,11 @@ class Trip extends DataClass implements Insertable<Trip> {
       fare: serializer.fromJson<int>(json['fare']),
       fareAfterRebate: serializer.fromJson<int>(json['fareAfterRebate']),
       postpaidFare: serializer.fromJson<int>(json['postpaidFare']),
-      vehicleType: serializer.fromJson<String>(json['vehicleType']),
-      vehicleNumber: serializer.fromJson<String>(json['vehicleNumber']),
+      vehicleType: serializer.fromJson<VehicleTypeValue>(json['vehicleType']),
+      vehicleNumber: serializer.fromJson<int>(json['vehicleNumber']),
       cardNumber: serializer.fromJson<String>(json['cardNumber']),
-      status: $TripsTable.$converterstatus.fromJson(
-        serializer.fromJson<String>(json['status']),
+      status: $StatementLinesTable.$converterstatus.fromJson(
+        serializer.fromJson<int>(json['status']),
       ),
       discountTypes: serializer.fromJson<String>(json['discountTypes']),
     );
@@ -560,7 +562,7 @@ class Trip extends DataClass implements Insertable<Trip> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
+      'id': serializer.toJson<String>(id),
       'duplicateKey': serializer.toJson<String>(duplicateKey),
       'entranceAt': serializer.toJson<DateTime?>(entranceAt),
       'exitAt': serializer.toJson<DateTime>(exitAt),
@@ -571,18 +573,18 @@ class Trip extends DataClass implements Insertable<Trip> {
       'fare': serializer.toJson<int>(fare),
       'fareAfterRebate': serializer.toJson<int>(fareAfterRebate),
       'postpaidFare': serializer.toJson<int>(postpaidFare),
-      'vehicleType': serializer.toJson<String>(vehicleType),
-      'vehicleNumber': serializer.toJson<String>(vehicleNumber),
+      'vehicleType': serializer.toJson<VehicleTypeValue>(vehicleType),
+      'vehicleNumber': serializer.toJson<int>(vehicleNumber),
       'cardNumber': serializer.toJson<String>(cardNumber),
-      'status': serializer.toJson<String>(
-        $TripsTable.$converterstatus.toJson(status),
+      'status': serializer.toJson<int>(
+        $StatementLinesTable.$converterstatus.toJson(status),
       ),
       'discountTypes': serializer.toJson<String>(discountTypes),
     };
   }
 
-  Trip copyWith({
-    int? id,
+  StatementLine copyWith({
+    String? id,
     String? duplicateKey,
     Value<DateTime?> entranceAt = const Value.absent(),
     DateTime? exitAt,
@@ -593,12 +595,12 @@ class Trip extends DataClass implements Insertable<Trip> {
     int? fare,
     int? fareAfterRebate,
     int? postpaidFare,
-    String? vehicleType,
-    String? vehicleNumber,
+    VehicleTypeValue? vehicleType,
+    int? vehicleNumber,
     String? cardNumber,
     ConfirmationStatusValue? status,
     String? discountTypes,
-  }) => Trip(
+  }) => StatementLine(
     id: id ?? this.id,
     duplicateKey: duplicateKey ?? this.duplicateKey,
     entranceAt: entranceAt.present ? entranceAt.value : this.entranceAt,
@@ -616,8 +618,8 @@ class Trip extends DataClass implements Insertable<Trip> {
     status: status ?? this.status,
     discountTypes: discountTypes ?? this.discountTypes,
   );
-  Trip copyWithCompanion(TripsCompanion data) {
-    return Trip(
+  StatementLine copyWithCompanion(StatementLinesCompanion data) {
+    return StatementLine(
       id: data.id.present ? data.id.value : this.id,
       duplicateKey: data.duplicateKey.present
           ? data.duplicateKey.value
@@ -659,7 +661,7 @@ class Trip extends DataClass implements Insertable<Trip> {
 
   @override
   String toString() {
-    return (StringBuffer('Trip(')
+    return (StringBuffer('StatementLine(')
           ..write('id: $id, ')
           ..write('duplicateKey: $duplicateKey, ')
           ..write('entranceAt: $entranceAt, ')
@@ -702,7 +704,7 @@ class Trip extends DataClass implements Insertable<Trip> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Trip &&
+      (other is StatementLine &&
           other.id == this.id &&
           other.duplicateKey == this.duplicateKey &&
           other.entranceAt == this.entranceAt &&
@@ -721,8 +723,8 @@ class Trip extends DataClass implements Insertable<Trip> {
           other.discountTypes == this.discountTypes);
 }
 
-class TripsCompanion extends UpdateCompanion<Trip> {
-  final Value<int> id;
+class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
+  final Value<String> id;
   final Value<String> duplicateKey;
   final Value<DateTime?> entranceAt;
   final Value<DateTime> exitAt;
@@ -733,12 +735,13 @@ class TripsCompanion extends UpdateCompanion<Trip> {
   final Value<int> fare;
   final Value<int> fareAfterRebate;
   final Value<int> postpaidFare;
-  final Value<String> vehicleType;
-  final Value<String> vehicleNumber;
+  final Value<VehicleTypeValue> vehicleType;
+  final Value<int> vehicleNumber;
   final Value<String> cardNumber;
   final Value<ConfirmationStatusValue> status;
   final Value<String> discountTypes;
-  const TripsCompanion({
+  final Value<int> rowid;
+  const StatementLinesCompanion({
     this.id = const Value.absent(),
     this.duplicateKey = const Value.absent(),
     this.entranceAt = const Value.absent(),
@@ -755,8 +758,9 @@ class TripsCompanion extends UpdateCompanion<Trip> {
     this.cardNumber = const Value.absent(),
     this.status = const Value.absent(),
     this.discountTypes = const Value.absent(),
+    this.rowid = const Value.absent(),
   });
-  TripsCompanion.insert({
+  StatementLinesCompanion.insert({
     this.id = const Value.absent(),
     required String duplicateKey,
     this.entranceAt = const Value.absent(),
@@ -768,11 +772,12 @@ class TripsCompanion extends UpdateCompanion<Trip> {
     required int fare,
     required int fareAfterRebate,
     required int postpaidFare,
-    required String vehicleType,
-    required String vehicleNumber,
+    required VehicleTypeValue vehicleType,
+    required int vehicleNumber,
     required String cardNumber,
     required ConfirmationStatusValue status,
     required String discountTypes,
+    this.rowid = const Value.absent(),
   }) : duplicateKey = Value(duplicateKey),
        exitAt = Value(exitAt),
        exitIc = Value(exitIc),
@@ -784,8 +789,8 @@ class TripsCompanion extends UpdateCompanion<Trip> {
        cardNumber = Value(cardNumber),
        status = Value(status),
        discountTypes = Value(discountTypes);
-  static Insertable<Trip> custom({
-    Expression<int>? id,
+  static Insertable<StatementLine> custom({
+    Expression<String>? id,
     Expression<String>? duplicateKey,
     Expression<DateTime>? entranceAt,
     Expression<DateTime>? exitAt,
@@ -796,11 +801,12 @@ class TripsCompanion extends UpdateCompanion<Trip> {
     Expression<int>? fare,
     Expression<int>? fareAfterRebate,
     Expression<int>? postpaidFare,
-    Expression<String>? vehicleType,
-    Expression<String>? vehicleNumber,
+    Expression<int>? vehicleType,
+    Expression<int>? vehicleNumber,
     Expression<String>? cardNumber,
-    Expression<String>? status,
+    Expression<int>? status,
     Expression<String>? discountTypes,
+    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -819,11 +825,12 @@ class TripsCompanion extends UpdateCompanion<Trip> {
       if (cardNumber != null) 'card_number': cardNumber,
       if (status != null) 'status': status,
       if (discountTypes != null) 'discount_types': discountTypes,
+      if (rowid != null) 'rowid': rowid,
     });
   }
 
-  TripsCompanion copyWith({
-    Value<int>? id,
+  StatementLinesCompanion copyWith({
+    Value<String>? id,
     Value<String>? duplicateKey,
     Value<DateTime?>? entranceAt,
     Value<DateTime>? exitAt,
@@ -834,13 +841,14 @@ class TripsCompanion extends UpdateCompanion<Trip> {
     Value<int>? fare,
     Value<int>? fareAfterRebate,
     Value<int>? postpaidFare,
-    Value<String>? vehicleType,
-    Value<String>? vehicleNumber,
+    Value<VehicleTypeValue>? vehicleType,
+    Value<int>? vehicleNumber,
     Value<String>? cardNumber,
     Value<ConfirmationStatusValue>? status,
     Value<String>? discountTypes,
+    Value<int>? rowid,
   }) {
-    return TripsCompanion(
+    return StatementLinesCompanion(
       id: id ?? this.id,
       duplicateKey: duplicateKey ?? this.duplicateKey,
       entranceAt: entranceAt ?? this.entranceAt,
@@ -857,6 +865,7 @@ class TripsCompanion extends UpdateCompanion<Trip> {
       cardNumber: cardNumber ?? this.cardNumber,
       status: status ?? this.status,
       discountTypes: discountTypes ?? this.discountTypes,
+      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -864,7 +873,7 @@ class TripsCompanion extends UpdateCompanion<Trip> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<int>(id.value);
+      map['id'] = Variable<String>(id.value);
     }
     if (duplicateKey.present) {
       map['duplicate_key'] = Variable<String>(duplicateKey.value);
@@ -897,28 +906,33 @@ class TripsCompanion extends UpdateCompanion<Trip> {
       map['postpaid_fare'] = Variable<int>(postpaidFare.value);
     }
     if (vehicleType.present) {
-      map['vehicle_type'] = Variable<String>(vehicleType.value);
+      map['vehicle_type'] = Variable<int>(
+        $StatementLinesTable.$convertervehicleType.toSql(vehicleType.value),
+      );
     }
     if (vehicleNumber.present) {
-      map['vehicle_number'] = Variable<String>(vehicleNumber.value);
+      map['vehicle_number'] = Variable<int>(vehicleNumber.value);
     }
     if (cardNumber.present) {
       map['card_number'] = Variable<String>(cardNumber.value);
     }
     if (status.present) {
-      map['status'] = Variable<String>(
-        $TripsTable.$converterstatus.toSql(status.value),
+      map['status'] = Variable<int>(
+        $StatementLinesTable.$converterstatus.toSql(status.value),
       );
     }
     if (discountTypes.present) {
       map['discount_types'] = Variable<String>(discountTypes.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
     }
     return map;
   }
 
   @override
   String toString() {
-    return (StringBuffer('TripsCompanion(')
+    return (StringBuffer('StatementLinesCompanion(')
           ..write('id: $id, ')
           ..write('duplicateKey: $duplicateKey, ')
           ..write('entranceAt: $entranceAt, ')
@@ -934,7 +948,8 @@ class TripsCompanion extends UpdateCompanion<Trip> {
           ..write('vehicleNumber: $vehicleNumber, ')
           ..write('cardNumber: $cardNumber, ')
           ..write('status: $status, ')
-          ..write('discountTypes: $discountTypes')
+          ..write('discountTypes: $discountTypes, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -943,21 +958,24 @@ class TripsCompanion extends UpdateCompanion<Trip> {
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
-  late final $TripsTable trips = $TripsTable(this);
-  late final Index tripsExitAt = Index(
-    'trips_exit_at',
-    'CREATE INDEX trips_exit_at ON trips (exit_at)',
+  late final $StatementLinesTable statementLines = $StatementLinesTable(this);
+  late final Index statementLinesExitAt = Index(
+    'statement_lines_exit_at',
+    'CREATE INDEX statement_lines_exit_at ON statement_lines (exit_at)',
   );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [trips, tripsExitAt];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    statementLines,
+    statementLinesExitAt,
+  ];
 }
 
-typedef $$TripsTableCreateCompanionBuilder =
-    TripsCompanion Function({
-      Value<int> id,
+typedef $$StatementLinesTableCreateCompanionBuilder =
+    StatementLinesCompanion Function({
+      Value<String> id,
       required String duplicateKey,
       Value<DateTime?> entranceAt,
       required DateTime exitAt,
@@ -968,15 +986,16 @@ typedef $$TripsTableCreateCompanionBuilder =
       required int fare,
       required int fareAfterRebate,
       required int postpaidFare,
-      required String vehicleType,
-      required String vehicleNumber,
+      required VehicleTypeValue vehicleType,
+      required int vehicleNumber,
       required String cardNumber,
       required ConfirmationStatusValue status,
       required String discountTypes,
+      Value<int> rowid,
     });
-typedef $$TripsTableUpdateCompanionBuilder =
-    TripsCompanion Function({
-      Value<int> id,
+typedef $$StatementLinesTableUpdateCompanionBuilder =
+    StatementLinesCompanion Function({
+      Value<String> id,
       Value<String> duplicateKey,
       Value<DateTime?> entranceAt,
       Value<DateTime> exitAt,
@@ -987,22 +1006,24 @@ typedef $$TripsTableUpdateCompanionBuilder =
       Value<int> fare,
       Value<int> fareAfterRebate,
       Value<int> postpaidFare,
-      Value<String> vehicleType,
-      Value<String> vehicleNumber,
+      Value<VehicleTypeValue> vehicleType,
+      Value<int> vehicleNumber,
       Value<String> cardNumber,
       Value<ConfirmationStatusValue> status,
       Value<String> discountTypes,
+      Value<int> rowid,
     });
 
-class $$TripsTableFilterComposer extends Composer<_$AppDatabase, $TripsTable> {
-  $$TripsTableFilterComposer({
+class $$StatementLinesTableFilterComposer
+    extends Composer<_$AppDatabase, $StatementLinesTable> {
+  $$StatementLinesTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get id => $composableBuilder(
+  ColumnFilters<String> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
   );
@@ -1057,12 +1078,13 @@ class $$TripsTableFilterComposer extends Composer<_$AppDatabase, $TripsTable> {
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get vehicleType => $composableBuilder(
+  ColumnWithTypeConverterFilters<VehicleTypeValue, VehicleTypeValue, int>
+  get vehicleType => $composableBuilder(
     column: $table.vehicleType,
-    builder: (column) => ColumnFilters(column),
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
-  ColumnFilters<String> get vehicleNumber => $composableBuilder(
+  ColumnFilters<int> get vehicleNumber => $composableBuilder(
     column: $table.vehicleNumber,
     builder: (column) => ColumnFilters(column),
   );
@@ -1075,7 +1097,7 @@ class $$TripsTableFilterComposer extends Composer<_$AppDatabase, $TripsTable> {
   ColumnWithTypeConverterFilters<
     ConfirmationStatusValue,
     ConfirmationStatusValue,
-    String
+    int
   >
   get status => $composableBuilder(
     column: $table.status,
@@ -1088,16 +1110,16 @@ class $$TripsTableFilterComposer extends Composer<_$AppDatabase, $TripsTable> {
   );
 }
 
-class $$TripsTableOrderingComposer
-    extends Composer<_$AppDatabase, $TripsTable> {
-  $$TripsTableOrderingComposer({
+class $$StatementLinesTableOrderingComposer
+    extends Composer<_$AppDatabase, $StatementLinesTable> {
+  $$StatementLinesTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get id => $composableBuilder(
+  ColumnOrderings<String> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
   );
@@ -1152,12 +1174,12 @@ class $$TripsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get vehicleType => $composableBuilder(
+  ColumnOrderings<int> get vehicleType => $composableBuilder(
     column: $table.vehicleType,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get vehicleNumber => $composableBuilder(
+  ColumnOrderings<int> get vehicleNumber => $composableBuilder(
     column: $table.vehicleNumber,
     builder: (column) => ColumnOrderings(column),
   );
@@ -1167,7 +1189,7 @@ class $$TripsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get status => $composableBuilder(
+  ColumnOrderings<int> get status => $composableBuilder(
     column: $table.status,
     builder: (column) => ColumnOrderings(column),
   );
@@ -1178,16 +1200,16 @@ class $$TripsTableOrderingComposer
   );
 }
 
-class $$TripsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $TripsTable> {
-  $$TripsTableAnnotationComposer({
+class $$StatementLinesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $StatementLinesTable> {
+  $$StatementLinesTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get id =>
+  GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get duplicateKey => $composableBuilder(
@@ -1232,12 +1254,13 @@ class $$TripsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get vehicleType => $composableBuilder(
-    column: $table.vehicleType,
-    builder: (column) => column,
-  );
+  GeneratedColumnWithTypeConverter<VehicleTypeValue, int> get vehicleType =>
+      $composableBuilder(
+        column: $table.vehicleType,
+        builder: (column) => column,
+      );
 
-  GeneratedColumn<String> get vehicleNumber => $composableBuilder(
+  GeneratedColumn<int> get vehicleNumber => $composableBuilder(
     column: $table.vehicleNumber,
     builder: (column) => column,
   );
@@ -1247,8 +1270,7 @@ class $$TripsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumnWithTypeConverter<ConfirmationStatusValue, String>
-  get status =>
+  GeneratedColumnWithTypeConverter<ConfirmationStatusValue, int> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
 
   GeneratedColumn<String> get discountTypes => $composableBuilder(
@@ -1257,35 +1279,40 @@ class $$TripsTableAnnotationComposer
   );
 }
 
-class $$TripsTableTableManager
+class $$StatementLinesTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $TripsTable,
-          Trip,
-          $$TripsTableFilterComposer,
-          $$TripsTableOrderingComposer,
-          $$TripsTableAnnotationComposer,
-          $$TripsTableCreateCompanionBuilder,
-          $$TripsTableUpdateCompanionBuilder,
-          (Trip, BaseReferences<_$AppDatabase, $TripsTable, Trip>),
-          Trip,
+          $StatementLinesTable,
+          StatementLine,
+          $$StatementLinesTableFilterComposer,
+          $$StatementLinesTableOrderingComposer,
+          $$StatementLinesTableAnnotationComposer,
+          $$StatementLinesTableCreateCompanionBuilder,
+          $$StatementLinesTableUpdateCompanionBuilder,
+          (
+            StatementLine,
+            BaseReferences<_$AppDatabase, $StatementLinesTable, StatementLine>,
+          ),
+          StatementLine,
           PrefetchHooks Function()
         > {
-  $$TripsTableTableManager(_$AppDatabase db, $TripsTable table)
-    : super(
+  $$StatementLinesTableTableManager(
+    _$AppDatabase db,
+    $StatementLinesTable table,
+  ) : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$TripsTableFilterComposer($db: db, $table: table),
+              $$StatementLinesTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$TripsTableOrderingComposer($db: db, $table: table),
+              $$StatementLinesTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$TripsTableAnnotationComposer($db: db, $table: table),
+              $$StatementLinesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<int> id = const Value.absent(),
+                Value<String> id = const Value.absent(),
                 Value<String> duplicateKey = const Value.absent(),
                 Value<DateTime?> entranceAt = const Value.absent(),
                 Value<DateTime> exitAt = const Value.absent(),
@@ -1296,12 +1323,13 @@ class $$TripsTableTableManager
                 Value<int> fare = const Value.absent(),
                 Value<int> fareAfterRebate = const Value.absent(),
                 Value<int> postpaidFare = const Value.absent(),
-                Value<String> vehicleType = const Value.absent(),
-                Value<String> vehicleNumber = const Value.absent(),
+                Value<VehicleTypeValue> vehicleType = const Value.absent(),
+                Value<int> vehicleNumber = const Value.absent(),
                 Value<String> cardNumber = const Value.absent(),
                 Value<ConfirmationStatusValue> status = const Value.absent(),
                 Value<String> discountTypes = const Value.absent(),
-              }) => TripsCompanion(
+                Value<int> rowid = const Value.absent(),
+              }) => StatementLinesCompanion(
                 id: id,
                 duplicateKey: duplicateKey,
                 entranceAt: entranceAt,
@@ -1318,10 +1346,11 @@ class $$TripsTableTableManager
                 cardNumber: cardNumber,
                 status: status,
                 discountTypes: discountTypes,
+                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                Value<int> id = const Value.absent(),
+                Value<String> id = const Value.absent(),
                 required String duplicateKey,
                 Value<DateTime?> entranceAt = const Value.absent(),
                 required DateTime exitAt,
@@ -1332,12 +1361,13 @@ class $$TripsTableTableManager
                 required int fare,
                 required int fareAfterRebate,
                 required int postpaidFare,
-                required String vehicleType,
-                required String vehicleNumber,
+                required VehicleTypeValue vehicleType,
+                required int vehicleNumber,
                 required String cardNumber,
                 required ConfirmationStatusValue status,
                 required String discountTypes,
-              }) => TripsCompanion.insert(
+                Value<int> rowid = const Value.absent(),
+              }) => StatementLinesCompanion.insert(
                 id: id,
                 duplicateKey: duplicateKey,
                 entranceAt: entranceAt,
@@ -1354,16 +1384,17 @@ class $$TripsTableTableManager
                 cardNumber: cardNumber,
                 status: status,
                 discountTypes: discountTypes,
+                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable<$TripsTable, Trip>(table),
-                  BaseReferences<_$AppDatabase, $TripsTable, Trip>(
-                    db,
-                    table,
-                    e,
-                  ),
+                  e.readTable<$StatementLinesTable, StatementLine>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $StatementLinesTable,
+                    StatementLine
+                  >(db, table, e),
                 ),
               )
               .toList(),
@@ -1372,24 +1403,27 @@ class $$TripsTableTableManager
       );
 }
 
-typedef $$TripsTableProcessedTableManager =
+typedef $$StatementLinesTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $TripsTable,
-      Trip,
-      $$TripsTableFilterComposer,
-      $$TripsTableOrderingComposer,
-      $$TripsTableAnnotationComposer,
-      $$TripsTableCreateCompanionBuilder,
-      $$TripsTableUpdateCompanionBuilder,
-      (Trip, BaseReferences<_$AppDatabase, $TripsTable, Trip>),
-      Trip,
+      $StatementLinesTable,
+      StatementLine,
+      $$StatementLinesTableFilterComposer,
+      $$StatementLinesTableOrderingComposer,
+      $$StatementLinesTableAnnotationComposer,
+      $$StatementLinesTableCreateCompanionBuilder,
+      $$StatementLinesTableUpdateCompanionBuilder,
+      (
+        StatementLine,
+        BaseReferences<_$AppDatabase, $StatementLinesTable, StatementLine>,
+      ),
+      StatementLine,
       PrefetchHooks Function()
     >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
-  $$TripsTableTableManager get trips =>
-      $$TripsTableTableManager(_db, _db.trips);
+  $$StatementLinesTableTableManager get statementLines =>
+      $$StatementLinesTableTableManager(_db, _db.statementLines);
 }

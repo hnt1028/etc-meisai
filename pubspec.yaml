@@ -37,6 +37,7 @@ dependencies:
   csv: ^8.0.0
   jis0208: ^1.0.1
   drift: ^2.35.4
+  uuid: ^4.6.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
