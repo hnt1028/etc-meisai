@@ -23,9 +23,11 @@
 
 ### 画面イメージ
 
-画面イメージは draw.io で描く: [images/SCR-001-settings.drawio](images/SCR-001-settings.drawio)
+画面イメージは draw.io で描く。画像（PNG）に draw.io のデータを埋め込んであるので、draw.io で開いて編集できる。
 
-破線の枠は、取り込み後・失敗時にだけ表示する項目。
+![SCR-001 設定の画面イメージ](images/SCR-001-settings.drawio.png)
+
+破線の枠は、状況によって表示する項目（処理中の進捗表示、取り込み結果、取り込みエラー、削除の完了）。
 
 ### 入出力項目一覧
 
