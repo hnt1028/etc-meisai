@@ -32,14 +32,15 @@ sequenceDiagram
     participant UC as 全削除の処理<br/>(DeleteAllStatementLinesUC)
     participant SL as 明細行の保存窓口<br/>(StatementLineIF)
 
-    UI-)UC: 全削除を依頼する
+    UI-)UC: execute()
     activate UC
-    UC-)SL: 保存済みの明細行をすべて削除する
+    Note over UC: 保存済みの明細行をすべて削除するよう、保存窓口に頼む
+    UC-)SL: deleteAll()
     activate SL
     Note over SL: 端末内DBの明細行を全件削除する
     SL--)UC: 完了
     deactivate SL
-    UC--)UI: 完了（失敗したら例外を返す）
+    UC--)UI: 完了（失敗したら例外）
     deactivate UC
 ```
 
