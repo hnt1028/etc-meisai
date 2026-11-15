@@ -1,5 +1,6 @@
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
+import 'package:etc_meisai/domain/value/vehicle_type_value.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/fakes.dart';
@@ -181,4 +182,48 @@ void main() {
 
     expect(_uc(lines).execute(), throwsStateError);
   });
+
+  test('carries every field of a statement line, with a card suffix', () async {
+    final lines = await _stored([
+      fakeStatementLine(
+        exitIc: 'x',
+        grossFare: 1200,
+        etcDiscount: -240,
+        fare: 960,
+        fareAfterRebate: 100,
+        vehicleType: VehicleTypeValue.light,
+        vehicleNumber: 77,
+        cardNumber: '1234-****-5678',
+        status: ConfirmationStatusValue.pending,
+        discountTypes: const ['深夜割引', '休日割引'],
+      ),
+    ]);
+
+    final line = (await _uc(lines).execute()).lines.single;
+
+    expect(line.exitIc, 'x');
+    expect(line.grossFare, 1200);
+    expect(line.etcDiscount, -240);
+    expect(line.fare, 960);
+    expect(line.fareAfterRebate, 100);
+    expect(line.postpaidFare, 860);
+    expect(line.vehicleType, VehicleTypeValue.light);
+    expect(line.vehicleNumber, 77);
+    expect(line.cardNumberSuffix, '5678');
+    expect(line.status, ConfirmationStatusValue.pending);
+    expect(line.discountTypes, ['深夜割引', '休日割引']);
+  });
+
+  test(
+    'keeps blank discounts as null and no discount types as empty',
+    () async {
+      final lines = await _stored([fakeStatementLine()]);
+
+      final line = (await _uc(lines).execute()).lines.single;
+
+      expect(line.grossFare, isNull);
+      expect(line.etcDiscount, isNull);
+      expect(line.discountTypes, isEmpty);
+    },
+  );
 }

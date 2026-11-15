@@ -73,7 +73,15 @@ class ListStatementLinesUC {
     exitAt: line.exitAt,
     entranceIc: line.entranceIc,
     exitIc: line.exitIc,
+    grossFare: line.grossFare,
+    etcDiscount: line.etcDiscount,
     fare: line.fare,
+    fareAfterRebate: line.fareAfterRebate,
+    postpaidFare: line.postpaidFare,
+    vehicleType: line.vehicleType,
+    vehicleNumber: line.vehicleNumber,
+    cardNumberSuffix: _suffix(line.cardNumber),
     status: line.status,
+    discountTypes: List.unmodifiable(line.discountTypes),
   );
 }

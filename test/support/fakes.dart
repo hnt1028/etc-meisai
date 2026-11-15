@@ -11,28 +11,35 @@ StatementLineEntity fakeStatementLine({
   String exitIc = 'B-IC',
   ConfirmationStatusValue status = ConfirmationStatusValue.confirmed,
   DateTime? exitAt,
+  DateTime? entranceAt,
   bool withoutEntrance = false,
   int fare = 1000,
   int fareAfterRebate = 0,
   int? postpaidFare,
   int vehicleNumber = 1234,
   String cardNumber = '0000-****-0001',
+  int? grossFare,
+  int? etcDiscount,
+  VehicleTypeValue vehicleType = VehicleTypeValue.standard,
+  List<String> discountTypes = const [],
 }) {
   return StatementLineEntity(
-    entranceAt: withoutEntrance ? null : DateTime(2026, 1, 10, 8, 30),
+    entranceAt: withoutEntrance
+        ? null
+        : (entranceAt ?? DateTime(2026, 1, 10, 8, 30)),
     exitAt: exitAt ?? DateTime(2026, 1, 10, 9, 15),
     entranceIc: withoutEntrance ? null : 'A-IC',
     exitIc: exitIc,
-    grossFare: null,
-    etcDiscount: null,
+    grossFare: grossFare,
+    etcDiscount: etcDiscount,
     fare: fare,
     fareAfterRebate: fareAfterRebate,
     postpaidFare: postpaidFare ?? fare - fareAfterRebate,
-    vehicleType: VehicleTypeValue.standard,
+    vehicleType: vehicleType,
     vehicleNumber: vehicleNumber,
     cardNumber: cardNumber,
     status: status,
-    discountTypes: const [],
+    discountTypes: discountTypes,
   );
 }
 
