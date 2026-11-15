@@ -20,4 +20,12 @@ abstract final class SettingsStrings {
   static const deleteConfirmOk = '削除する';
   static const deleted = '削除しました';
   static const deleteFailed = '削除できませんでした';
+
+  static const icMappingSection = 'ICの対応づけ';
+  static const icMappingButton = 'ICの対応づけを開く';
+
+  /// The credit the terms of the IC master require (docs/route-map.md).
+  static const credit =
+      '出典：国土交通省 国土数値情報（高速道路時系列データ）'
+      '（https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N06-2025.html）を加工して作成';
 }

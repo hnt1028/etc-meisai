@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:etc_meisai/application/usecase/settings/delete_all_statement_lines_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/import_statement_uc.dart';
-import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/userinterface/app.dart';
 import 'package:etc_meisai/userinterface/app_strings.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_providers.dart';
@@ -28,9 +27,7 @@ Widget _app({
       deleteAllStatementLinesUCProvider.overrideWithValue(
         DeleteAllStatementLinesUC(statementLines: lines),
       ),
-      listStatementLinesUCProvider.overrideWithValue(
-        ListStatementLinesUC(statementLines: lines),
-      ),
+      listStatementLinesUCProvider.overrideWithValue(fakeListUC(lines)),
       csvPickerProvider.overrideWithValue(
         picker ?? () async => Uint8List.fromList([1]),
       ),
@@ -221,5 +218,17 @@ void main() {
 
       expect(_text(SettingsStrings.deleteFailed), findsOneWidget);
     });
+  });
+
+  testWidgets('shows the credit of the IC master', (tester) async {
+    await _pump(
+      tester,
+      _app(statement: FakeStatementIF([]), lines: FakeStatementLineIF()),
+    );
+
+    await tester.ensureVisible(_text(SettingsStrings.credit));
+    expect(_text(SettingsStrings.credit), findsOneWidget);
+    expect(SettingsStrings.credit, contains('国土数値情報'));
+    expect(SettingsStrings.credit, contains('加工して作成'));
   });
 }

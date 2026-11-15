@@ -1,6 +1,5 @@
 import 'package:etc_meisai/application/usecase/settings/delete_all_statement_lines_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/import_statement_uc.dart';
-import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/userinterface/app.dart';
 import 'package:etc_meisai/userinterface/app_strings.dart';
 import 'package:etc_meisai/userinterface/settings/settings_providers.dart';
@@ -26,9 +25,7 @@ Widget _app() {
       deleteAllStatementLinesUCProvider.overrideWithValue(
         DeleteAllStatementLinesUC(statementLines: lines),
       ),
-      listStatementLinesUCProvider.overrideWithValue(
-        ListStatementLinesUC(statementLines: lines),
-      ),
+      listStatementLinesUCProvider.overrideWithValue(fakeListUC(lines)),
     ],
     // ignore: prefer_const_constructors
     child: EtcMeisaiApp(),

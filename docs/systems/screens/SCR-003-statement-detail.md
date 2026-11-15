@@ -32,6 +32,7 @@
 | 出口日時 | `exitAt` | 「2026/01/10 09:15」 |
 | 入口IC | `entranceIc` | 空欄のときは「-」 |
 | 出口IC | `exitIc` | IC名 |
+| 通行した高速道路 | `routeNames` | 「東名高速道路・首都高速道路」のように「・」でつなぐ。無いときは「-」 |
 | 割引前料金 | `grossFare` | 「1,200円」。`null`（割引なし）のときは「-」 |
 | ETC割引額 | `etcDiscount` | 「-240円」。`null`（割引なし）のときは「-」 |
 | 通行料金 | `fare` | 「960円」 |
@@ -43,7 +44,7 @@
 | 状態 | `status` | 「確定」または「確認中」 |
 | 割引種別 | `discountTypes` | 「深夜割引・休日割引」のように「・」でつなぐ。無いときは「なし」 |
 
-- 「通行した高速道路」は、ICマスタの出どころが決まってから追加する（未対応）
+- 通行した高速道路（路線名）の決め方は、[route-map.md](../../route-map.md) の「路線名」に従う。決められないときは、[SCR-004](SCR-004-ic-mapping.md) で対応づけを登録すると、表示される
 
 ### 操作一覧
 
@@ -64,5 +65,5 @@
 
 ## 関連するテスト
 
-- ウィジェット: `test/userinterface/statements/statement_detail_screen_test.dart`（すべての項目の表示、空欄・`null` の項目が「-」になること、割引種別が無いとき「なし」、確認中、明細行が渡されないときのER-1、戻るボタン）
+- ウィジェット: `test/userinterface/statements/statement_detail_screen_test.dart`（すべての項目（路線名を含む）の表示、空欄・`null`・路線名なしの項目が「-」になること、割引種別が無いとき「なし」、確認中、明細行が渡されないときのER-1、戻るボタン）
 - 結合: `integration_test/statement_list_test.dart`（一覧から詳細を開けること）

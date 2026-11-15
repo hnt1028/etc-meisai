@@ -1,14 +1,23 @@
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/application/dto/statement_list_dto.dart';
+import 'package:etc_meisai/application/interface/ic_mapping_if.dart';
+import 'package:etc_meisai/application/interface/ic_master_if.dart';
 import 'package:etc_meisai/application/interface/statement_line_if.dart';
+import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
 import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
 
 /// Lists the stored statement lines for the statement list screen.
 /// Design: PRC-004.
 class ListStatementLinesUC {
-  const ListStatementLinesUC({required this.statementLines});
+  const ListStatementLinesUC({
+    required this.statementLines,
+    required this.icMaster,
+    required this.icMappings,
+  });
 
   final StatementLineIF statementLines;
+  final IcMasterIF icMaster;
+  final IcMappingIF icMappings;
 
   /// [from] and [to] are dates (the time is ignored) and are included in the
   /// period. A null condition is not used.
@@ -19,6 +28,10 @@ class ListStatementLinesUC {
     String? cardNumberSuffix,
   }) async {
     final all = await statementLines.findAll();
+    final lookup = IcLookup(
+      points: await icMaster.findAll(),
+      mappings: await icMappings.findAll(),
+    );
 
     final vehicleNumberChoices = {
       for (final line in all) line.vehicleNumber,
@@ -51,7 +64,7 @@ class ListStatementLinesUC {
     final sorted = [for (final e in indexed) e.value];
 
     return StatementListDTO(
-      lines: [for (final line in sorted) _toDto(line)],
+      lines: [for (final line in sorted) _toDto(line, lookup)],
       totalFare: sorted.fold(0, (sum, l) => sum + l.fare),
       totalFareAfterRebate: sorted.fold(0, (sum, l) => sum + l.fareAfterRebate),
       totalPostpaidFare: sorted.fold(0, (sum, l) => sum + l.postpaidFare),
@@ -68,20 +81,22 @@ class ListStatementLinesUC {
       ? cardNumber
       : cardNumber.substring(cardNumber.length - 4);
 
-  static StatementLineDTO _toDto(StatementLineEntity line) => StatementLineDTO(
-    entranceAt: line.entranceAt,
-    exitAt: line.exitAt,
-    entranceIc: line.entranceIc,
-    exitIc: line.exitIc,
-    grossFare: line.grossFare,
-    etcDiscount: line.etcDiscount,
-    fare: line.fare,
-    fareAfterRebate: line.fareAfterRebate,
-    postpaidFare: line.postpaidFare,
-    vehicleType: line.vehicleType,
-    vehicleNumber: line.vehicleNumber,
-    cardNumberSuffix: _suffix(line.cardNumber),
-    status: line.status,
-    discountTypes: List.unmodifiable(line.discountTypes),
-  );
+  static StatementLineDTO _toDto(StatementLineEntity line, IcLookup lookup) =>
+      StatementLineDTO(
+        entranceAt: line.entranceAt,
+        exitAt: line.exitAt,
+        entranceIc: line.entranceIc,
+        exitIc: line.exitIc,
+        grossFare: line.grossFare,
+        etcDiscount: line.etcDiscount,
+        fare: line.fare,
+        fareAfterRebate: line.fareAfterRebate,
+        postpaidFare: line.postpaidFare,
+        vehicleType: line.vehicleType,
+        vehicleNumber: line.vehicleNumber,
+        cardNumberSuffix: _suffix(line.cardNumber),
+        status: line.status,
+        discountTypes: List.unmodifiable(line.discountTypes),
+        routeNames: lookup.routeNamesOf(line.entranceIc, line.exitIc),
+      );
 }

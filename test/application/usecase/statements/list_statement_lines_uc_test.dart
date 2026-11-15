@@ -1,12 +1,12 @@
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
+import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/domain/value/vehicle_type_value.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/fakes.dart';
 
-ListStatementLinesUC _uc(FakeStatementLineIF lines) =>
-    ListStatementLinesUC(statementLines: lines);
+ListStatementLinesUC _uc(FakeStatementLineIF lines) => fakeListUC(lines);
 
 Future<FakeStatementLineIF> _stored(List<dynamic> entities) async {
   final lines = FakeStatementLineIF();
@@ -226,4 +226,55 @@ void main() {
       expect(line.discountTypes, isEmpty);
     },
   );
+
+  group('route names', () {
+    final points = [
+      fakeIcPoint(name: '北', routeNames: const ['R1', 'R2']),
+      fakeIcPoint(name: '東', routeNames: const ['R2', 'R3']),
+      fakeIcPoint(name: '南', routeNames: const ['R4']),
+    ];
+
+    Future<List<String>> routesOf(
+      String entrance,
+      String exit, {
+      FakeIcMappingIF? mappings,
+      bool withoutEntrance = false,
+    }) async {
+      final lines = FakeStatementLineIF();
+      lines.stored.add(
+        fakeStatementLine(
+          exitIc: exit,
+          entranceIc: entrance,
+          withoutEntrance: withoutEntrance,
+        ),
+      );
+      final uc = fakeListUC(lines, points: points, mappings: mappings);
+      return (await uc.execute()).lines.single.routeNames;
+    }
+
+    test('are the routes both ICs share', () async {
+      expect(await routesOf('北ＩＣ', '東'), ['R2']);
+    });
+
+    test('are the routes of both ICs when they share none', () async {
+      expect(await routesOf('北', '南'), ['R1', 'R2', 'R4']);
+    });
+
+    test('are the routes of the one IC that is known', () async {
+      expect(await routesOf('北', '不明'), ['R1', 'R2']);
+      expect(await routesOf('不明', '南'), ['R4']);
+      expect(await routesOf('北', '東', withoutEntrance: true), ['R2', 'R3']);
+    });
+
+    test('are empty when no IC is known', () async {
+      expect(await routesOf('不明', '不明2'), isEmpty);
+    });
+
+    test('follow a mapping the user registered', () async {
+      final mappings = FakeIcMappingIF()
+        ..stored.add(const IcMappingEntity(icName: '不明', pointId: 'id-南'));
+
+      expect(await routesOf('北', '不明', mappings: mappings), ['R1', 'R2', 'R4']);
+    });
+  });
 }

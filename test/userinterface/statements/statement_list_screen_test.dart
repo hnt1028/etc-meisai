@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/userinterface/app.dart';
 import 'package:etc_meisai/userinterface/common/data_revision.dart';
@@ -18,9 +17,7 @@ import '../../support/fakes.dart';
 Widget _app(FakeStatementLineIF lines) {
   return ProviderScope(
     overrides: [
-      listStatementLinesUCProvider.overrideWithValue(
-        ListStatementLinesUC(statementLines: lines),
-      ),
+      listStatementLinesUCProvider.overrideWithValue(fakeListUC(lines)),
     ],
     // Not const, so that the constructor runs (and is counted by coverage).
     // ignore: prefer_const_constructors
@@ -125,6 +122,36 @@ void main() {
 
     expect(_text('深夜割引・休日割引'), findsOneWidget);
     expect(find.textContaining('割引'), findsOneWidget);
+  });
+
+  testWidgets('shows the route names only when they are known', (tester) async {
+    final lines = FakeStatementLineIF();
+    lines.stored.addAll([
+      fakeStatementLine(exitIc: '東', entranceIc: '北'),
+      fakeStatementLine(exitIc: '不明', entranceIc: '不明2'),
+    ]);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          listStatementLinesUCProvider.overrideWithValue(
+            fakeListUC(
+              lines,
+              points: [
+                fakeIcPoint(name: '北', routeNames: const ['東名', '新東名']),
+                fakeIcPoint(name: '東', routeNames: const ['東名']),
+              ],
+            ),
+          ),
+        ],
+        // ignore: prefer_const_constructors
+        child: EtcMeisaiApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(_text('東名'), findsOneWidget);
+    expect(_text('新東名'), findsNothing);
+    expect(find.text('東名・新東名'), findsNothing);
   });
 
   testWidgets('opens the detail of a tapped line and comes back', (

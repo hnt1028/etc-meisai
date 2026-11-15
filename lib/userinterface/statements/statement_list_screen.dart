@@ -272,6 +272,8 @@ class _LineTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(StatementListStrings.times(line.entranceAt, line.exitAt)),
+          if (line.routeNames.isNotEmpty)
+            Text(StatementListStrings.routes(line.routeNames)),
           if (line.discountTypes.isNotEmpty)
             Text(StatementListStrings.discounts(line.discountTypes)),
         ],
