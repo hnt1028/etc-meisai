@@ -4,6 +4,7 @@ import 'package:etc_meisai/userinterface/settings/settings_strings.dart';
 import 'package:etc_meisai/userinterface/statements/statement_detail_strings.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_strings.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -80,13 +81,18 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('timeline-row-0')));
     await tester.pumpAndSettle();
     expect(find.text(StatementDetailStrings.title), findsOneWidget);
-    // The detail is a long list, so scroll to the fields near the bottom.
-    await tester.scrollUntilVisible(find.text('1234'), 100);
-    expect(find.text('1234'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text(StatementDetailStrings.cardNumberValue('0001')),
-      100,
+    // The route is on a map. テスト北ＩＣ has two points in the fictional IC
+    // master, so its position is not known.
+    expect(find.byType(FlutterMap), findsOneWidget);
+    expect(
+      find.text(StatementDetailStrings.unlocatedNotice(['テスト北ＩＣ'])),
+      findsOneWidget,
     );
+    // The detail is a long list. The drag starts on a field, because a drag on
+    // the map moves the map.
+    await tester.drag(find.byType(ListTile).last, const Offset(0, -600));
+    await tester.pumpAndSettle();
+    expect(find.text('1234'), findsOneWidget);
     expect(
       find.text(StatementDetailStrings.cardNumberValue('0001')),
       findsOneWidget,
