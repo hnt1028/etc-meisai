@@ -10,20 +10,27 @@ import 'package:etc_meisai/domain/value/vehicle_type_value.dart';
 StatementLineEntity fakeStatementLine({
   String exitIc = 'B-IC',
   ConfirmationStatusValue status = ConfirmationStatusValue.confirmed,
+  DateTime? exitAt,
+  bool withoutEntrance = false,
+  int fare = 1000,
+  int fareAfterRebate = 0,
+  int? postpaidFare,
+  int vehicleNumber = 1234,
+  String cardNumber = '0000-****-0001',
 }) {
   return StatementLineEntity(
-    entranceAt: DateTime(2026, 1, 10, 8, 30),
-    exitAt: DateTime(2026, 1, 10, 9, 15),
-    entranceIc: 'A-IC',
+    entranceAt: withoutEntrance ? null : DateTime(2026, 1, 10, 8, 30),
+    exitAt: exitAt ?? DateTime(2026, 1, 10, 9, 15),
+    entranceIc: withoutEntrance ? null : 'A-IC',
     exitIc: exitIc,
     grossFare: null,
     etcDiscount: null,
-    fare: 1000,
-    fareAfterRebate: 0,
-    postpaidFare: 1000,
+    fare: fare,
+    fareAfterRebate: fareAfterRebate,
+    postpaidFare: postpaidFare ?? fare - fareAfterRebate,
     vehicleType: VehicleTypeValue.standard,
-    vehicleNumber: 1234,
-    cardNumber: '0000-****-0001',
+    vehicleNumber: vehicleNumber,
+    cardNumber: cardNumber,
     status: status,
     discountTypes: const [],
   );
@@ -53,6 +60,15 @@ class FakeStatementLineIF implements StatementLineIF {
   /// When set, [save] and [deleteAll] wait for it.
   Future<void>? gate;
 
+  /// When set, [findAll] throws it.
+  Object? readError;
+
+  /// When set, [findAll] waits for it.
+  Future<void>? readGate;
+
+  /// How many times [findAll] was called.
+  int readCount = 0;
+
   String _key(StatementLineEntity l) =>
       '${l.entranceAt}|${l.entranceIc}|${l.exitIc}|${l.cardNumber}';
 
@@ -73,7 +89,12 @@ class FakeStatementLineIF implements StatementLineIF {
   }
 
   @override
-  Future<List<StatementLineEntity>> findAll() async => List.of(stored);
+  Future<List<StatementLineEntity>> findAll() async {
+    readCount++;
+    await readGate;
+    if (readError != null) throw readError!;
+    return List.of(stored);
+  }
 
   @override
   Future<void> deleteAll() async {
