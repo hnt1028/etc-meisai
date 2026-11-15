@@ -1,4 +1,4 @@
-/// Whether the amount of a trip is final.
+/// Whether the amount of a statement line is final.
 enum ConfirmationStatusValue {
   /// The amount is final (備考: 確定).
   confirmed,

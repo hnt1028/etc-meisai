@@ -2,7 +2,7 @@
 
 ## 概要
 
-利用明細CSVの内容を、保存済みの利用に取り込む。取り込む規則は [csv-format.md](../../csv-format.md) に従う。
+利用明細CSVの内容を、保存済みの明細行に取り込む。取り込む規則は [csv-format.md](../../csv-format.md) に従う。
 
 ## 実装箇所
 
@@ -11,7 +11,7 @@
 | 処理本体 | `lib/application/usecase/settings/import_statement_uc.dart` | `ImportStatementUC` |
 | 結果の受け渡し | `lib/application/dto/import_result_dto.dart` | `ImportResultDTO` |
 | 使う窓口（CSVの読み取り） | `lib/application/interface/statement_if.dart` | `StatementIF` |
-| 使う窓口（利用の保存・取得） | `lib/application/interface/trip_if.dart` | `TripIF` |
+| 使う窓口（明細行の保存・取得） | `lib/application/interface/statement_line_if.dart` | `StatementLineIF` |
 
 ## 呼び出し箇所
 
@@ -24,15 +24,15 @@
 
 ## 手順
 
-1. `StatementIF` でバイト列を利用の一覧に変換する
-2. 一覧の利用ごとに、`TripIF` で、キーが同じ保存済みの利用を探す
+1. `StatementIF` でバイト列を明細行のリストに変換する
+2. リストの明細行ごとに、`StatementLineIF` で、キーが同じ保存済みの明細行を探す
 3. 保存済みの状態に応じて、次のように扱う
 
 | 保存済みの状態 | 扱い | 件数 |
 |---|---|---|
 | なし | 新規に保存する | 追加 |
 | 確定 | 保存せず、保存済みの値を残す | 無視 |
-| 確認中 | 取り込む利用で置き換える | 上書き |
+| 確認中 | 取り込む明細行で置き換える | 上書き |
 
 ## シーケンス図
 
@@ -41,26 +41,26 @@ sequenceDiagram
     participant UI as 設定画面
     participant UC as ImportStatementUC
     participant ST as StatementIF
-    participant TR as TripIF
+    participant TR as StatementLineIF
 
     UI-)UC: execute(bytes)
     activate UC
     UC->>ST: parse(bytes)
     activate ST
-    ST-->>UC: 利用の一覧
+    ST-->>UC: 明細行のリスト
     deactivate ST
-    loop 利用ごと
-        UC-)TR: findSame(trip)
+    loop 明細行ごと
+        UC-)TR: findSame(明細行)
         activate TR
         TR--)UC: 保存済みの利用 / null
         deactivate TR
         alt 保存済みが無い
-            UC-)TR: save(trip)
+            UC-)TR: save(明細行)
             activate TR
             TR--)UC: 完了
             deactivate TR
         else 保存済みが確認中
-            UC-)TR: save(trip)
+            UC-)TR: save(明細行)
             activate TR
             TR--)UC: 完了
             deactivate TR

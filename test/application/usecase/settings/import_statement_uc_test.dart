@@ -1,52 +1,56 @@
 import 'dart:typed_data';
 
 import 'package:etc_meisai/application/interface/statement_if.dart';
-import 'package:etc_meisai/application/interface/trip_if.dart';
+import 'package:etc_meisai/application/interface/statement_line_if.dart';
 import 'package:etc_meisai/application/usecase/settings/import_statement_uc.dart';
-import 'package:etc_meisai/domain/entity/trip_entity.dart';
+import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
+import 'package:etc_meisai/domain/value/vehicle_type_value.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Returns the given trips, or throws when [error] is set.
+/// Returns the given statement lines, or throws when [error] is set.
 class _FakeStatementIF implements StatementIF {
-  _FakeStatementIF(this.trips, {this.error});
+  _FakeStatementIF(this.statementLines, {this.error});
 
-  final List<TripEntity> trips;
+  final List<StatementLineEntity> statementLines;
   final FormatException? error;
 
   @override
-  List<TripEntity> parse(Uint8List bytes) {
+  List<StatementLineEntity> parse(Uint8List bytes) {
     if (error != null) throw error!;
-    return trips;
+    return statementLines;
   }
 }
 
-/// Keeps trips in memory, keyed like the real duplicate key.
-class _FakeTripIF implements TripIF {
-  final Map<String, TripEntity> stored = {};
+/// Keeps statement lines in memory, keyed like the real duplicate key.
+class _FakeStatementLineIF implements StatementLineIF {
+  final Map<String, StatementLineEntity> stored = {};
 
-  String _key(TripEntity t) =>
+  String _key(StatementLineEntity t) =>
       '${t.entranceAt}|${t.entranceIc}|${t.exitIc}|${t.cardNumber}';
 
   @override
-  Future<TripEntity?> findSame(TripEntity trip) async => stored[_key(trip)];
+  Future<StatementLineEntity?> findSame(
+    StatementLineEntity statementLine,
+  ) async => stored[_key(statementLine)];
 
   @override
-  Future<void> save(TripEntity trip) async => stored[_key(trip)] = trip;
+  Future<void> save(StatementLineEntity statementLine) async =>
+      stored[_key(statementLine)] = statementLine;
 
   @override
-  Future<List<TripEntity>> findAll() async => stored.values.toList();
+  Future<List<StatementLineEntity>> findAll() async => stored.values.toList();
 
   @override
   Future<void> deleteAll() async => stored.clear();
 }
 
-TripEntity _trip({
+StatementLineEntity _statementLine({
   required ConfirmationStatusValue status,
   int fare = 1000,
   String exitIc = 'B-IC',
 }) {
-  return TripEntity(
+  return StatementLineEntity(
     entranceAt: DateTime(2026, 1, 10, 8, 30),
     exitAt: DateTime(2026, 1, 10, 9, 15),
     entranceIc: 'A-IC',
@@ -56,8 +60,8 @@ TripEntity _trip({
     fare: fare,
     fareAfterRebate: 0,
     postpaidFare: fare,
-    vehicleType: '1',
-    vehicleNumber: 'TEST 0000',
+    vehicleType: VehicleTypeValue.standard,
+    vehicleNumber: 1234,
     cardNumber: '0000-****-0001',
     status: status,
     discountTypes: const [],
@@ -65,95 +69,102 @@ TripEntity _trip({
 }
 
 void main() {
-  late _FakeTripIF trips;
+  late _FakeStatementLineIF statementLines;
   final bytes = Uint8List(0);
 
-  ImportStatementUC usecase(List<TripEntity> incoming, {FormatException? e}) {
+  ImportStatementUC usecase(
+    List<StatementLineEntity> incoming, {
+    FormatException? e,
+  }) {
     return ImportStatementUC(
       statement: _FakeStatementIF(incoming, error: e),
-      trips: trips,
+      statementLines: statementLines,
     );
   }
 
-  setUp(() => trips = _FakeTripIF());
+  setUp(() => statementLines = _FakeStatementLineIF());
 
-  test('stores a trip that is not stored yet', () async {
+  test('stores a statement line that is not stored yet', () async {
     final result = await usecase([
-      _trip(status: ConfirmationStatusValue.pending),
+      _statementLine(status: ConfirmationStatusValue.pending),
     ]).execute(bytes);
 
     expect(result.addedCount, 1);
     expect(result.overwrittenCount, 0);
     expect(result.ignoredCount, 0);
-    expect((await trips.findAll()).length, 1);
+    expect((await statementLines.findAll()).length, 1);
   });
 
-  test('importing the same CSV twice does not add trips', () async {
-    final incoming = [_trip(status: ConfirmationStatusValue.confirmed)];
+  test('importing the same CSV twice does not add statement lines', () async {
+    final incoming = [
+      _statementLine(status: ConfirmationStatusValue.confirmed),
+    ];
     await usecase(incoming).execute(bytes);
     final second = await usecase(incoming).execute(bytes);
 
     expect(second.addedCount, 0);
-    expect((await trips.findAll()).length, 1);
+    expect((await statementLines.findAll()).length, 1);
   });
 
   for (final incomingStatus in ConfirmationStatusValue.values) {
     test('ignores an incoming $incomingStatus row '
-        'when a confirmed trip is stored', () async {
-      await trips.save(
-        _trip(status: ConfirmationStatusValue.confirmed, fare: 1000),
+        'when a confirmed statement line is stored', () async {
+      await statementLines.save(
+        _statementLine(status: ConfirmationStatusValue.confirmed, fare: 1000),
       );
 
       final result = await usecase([
-        _trip(status: incomingStatus, fare: 2000),
+        _statementLine(status: incomingStatus, fare: 2000),
       ]).execute(bytes);
 
       expect(result.ignoredCount, 1);
       expect(result.overwrittenCount, 0);
-      final stored = (await trips.findAll()).single;
+      final stored = (await statementLines.findAll()).single;
       expect(stored.fare, 1000);
       expect(stored.status, ConfirmationStatusValue.confirmed);
     });
   }
 
-  test('overwrites a pending trip with a confirmed row', () async {
-    await trips.save(
-      _trip(status: ConfirmationStatusValue.pending, fare: 1000),
+  test('overwrites a pending statement line with a confirmed row', () async {
+    await statementLines.save(
+      _statementLine(status: ConfirmationStatusValue.pending, fare: 1000),
     );
 
     final result = await usecase([
-      _trip(status: ConfirmationStatusValue.confirmed, fare: 800),
+      _statementLine(status: ConfirmationStatusValue.confirmed, fare: 800),
     ]).execute(bytes);
 
     expect(result.overwrittenCount, 1);
-    final stored = (await trips.findAll()).single;
+    final stored = (await statementLines.findAll()).single;
     expect(stored.fare, 800);
     expect(stored.status, ConfirmationStatusValue.confirmed);
   });
 
-  test('overwrites a pending trip with a pending row', () async {
-    await trips.save(
-      _trip(status: ConfirmationStatusValue.pending, fare: 1000),
+  test('overwrites a pending statement line with a pending row', () async {
+    await statementLines.save(
+      _statementLine(status: ConfirmationStatusValue.pending, fare: 1000),
     );
 
     final result = await usecase([
-      _trip(status: ConfirmationStatusValue.pending, fare: 900),
+      _statementLine(status: ConfirmationStatusValue.pending, fare: 900),
     ]).execute(bytes);
 
     expect(result.overwrittenCount, 1);
-    expect((await trips.findAll()).single.fare, 900);
+    expect((await statementLines.findAll()).single.fare, 900);
   });
 
   test('counts added, overwritten and ignored rows together', () async {
-    await trips.save(_trip(status: ConfirmationStatusValue.confirmed));
-    await trips.save(
-      _trip(status: ConfirmationStatusValue.pending, exitIc: 'C-IC'),
+    await statementLines.save(
+      _statementLine(status: ConfirmationStatusValue.confirmed),
+    );
+    await statementLines.save(
+      _statementLine(status: ConfirmationStatusValue.pending, exitIc: 'C-IC'),
     );
 
     final result = await usecase([
-      _trip(status: ConfirmationStatusValue.pending),
-      _trip(status: ConfirmationStatusValue.confirmed, exitIc: 'C-IC'),
-      _trip(status: ConfirmationStatusValue.confirmed, exitIc: 'D-IC'),
+      _statementLine(status: ConfirmationStatusValue.pending),
+      _statementLine(status: ConfirmationStatusValue.confirmed, exitIc: 'C-IC'),
+      _statementLine(status: ConfirmationStatusValue.confirmed, exitIc: 'D-IC'),
     ]).execute(bytes);
 
     expect(result.ignoredCount, 1);
@@ -163,10 +174,10 @@ void main() {
 
   test('throws and stores nothing when the CSV is invalid', () async {
     final failing = usecase([
-      _trip(status: ConfirmationStatusValue.confirmed),
+      _statementLine(status: ConfirmationStatusValue.confirmed),
     ], e: const FormatException('column count is 14, expected 15'));
 
     await expectLater(failing.execute(bytes), throwsFormatException);
-    expect(await trips.findAll(), isEmpty);
+    expect(await statementLines.findAll(), isEmpty);
   });
 }

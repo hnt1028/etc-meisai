@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import 'userinterface/app.dart';
+import 'package:etc_meisai/userinterface/app.dart';
 
 void main() {
   runApp(const EtcMeisaiApp());

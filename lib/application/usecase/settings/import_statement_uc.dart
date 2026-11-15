@@ -1,16 +1,19 @@
 import 'dart:typed_data';
 
-import '../../../domain/value/confirmation_status_value.dart';
-import '../../dto/import_result_dto.dart';
-import '../../interface/statement_if.dart';
-import '../../interface/trip_if.dart';
+import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
+import 'package:etc_meisai/application/dto/import_result_dto.dart';
+import 'package:etc_meisai/application/interface/statement_if.dart';
+import 'package:etc_meisai/application/interface/statement_line_if.dart';
 
-/// Imports a usage statement CSV into the stored trips.
+/// Imports a usage statement CSV into the stored statement lines.
 class ImportStatementUC {
-  const ImportStatementUC({required this.statement, required this.trips});
+  const ImportStatementUC({
+    required this.statement,
+    required this.statementLines,
+  });
 
   final StatementIF statement;
-  final TripIF trips;
+  final StatementLineIF statementLines;
 
   /// Imports the CSV given as raw [bytes].
   ///
@@ -23,15 +26,15 @@ class ImportStatementUC {
     var overwritten = 0;
     var ignored = 0;
 
-    for (final trip in incoming) {
-      final stored = await trips.findSame(trip);
+    for (final statementLine in incoming) {
+      final stored = await statementLines.findSame(statementLine);
       if (stored == null) {
-        await trips.save(trip);
+        await statementLines.save(statementLine);
         added++;
       } else if (stored.status == ConfirmationStatusValue.confirmed) {
         ignored++;
       } else {
-        await trips.save(trip);
+        await statementLines.save(statementLine);
         overwritten++;
       }
     }

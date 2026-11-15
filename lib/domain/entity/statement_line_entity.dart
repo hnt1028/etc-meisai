@@ -1,11 +1,12 @@
-import '../value/confirmation_status_value.dart';
+import 'package:etc_meisai/domain/value/vehicle_type_value.dart';
+import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 
-/// One trip from an entrance to an exit (one row of the usage statement CSV).
+/// One line of the usage statement: a single use from an entrance to an exit.
 ///
 /// Amounts are in yen. Only [entranceAt], [entranceIc], [grossFare] and
 /// [etcDiscount] can be null, because the CSV leaves them blank in some rows.
-class TripEntity {
-  const TripEntity({
+class StatementLineEntity {
+  const StatementLineEntity({
     required this.entranceAt,
     required this.exitAt,
     required this.entranceIc,
@@ -40,10 +41,10 @@ class TripEntity {
   final int fareAfterRebate;
   final int postpaidFare;
 
-  final String vehicleType;
+  final VehicleTypeValue vehicleType;
 
   /// Personal information. Never log it.
-  final String vehicleNumber;
+  final int vehicleNumber;
 
   /// Personal information. Partly masked with `*` in the CSV. Never log it.
   final String cardNumber;
