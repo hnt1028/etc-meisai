@@ -1,4 +1,5 @@
 import 'package:etc_meisai/application/dto/import_result_dto.dart';
+import 'package:etc_meisai/userinterface/common/data_revision.dart';
 import 'package:etc_meisai/userinterface/settings/settings_providers.dart';
 import 'package:etc_meisai/userinterface/settings/settings_strings.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,6 +50,9 @@ class SettingsController extends Notifier<SettingsState> {
     } catch (_) {
       // The details are not shown: they could contain personal data.
       state = const SettingsState(error: SettingsStrings.importUnexpected);
+    } finally {
+      // Even a failed import can leave some statement lines stored (ER-2).
+      ref.read(dataRevisionProvider.notifier).changed();
     }
   }
 
@@ -61,6 +65,8 @@ class SettingsController extends Notifier<SettingsState> {
       state = const SettingsState(notice: SettingsStrings.deleted);
     } catch (_) {
       state = const SettingsState(error: SettingsStrings.deleteFailed);
+    } finally {
+      ref.read(dataRevisionProvider.notifier).changed();
     }
   }
 }

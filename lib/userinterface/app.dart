@@ -1,14 +1,34 @@
+import 'package:etc_meisai/userinterface/app_shell.dart';
 import 'package:etc_meisai/userinterface/settings/settings_screen.dart';
+import 'package:etc_meisai/userinterface/statements/statement_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 GoRouter createRouter() {
   return GoRouter(
-    initialLocation: '/settings',
+    initialLocation: '/statements',
     routes: [
-      GoRoute(
-        path: '/settings',
-        builder: (context, state) => const SettingsScreen(),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            AppShell(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/statements',
+                builder: (context, state) => const StatementListScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/settings',
+                builder: (context, state) => const SettingsScreen(),
+              ),
+            ],
+          ),
+        ],
       ),
     ],
   );

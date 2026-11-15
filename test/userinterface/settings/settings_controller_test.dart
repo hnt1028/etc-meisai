@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:etc_meisai/application/usecase/settings/delete_all_statement_lines_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/import_statement_uc.dart';
+import 'package:etc_meisai/userinterface/common/data_revision.dart';
 import 'package:etc_meisai/userinterface/settings/settings_controller.dart';
 import 'package:etc_meisai/userinterface/settings/settings_providers.dart';
 import 'package:etc_meisai/userinterface/settings/settings_strings.dart';
@@ -176,6 +177,43 @@ void main() {
         c.read(settingsControllerProvider).notice,
         SettingsStrings.deleted,
       );
+    });
+  });
+
+  group('data revision', () {
+    test('changes after an import, a failed import and a deletion', () async {
+      final lines = FakeStatementLineIF();
+      final c = _container(
+        statement: FakeStatementIF([fakeStatementLine()]),
+        lines: lines,
+      );
+      final controller = c.read(settingsControllerProvider.notifier);
+      expect(c.read(dataRevisionProvider), 0);
+
+      await controller.importCsv();
+      expect(c.read(dataRevisionProvider), 1);
+
+      await controller.deleteAll();
+      expect(c.read(dataRevisionProvider), 2);
+
+      lines.error = StateError('disk');
+      await controller.importCsv();
+      expect(c.read(dataRevisionProvider), 3);
+
+      await controller.deleteAll();
+      expect(c.read(dataRevisionProvider), 4);
+    });
+
+    test('stays the same when no file is chosen', () async {
+      final c = _container(
+        statement: FakeStatementIF([]),
+        lines: FakeStatementLineIF(),
+        picker: () async => null,
+      );
+
+      await c.read(settingsControllerProvider.notifier).importCsv();
+
+      expect(c.read(dataRevisionProvider), 0);
     });
   });
 
