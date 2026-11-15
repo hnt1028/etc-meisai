@@ -11,18 +11,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - id: app
+        name: Detect Flutter app
+        run: echo "exists=$([ -f pubspec.yaml ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
       - uses: subosito/flutter-action@v2
+        if: steps.app.outputs.exists == 'true'
         with:
           channel: stable
           flutter-version: "3.44.4"
           cache: true
 
       - run: flutter pub get
+        if: steps.app.outputs.exists == 'true'
 
       - name: Format check
+        if: steps.app.outputs.exists == 'true'
         run: dart format --set-exit-if-changed .
 
       - name: Analyze
+        if: steps.app.outputs.exists == 'true'
         run: |
           set +e
           flutter analyze | tee analyze.txt
@@ -31,6 +39,7 @@ jobs:
           exit "$status"
 
       - name: Test
+        if: steps.app.outputs.exists == 'true'
         run: |
           set +e
           flutter test --machine > test.json
