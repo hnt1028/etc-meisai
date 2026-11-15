@@ -1,6 +1,8 @@
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
+import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/value/ic_match_value.dart';
+import 'package:etc_meisai/domain/value/ic_place_source_value.dart';
 
 /// The result of [IcLookup.resolve].
 class IcResolution {
@@ -19,13 +21,37 @@ class IcResolution {
   final List<IcPointEntity> candidates;
 }
 
+/// Where an IC name is on the map. See [IcLookup.placeOf].
+class IcPlace {
+  const IcPlace({
+    required this.latitude,
+    required this.longitude,
+    required this.source,
+    required this.approximate,
+    this.point,
+  });
+
+  final double latitude;
+  final double longitude;
+  final IcPlaceSourceValue source;
+
+  /// True when the position is borrowed from the IC of the same name (a toll
+  /// gate, "…本線"), so it is only close to the real one.
+  final bool approximate;
+
+  /// The IC point, when [source] is the master.
+  final IcPointEntity? point;
+}
+
 /// Ties the IC names of the CSV to the points of the IC master, and finds the
 /// route names of a statement line. The rules are in docs/route-map.md.
 class IcLookup {
   IcLookup({
     required Iterable<IcPointEntity> points,
     required Iterable<IcMappingEntity> mappings,
-  }) : _mappings = {for (final m in mappings) m.icName: m.pointId} {
+    Iterable<IcPositionEntity> positions = const [],
+  }) : _mappings = {for (final m in mappings) m.icName: m.pointId},
+       _positions = {for (final p in positions) p.icName: p} {
     for (final point in points) {
       _byId[point.id] = point;
       _byName.putIfAbsent(fold(point.name), () => []).add(point);
@@ -35,6 +61,7 @@ class IcLookup {
   }
 
   final Map<String, String> _mappings;
+  final Map<String, IcPositionEntity> _positions;
   final Map<String, IcPointEntity> _byId = {};
   final Map<String, List<IcPointEntity>> _byName = {};
   final Map<String, List<IcPointEntity>> _byBase = {};
@@ -53,8 +80,10 @@ class IcLookup {
     '出入口',
     '入口',
     '出口',
-    '本線',
+    _tollGateSuffix,
   ];
+
+  static const _tollGateSuffix = '本線';
 
   /// Makes full-width letters, digits and symbols half-width, ignores the case
   /// and removes spaces, so that ＩＣ and IC are the same.
@@ -107,6 +136,29 @@ class IcLookup {
     return IcResolution(
       state: IcMatchValue.ambiguous,
       candidates: List.unmodifiable(candidates),
+    );
+  }
+
+  /// The position of [icName]: the one the user chose on the map, else the one
+  /// of its IC point. Null when neither is known.
+  IcPlace? placeOf(String icName) {
+    final specified = _positions[icName];
+    if (specified != null) {
+      return IcPlace(
+        latitude: specified.latitude,
+        longitude: specified.longitude,
+        source: IcPlaceSourceValue.specified,
+        approximate: false,
+      );
+    }
+    final point = resolve(icName).point;
+    if (point == null) return null;
+    return IcPlace(
+      latitude: point.latitude,
+      longitude: point.longitude,
+      source: IcPlaceSourceValue.master,
+      approximate: fold(icName).endsWith(_tollGateSuffix),
+      point: point,
     );
   }
 

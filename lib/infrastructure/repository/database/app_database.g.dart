@@ -1170,11 +1170,279 @@ class IcMappingsCompanion extends UpdateCompanion<IcMapping> {
   }
 }
 
+class $IcPositionsTable extends IcPositions
+    with TableInfo<$IcPositionsTable, IcPosition> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $IcPositionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _icNameMeta = const VerificationMeta('icName');
+  @override
+  late final GeneratedColumn<String> icName = GeneratedColumn<String>(
+    'ic_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _latitudeMeta = const VerificationMeta(
+    'latitude',
+  );
+  @override
+  late final GeneratedColumn<double> latitude = GeneratedColumn<double>(
+    'latitude',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _longitudeMeta = const VerificationMeta(
+    'longitude',
+  );
+  @override
+  late final GeneratedColumn<double> longitude = GeneratedColumn<double>(
+    'longitude',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [icName, latitude, longitude];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ic_positions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<IcPosition> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('ic_name')) {
+      context.handle(
+        _icNameMeta,
+        icName.isAcceptableOrUnknown(data['ic_name']!, _icNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_icNameMeta);
+    }
+    if (data.containsKey('latitude')) {
+      context.handle(
+        _latitudeMeta,
+        latitude.isAcceptableOrUnknown(data['latitude']!, _latitudeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_latitudeMeta);
+    }
+    if (data.containsKey('longitude')) {
+      context.handle(
+        _longitudeMeta,
+        longitude.isAcceptableOrUnknown(data['longitude']!, _longitudeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_longitudeMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {icName};
+  @override
+  IcPosition map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return IcPosition(
+      icName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ic_name'],
+      )!,
+      latitude: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}latitude'],
+      )!,
+      longitude: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}longitude'],
+      )!,
+    );
+  }
+
+  @override
+  $IcPositionsTable createAlias(String alias) {
+    return $IcPositionsTable(attachedDatabase, alias);
+  }
+}
+
+class IcPosition extends DataClass implements Insertable<IcPosition> {
+  /// The IC name as written in the CSV.
+  final String icName;
+
+  /// Degrees.
+  final double latitude;
+  final double longitude;
+  const IcPosition({
+    required this.icName,
+    required this.latitude,
+    required this.longitude,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['ic_name'] = Variable<String>(icName);
+    map['latitude'] = Variable<double>(latitude);
+    map['longitude'] = Variable<double>(longitude);
+    return map;
+  }
+
+  IcPositionsCompanion toCompanion(bool nullToAbsent) {
+    return IcPositionsCompanion(
+      icName: Value(icName),
+      latitude: Value(latitude),
+      longitude: Value(longitude),
+    );
+  }
+
+  factory IcPosition.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return IcPosition(
+      icName: serializer.fromJson<String>(json['icName']),
+      latitude: serializer.fromJson<double>(json['latitude']),
+      longitude: serializer.fromJson<double>(json['longitude']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'icName': serializer.toJson<String>(icName),
+      'latitude': serializer.toJson<double>(latitude),
+      'longitude': serializer.toJson<double>(longitude),
+    };
+  }
+
+  IcPosition copyWith({String? icName, double? latitude, double? longitude}) =>
+      IcPosition(
+        icName: icName ?? this.icName,
+        latitude: latitude ?? this.latitude,
+        longitude: longitude ?? this.longitude,
+      );
+  IcPosition copyWithCompanion(IcPositionsCompanion data) {
+    return IcPosition(
+      icName: data.icName.present ? data.icName.value : this.icName,
+      latitude: data.latitude.present ? data.latitude.value : this.latitude,
+      longitude: data.longitude.present ? data.longitude.value : this.longitude,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('IcPosition(')
+          ..write('icName: $icName, ')
+          ..write('latitude: $latitude, ')
+          ..write('longitude: $longitude')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(icName, latitude, longitude);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is IcPosition &&
+          other.icName == this.icName &&
+          other.latitude == this.latitude &&
+          other.longitude == this.longitude);
+}
+
+class IcPositionsCompanion extends UpdateCompanion<IcPosition> {
+  final Value<String> icName;
+  final Value<double> latitude;
+  final Value<double> longitude;
+  final Value<int> rowid;
+  const IcPositionsCompanion({
+    this.icName = const Value.absent(),
+    this.latitude = const Value.absent(),
+    this.longitude = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  IcPositionsCompanion.insert({
+    required String icName,
+    required double latitude,
+    required double longitude,
+    this.rowid = const Value.absent(),
+  }) : icName = Value(icName),
+       latitude = Value(latitude),
+       longitude = Value(longitude);
+  static Insertable<IcPosition> custom({
+    Expression<String>? icName,
+    Expression<double>? latitude,
+    Expression<double>? longitude,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (icName != null) 'ic_name': icName,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  IcPositionsCompanion copyWith({
+    Value<String>? icName,
+    Value<double>? latitude,
+    Value<double>? longitude,
+    Value<int>? rowid,
+  }) {
+    return IcPositionsCompanion(
+      icName: icName ?? this.icName,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (icName.present) {
+      map['ic_name'] = Variable<String>(icName.value);
+    }
+    if (latitude.present) {
+      map['latitude'] = Variable<double>(latitude.value);
+    }
+    if (longitude.present) {
+      map['longitude'] = Variable<double>(longitude.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('IcPositionsCompanion(')
+          ..write('icName: $icName, ')
+          ..write('latitude: $latitude, ')
+          ..write('longitude: $longitude, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $StatementLinesTable statementLines = $StatementLinesTable(this);
   late final $IcMappingsTable icMappings = $IcMappingsTable(this);
+  late final $IcPositionsTable icPositions = $IcPositionsTable(this);
   late final Index statementLinesExitAt = Index(
     'statement_lines_exit_at',
     'CREATE INDEX statement_lines_exit_at ON statement_lines (exit_at)',
@@ -1186,6 +1454,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     statementLines,
     icMappings,
+    icPositions,
     statementLinesExitAt,
   ];
 }
@@ -1786,6 +2055,177 @@ typedef $$IcMappingsTableProcessedTableManager =
       IcMapping,
       PrefetchHooks Function()
     >;
+typedef $$IcPositionsTableCreateCompanionBuilder =
+    IcPositionsCompanion Function({
+      required String icName,
+      required double latitude,
+      required double longitude,
+      Value<int> rowid,
+    });
+typedef $$IcPositionsTableUpdateCompanionBuilder =
+    IcPositionsCompanion Function({
+      Value<String> icName,
+      Value<double> latitude,
+      Value<double> longitude,
+      Value<int> rowid,
+    });
+
+class $$IcPositionsTableFilterComposer
+    extends Composer<_$AppDatabase, $IcPositionsTable> {
+  $$IcPositionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get icName => $composableBuilder(
+    column: $table.icName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get latitude => $composableBuilder(
+    column: $table.latitude,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get longitude => $composableBuilder(
+    column: $table.longitude,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$IcPositionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $IcPositionsTable> {
+  $$IcPositionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get icName => $composableBuilder(
+    column: $table.icName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get latitude => $composableBuilder(
+    column: $table.latitude,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get longitude => $composableBuilder(
+    column: $table.longitude,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$IcPositionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $IcPositionsTable> {
+  $$IcPositionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get icName =>
+      $composableBuilder(column: $table.icName, builder: (column) => column);
+
+  GeneratedColumn<double> get latitude =>
+      $composableBuilder(column: $table.latitude, builder: (column) => column);
+
+  GeneratedColumn<double> get longitude =>
+      $composableBuilder(column: $table.longitude, builder: (column) => column);
+}
+
+class $$IcPositionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $IcPositionsTable,
+          IcPosition,
+          $$IcPositionsTableFilterComposer,
+          $$IcPositionsTableOrderingComposer,
+          $$IcPositionsTableAnnotationComposer,
+          $$IcPositionsTableCreateCompanionBuilder,
+          $$IcPositionsTableUpdateCompanionBuilder,
+          (
+            IcPosition,
+            BaseReferences<_$AppDatabase, $IcPositionsTable, IcPosition>,
+          ),
+          IcPosition,
+          PrefetchHooks Function()
+        > {
+  $$IcPositionsTableTableManager(_$AppDatabase db, $IcPositionsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$IcPositionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$IcPositionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$IcPositionsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> icName = const Value.absent(),
+                Value<double> latitude = const Value.absent(),
+                Value<double> longitude = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => IcPositionsCompanion(
+                icName: icName,
+                latitude: latitude,
+                longitude: longitude,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String icName,
+                required double latitude,
+                required double longitude,
+                Value<int> rowid = const Value.absent(),
+              }) => IcPositionsCompanion.insert(
+                icName: icName,
+                latitude: latitude,
+                longitude: longitude,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$IcPositionsTable, IcPosition>(table),
+                  BaseReferences<_$AppDatabase, $IcPositionsTable, IcPosition>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$IcPositionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $IcPositionsTable,
+      IcPosition,
+      $$IcPositionsTableFilterComposer,
+      $$IcPositionsTableOrderingComposer,
+      $$IcPositionsTableAnnotationComposer,
+      $$IcPositionsTableCreateCompanionBuilder,
+      $$IcPositionsTableUpdateCompanionBuilder,
+      (
+        IcPosition,
+        BaseReferences<_$AppDatabase, $IcPositionsTable, IcPosition>,
+      ),
+      IcPosition,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1794,4 +2234,6 @@ class $AppDatabaseManager {
       $$StatementLinesTableTableManager(_db, _db.statementLines);
   $$IcMappingsTableTableManager get icMappings =>
       $$IcMappingsTableTableManager(_db, _db.icMappings);
+  $$IcPositionsTableTableManager get icPositions =>
+      $$IcPositionsTableTableManager(_db, _db.icPositions);
 }

@@ -59,4 +59,4 @@ sequenceDiagram
 
 ## 関連するテスト
 
-- 単体: `test/application/usecase/route_map/ic_position_uc_test.dart`（保存されること、同じIC名の置き換え、範囲外・NaN のとき保存しないこと、保存の失敗）
+- 単体: `test/application/usecase/route_map/list_route_map_uc_test.dart`（保存されること、同じIC名の置き換え、範囲外・NaN のとき保存しないこと、保存の失敗）

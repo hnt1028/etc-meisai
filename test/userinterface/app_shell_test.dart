@@ -2,6 +2,8 @@ import 'package:etc_meisai/application/usecase/settings/delete_all_statement_lin
 import 'package:etc_meisai/application/usecase/settings/import_statement_uc.dart';
 import 'package:etc_meisai/userinterface/app.dart';
 import 'package:etc_meisai/userinterface/app_strings.dart';
+import 'package:etc_meisai/userinterface/route_map/route_map_providers.dart';
+import 'package:etc_meisai/userinterface/route_map/route_map_strings.dart';
 import 'package:etc_meisai/userinterface/settings/settings_providers.dart';
 import 'package:etc_meisai/userinterface/settings/settings_strings.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_providers.dart';
@@ -25,6 +27,8 @@ Widget _app() {
       deleteAllStatementLinesUCProvider.overrideWithValue(
         DeleteAllStatementLinesUC(statementLines: lines),
       ),
+      listRouteMapUCProvider.overrideWithValue(fakeRouteMapUC(lines)),
+      tileLayerProvider.overrideWithValue(const SizedBox.shrink()),
       listStatementLinesUCProvider.overrideWithValue(fakeListUC(lines)),
     ],
     // ignore: prefer_const_constructors
@@ -40,6 +44,7 @@ void main() {
     expect(find.text(StatementListStrings.title), findsOneWidget);
     expect(find.text(SettingsStrings.importButton), findsNothing);
     expect(find.text(AppStrings.statementsTab), findsOneWidget);
+    expect(find.text(AppStrings.routeMapTab), findsOneWidget);
     expect(find.text(AppStrings.settingsTab), findsOneWidget);
   });
 
@@ -48,6 +53,17 @@ void main() {
   ) async {
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
+
+    await tester.tap(find.text(AppStrings.routeMapTab));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text(RouteMapStrings.title),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text(StatementListStrings.title), findsNothing);
 
     await tester.tap(find.text(AppStrings.settingsTab));
     await tester.pumpAndSettle();

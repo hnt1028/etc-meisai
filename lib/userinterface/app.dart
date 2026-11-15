@@ -1,6 +1,7 @@
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/userinterface/app_shell.dart';
 import 'package:etc_meisai/userinterface/ic_mapping/ic_mapping_screen.dart';
+import 'package:etc_meisai/userinterface/route_map/route_map_screen.dart';
 import 'package:etc_meisai/userinterface/settings/settings_screen.dart';
 import 'package:etc_meisai/userinterface/statements/statement_detail_screen.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_screen.dart';
@@ -20,6 +21,25 @@ GoRouter createRouter() {
               GoRoute(
                 path: '/statements',
                 builder: (context, state) => const StatementListScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'detail',
+                    builder: (context, state) {
+                      final extra = state.extra;
+                      return StatementDetailScreen(
+                        line: extra is StatementLineDTO ? extra : null,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/route-map',
+                builder: (context, state) => const RouteMapScreen(),
                 routes: [
                   GoRoute(
                     path: 'detail',

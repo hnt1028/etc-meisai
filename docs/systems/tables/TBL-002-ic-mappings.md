@@ -9,7 +9,7 @@
 | 役割 | ファイル | クラス |
 |---|---|---|
 | テーブル定義 | `lib/infrastructure/repository/database/ic_mappings_table.dart` | `IcMappings` |
-| データベース | `lib/infrastructure/repository/database/app_database.dart` | `AppDatabase`（`schemaVersion` は 2。1 から 2 へ上げるときに、このテーブルを作る） |
+| データベース | `lib/infrastructure/repository/database/app_database.dart` | `AppDatabase`（バージョン2で、このテーブルを作った。1 から上げるときに作る。現在の `schemaVersion` は 3） |
 | 生成コード | `lib/infrastructure/repository/database/app_database.g.dart` | （drift が生成する。手で編集しない） |
 
 ## 使う箇所

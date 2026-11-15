@@ -55,4 +55,4 @@ sequenceDiagram
 
 ## 関連するテスト
 
-- 単体: `test/application/usecase/route_map/ic_position_uc_test.dart`（削除されること、無いIC名でも失敗しないこと、削除の失敗）
+- 単体: `test/application/usecase/route_map/list_route_map_uc_test.dart`（削除されること、無いIC名でも失敗しないこと、削除の失敗）
