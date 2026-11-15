@@ -39,7 +39,7 @@
    - ETCカード番号の下4桁が `cardNumberSuffix` と等しい
 4. 出口日時の新しい順に並べる（同じ日時は、保存済みの順のまま）
 5. 絞った明細行の、通行料金・還元額適用料金・後納料金を、それぞれ合計する（確認中の明細行も含める）
-6. `Entity` を `StatementLineDTO` に詰め替える。ETCカード番号と車両番号は、DTO の明細行には入れない
+6. `Entity` を `StatementLineDTO` に詰め替える。ETCカード番号は、下4桁にして入れる（元の番号は入れない）
 
 ## シーケンス図
 
@@ -76,7 +76,24 @@ sequenceDiagram
 | `vehicleNumberChoices` | `List<int>` | 絞り込みで選べる車両番号 |
 | `cardNumberChoices` | `List<String>` | 絞り込みで選べるETCカード番号（下4桁） |
 
-`StatementLineDTO`: `entranceAt`（`DateTime?`）、`exitAt`、`entranceIc`（`String?`）、`exitIc`、`fare`（`int`）、`status`（`ConfirmationStatusValue`）
+`StatementLineDTO`（一覧・タイムラインの表示と、[SCR-003](../screens/SCR-003-statement-detail.md) の詳細に使う）
+
+| 項目 | 型 | 内容 |
+|---|---|---|
+| `entranceAt` | `DateTime?` | 入口日時。空欄のときは `null` |
+| `exitAt` | `DateTime` | 出口日時 |
+| `entranceIc` | `String?` | 入口IC。空欄のときは `null` |
+| `exitIc` | `String` | 出口IC |
+| `grossFare` | `int?` | 割引前料金。割引なしのときは `null` |
+| `etcDiscount` | `int?` | ETC割引額。割引なしのときは `null` |
+| `fare` | `int` | 通行料金 |
+| `fareAfterRebate` | `int` | 還元額適用料金 |
+| `postpaidFare` | `int` | 後納料金 |
+| `vehicleType` | `VehicleTypeValue` | 車種 |
+| `vehicleNumber` | `int` | 車両番号（個人情報） |
+| `cardNumberSuffix` | `String` | ETCカード番号の下4桁 |
+| `status` | `ConfirmationStatusValue` | 状態 |
+| `discountTypes` | `List<String>` | 割引種別（無いときは空） |
 
 ## エラー時の動作
 
@@ -84,4 +101,4 @@ sequenceDiagram
 
 ## 関連するテスト
 
-- 単体: `test/application/usecase/statements/list_statement_lines_uc_test.dart`（0件、並び順、期間の境界日を含むこと、車両番号・カード番号の絞り込み、合計と内訳、入口が空欄の行、選択肢が絞り込み前の全体から作られること、カード番号が下4桁になること）
+- 単体: `test/application/usecase/statements/list_statement_lines_uc_test.dart`（0件、並び順、期間の境界日を含むこと、車両番号・カード番号の絞り込み、合計と内訳、入口が空欄の行、選択肢が絞り込み前の全体から作られること、カード番号が下4桁になること、割引種別・車種・車両番号・割引前料金などが詰め替えられること）
