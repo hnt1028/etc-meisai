@@ -61,6 +61,35 @@ class StatementFilterController extends Notifier<StatementFilterState> {
   void clear() => state = const StatementFilterState();
 }
 
+/// How the statement lines are shown.
+enum StatementListMode { list, timeline }
+
+final statementListModeProvider =
+    NotifierProvider<StatementListModeController, StatementListMode>(
+      StatementListModeController.new,
+    );
+
+/// OP-6 of SCR-002.
+class StatementListModeController extends Notifier<StatementListMode> {
+  @override
+  StatementListMode build() => StatementListMode.list;
+
+  void select(StatementListMode mode) => state = mode;
+}
+
+final timelineDayProvider = NotifierProvider<TimelineDayController, DateTime?>(
+  TimelineDayController.new,
+);
+
+/// OP-7 of SCR-002: the day the timeline shows. Null means the newest day that
+/// has statement lines.
+class TimelineDayController extends Notifier<DateTime?> {
+  @override
+  DateTime? build() => null;
+
+  void select(DateTime day) => state = DateTime(day.year, day.month, day.day);
+}
+
 /// OP-1: the statement lines for the current filter. It is read again when the
 /// filter or the stored data changes.
 final statementListProvider = FutureProvider<StatementListDTO>((ref) {

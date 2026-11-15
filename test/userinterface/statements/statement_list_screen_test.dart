@@ -4,6 +4,7 @@ import 'package:etc_meisai/application/usecase/statements/list_statement_lines_u
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/userinterface/app.dart';
 import 'package:etc_meisai/userinterface/common/data_revision.dart';
+import 'package:etc_meisai/userinterface/statements/statement_detail_strings.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_controller.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_providers.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_screen.dart';
@@ -109,6 +110,43 @@ void main() {
     expect(_text(StatementListStrings.pending), findsOneWidget);
     expect(_text('- → p'), findsOneWidget);
     expect(_text('- → 2026/01/10 09:15'), findsOneWidget);
+  });
+
+  testWidgets('shows the discount types only when there are some', (
+    tester,
+  ) async {
+    final lines = FakeStatementLineIF();
+    lines.stored.addAll([
+      fakeStatementLine(exitIc: 'd', discountTypes: const ['深夜割引', '休日割引']),
+      fakeStatementLine(exitIc: 'n'),
+    ]);
+
+    await _start(tester, lines);
+
+    expect(_text('深夜割引・休日割引'), findsOneWidget);
+    expect(find.textContaining('割引'), findsOneWidget);
+  });
+
+  testWidgets('opens the detail of a tapped line and comes back', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await _start(tester, _linesOfTwoVehicles());
+
+    await tester.tap(_text('A-IC → Y-IC'));
+    await tester.pumpAndSettle();
+
+    expect(_text(StatementDetailStrings.title), findsOneWidget);
+    expect(_text('**** 0002'), findsOneWidget);
+    expect(_text(StatementListStrings.title), findsNothing);
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+
+    expect(_text(StatementListStrings.title), findsOneWidget);
+    expect(_text('A-IC → Y-IC'), findsOneWidget);
   });
 
   testWidgets('says so when nothing is imported, with a total of 0', (

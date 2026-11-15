@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:etc_meisai/infrastructure/repository/database/app_database.dart';
 import 'package:etc_meisai/userinterface/settings/settings_strings.dart';
+import 'package:etc_meisai/userinterface/statements/statement_detail_strings.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -68,6 +69,33 @@ void main() {
     await tester.tap(find.text(StatementListStrings.clearFilter));
     await tester.pumpAndSettle();
     expect(find.text(StatementListStrings.clearFilter), findsNothing);
+
+    // The timeline shows the same three lines on 10 January.
+    await tester.tap(find.text(StatementListStrings.modeTimeline));
+    await tester.pumpAndSettle();
+    expect(find.text('2026/01/10'), findsOneWidget);
+    expect(find.byKey(const ValueKey('timeline-bar-2')), findsOneWidget);
+
+    // A tap opens the detail, and back returns to the timeline.
+    await tester.tap(find.byKey(const ValueKey('timeline-row-0')));
+    await tester.pumpAndSettle();
+    expect(find.text(StatementDetailStrings.title), findsOneWidget);
+    // The detail is a long list, so scroll to the fields near the bottom.
+    await tester.scrollUntilVisible(find.text('1234'), 100);
+    expect(find.text('1234'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text(StatementDetailStrings.cardNumberValue('0001')),
+      100,
+    );
+    expect(
+      find.text(StatementDetailStrings.cardNumberValue('0001')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.text('2026/01/10'), findsOneWidget);
+    await tester.tap(find.text(StatementListStrings.modeList));
+    await tester.pumpAndSettle();
 
     // Deleting on the settings screen empties the list.
     await openSettings(tester);

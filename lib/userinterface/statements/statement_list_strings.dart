@@ -5,6 +5,9 @@ import 'package:etc_meisai/userinterface/common/format.dart';
 abstract final class StatementListStrings {
   static const title = '利用明細一覧';
 
+  static const modeList = '一覧';
+  static const modeTimeline = 'タイムライン';
+
   static const periodLabel = '期間';
   static const periodNone = '指定なし';
   static const vehicleNumberLabel = '車両番号';
@@ -30,6 +33,13 @@ abstract final class StatementListStrings {
       '${entranceAt == null ? blank : formatDateTime(entranceAt)} → '
       '${formatDateTime(exitAt)}';
   static const pending = '確認中';
+
+  /// Shows the discount names, such as 深夜割引・休日割引.
+  static String discounts(List<String> discountTypes) =>
+      discountTypes.join('・');
+
+  static const previousDay = '前の利用日';
+  static const nextDay = '次の利用日';
 
   static const emptyNoData = '取り込んだ明細行がありません';
   static const emptyNoMatch = '条件に合う明細行がありません';

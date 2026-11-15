@@ -14,7 +14,9 @@ class MessageText extends StatelessWidget {
       child: Text(
         text,
         style: isError
-            ? TextStyle(color: Theme.of(context).colorScheme.error)
+            ? Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              )
             : null,
       ),
     );

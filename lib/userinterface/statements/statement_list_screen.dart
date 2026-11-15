@@ -5,8 +5,10 @@ import 'package:etc_meisai/userinterface/common/format.dart';
 import 'package:etc_meisai/userinterface/common/message_text.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_controller.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_strings.dart';
+import 'package:etc_meisai/userinterface/statements/statement_timeline.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// SCR-002: lists the statement lines with a filter and the total fare.
 class StatementListScreen extends ConsumerWidget {
@@ -16,6 +18,7 @@ class StatementListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final list = ref.watch(statementListProvider);
     final filter = ref.watch(statementFilterProvider);
+    final mode = ref.watch(statementListModeProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text(StatementListStrings.title)),
@@ -38,11 +41,16 @@ class StatementListScreen extends ConsumerWidget {
         data: (data) => Column(
           children: [
             if (list.isLoading) const LinearProgressIndicator(),
+            _ModeSwitch(mode: mode),
             _FilterBar(filter: filter, data: data),
             _Totals(data: data),
             const Divider(height: 1),
             Expanded(
-              child: _Lines(data: data, filtered: filter.isActive),
+              child: data.lines.isEmpty
+                  ? _Empty(filtered: filter.isActive)
+                  : mode == StatementListMode.list
+                  ? _Lines(data: data)
+                  : StatementTimeline(lines: data.lines),
             ),
           ],
         ),
@@ -95,6 +103,7 @@ class _FilterBar extends ConsumerWidget {
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: StatementListStrings.vehicleNumberLabel,
+                    border: OutlineInputBorder(),
                   ),
                   items: [
                     const DropdownMenuItem<int?>(
@@ -118,6 +127,7 @@ class _FilterBar extends ConsumerWidget {
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: StatementListStrings.cardNumberLabel,
+                    border: OutlineInputBorder(),
                   ),
                   items: [
                     const DropdownMenuItem<String?>(
@@ -158,44 +168,88 @@ class _Totals extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            StatementListStrings.totalFare(data.totalFare),
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          Text(
-            StatementListStrings.totalBreakdown(
-              data.totalFareAfterRebate,
-              data.totalPostpaidFare,
+    final theme = Theme.of(context);
+    return Card.filled(
+      margin: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              StatementListStrings.totalFare(data.totalFare),
+              style: theme.textTheme.titleLarge,
             ),
-          ),
-        ],
+            Text(
+              StatementListStrings.totalBreakdown(
+                data.totalFareAfterRebate,
+                data.totalPostpaidFare,
+              ),
+              style: theme.textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ModeSwitch extends ConsumerWidget {
+  const _ModeSwitch({required this.mode});
+
+  final StatementListMode mode;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: SizedBox(
+        width: double.infinity,
+        child: SegmentedButton<StatementListMode>(
+          segments: const [
+            ButtonSegment(
+              value: StatementListMode.list,
+              label: Text(StatementListStrings.modeList),
+            ),
+            ButtonSegment(
+              value: StatementListMode.timeline,
+              label: Text(StatementListStrings.modeTimeline),
+            ),
+          ],
+          selected: {mode},
+          onSelectionChanged: (selection) => ref
+              .read(statementListModeProvider.notifier)
+              .select(selection.first),
+        ),
+      ),
+    );
+  }
+}
+
+class _Empty extends StatelessWidget {
+  const _Empty({required this.filtered});
+
+  final bool filtered;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        filtered
+            ? StatementListStrings.emptyNoMatch
+            : StatementListStrings.emptyNoData,
       ),
     );
   }
 }
 
 class _Lines extends StatelessWidget {
-  const _Lines({required this.data, required this.filtered});
+  const _Lines({required this.data});
 
   final StatementListDTO data;
-  final bool filtered;
 
   @override
   Widget build(BuildContext context) {
-    if (data.lines.isEmpty) {
-      return Center(
-        child: Text(
-          filtered
-              ? StatementListStrings.emptyNoMatch
-              : StatementListStrings.emptyNoData,
-        ),
-      );
-    }
     return ListView.separated(
       itemCount: data.lines.length,
       separatorBuilder: (_, _) => const Divider(height: 1),
@@ -212,8 +266,16 @@ class _LineTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      onTap: () => context.push('/statements/detail', extra: line),
       title: Text(StatementListStrings.route(line.entranceIc, line.exitIc)),
-      subtitle: Text(StatementListStrings.times(line.entranceAt, line.exitAt)),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(StatementListStrings.times(line.entranceAt, line.exitAt)),
+          if (line.discountTypes.isNotEmpty)
+            Text(StatementListStrings.discounts(line.discountTypes)),
+        ],
+      ),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -222,7 +284,9 @@ class _LineTile extends StatelessWidget {
           if (line.status == ConfirmationStatusValue.pending)
             Text(
               StatementListStrings.pending,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
             ),
         ],
       ),
