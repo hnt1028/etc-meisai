@@ -55,4 +55,4 @@ sequenceDiagram
 
 ## 関連するテスト
 
-- 単体: `test/application/usecase/ic_mapping/delete_ic_mapping_uc_test.dart`（削除されること、無いIC名でも失敗しないこと、削除の失敗）
+- 単体: `test/application/usecase/ic_mapping/ic_mapping_uc_test.dart`（削除されること、無いIC名でも失敗しないこと、削除の失敗）

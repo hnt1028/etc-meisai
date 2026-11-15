@@ -64,4 +64,4 @@ sequenceDiagram
 
 ## 関連するテスト
 
-- 単体: `test/application/usecase/ic_mapping/save_ic_mapping_uc_test.dart`（保存されること、同じIC名の置き換え、地点が無いときに保存しないこと、保存の失敗）
+- 単体: `test/application/usecase/ic_mapping/ic_mapping_uc_test.dart`（保存されること、同じIC名の置き換え、地点が無いときに保存しないこと、保存の失敗）

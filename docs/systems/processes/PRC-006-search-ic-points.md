@@ -26,7 +26,7 @@
 
 1. `query` の前後の空白を取り除く。空なら、空のリストを返す
 2. `IcMasterIF` の `findAll` でICマスタを取得する
-3. 名前（NFKC 正規化、小文字にする）に、`query`（同じ正規化）を含む地点に絞る
+3. 名前（全角の英数字・記号を半角にし、小文字にして、空白を取り除く。[route-map.md](../../route-map.md) の「そろえる」）に、`query`（同じようにそろえる）を含む地点に絞る
 4. 名前が `query` で始まるものを先に、そのあとは、名前の順に並べる。50件まで返す
 
 ## シーケンス図
@@ -59,4 +59,4 @@ sequenceDiagram
 
 ## 関連するテスト
 
-- 単体: `test/application/usecase/ic_mapping/search_ic_points_uc_test.dart`（空欄、全角・半角の違い、前方一致が先、50件、見つからないとき、取得の失敗）
+- 単体: `test/application/usecase/ic_mapping/ic_mapping_uc_test.dart`（空欄、全角・半角と大文字・小文字の違い、前方一致が先、50件、見つからないとき、取得の失敗）

@@ -81,5 +81,5 @@ sequenceDiagram
 
 ## 関連するテスト
 
-- 単体: `test/application/usecase/ic_mapping/list_ic_matches_uc_test.dart`（一致するIC名は出ないこと、複数候補と未一致、明細行の数と並び順、登録済み、マスタに無い登録済み、入口が空欄の行、0件）
+- 単体: `test/application/usecase/ic_mapping/ic_mapping_uc_test.dart`（一致するIC名は出ないこと、複数候補と未一致、明細行の数と並び順、登録済み、マスタに無い登録済み、入口が空欄の行、0件）
 - 単体: `test/application/usecase/ic_mapping/ic_lookup_test.dart`（照合の順序、正規化、末尾の除去、複数候補、登録の優先、路線名の決定）

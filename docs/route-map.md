@@ -24,6 +24,7 @@ dart run tool/build_ic_master.dart <N06のGeoJSONがあるフォルダ> assets/i
 - 接合部1件が、マスタの1地点になる。`id`（N06の関係ID）、`name`（地点名）、`kind`（接合部種別）、`lat`・`lon`（緯度経度）、`routes`（路線名のリスト）を持つ
 - `routes` は、地点から50m以内にある路線区間の路線名（重複なし）。N06では、現在の接合部はすべて路線区間の上にある。JCTやIC は、2〜3路線になることがある
 - `kind` は、1: 一般IC（都市高速のランプを含む）、2: スマートIC、3: JCT、4: その他（PAなど）
+- ツールの処理は `tool/ic_master_builder.dart`。`test/tool/ic_master_builder_test.dart` で確かめる。作ったマスタの整合（IDが重複しない、すべての地点に路線名がある、座標が日本の範囲）は、`test/infrastructure/repository/ic_mapping/ic_repo_test.dart` が確かめる
 - N06 を新しい版に差し替えるときは、このコマンドを実行し直す。`id` は版をまたいで同じ地点を指す（関係ID）
 
 ## IC名の照合
@@ -31,8 +32,8 @@ dart run tool/build_ic_master.dart <N06のGeoJSONがあるフォルダ> assets/i
 CSVのIC名と、マスタの `name` を、次の順で照合する（実装は `IcLookup`。[PRC-005](systems/processes/PRC-005-list-ic-matches.md)）。
 
 1. 利用者が登録した対応づけ（[SCR-004](systems/screens/SCR-004-ic-mapping.md)）があれば、それを使う
-2. IC名を NFKC 正規化（全角・半角をそろえる）して、マスタの `name` と完全に等しい地点を探す。1件なら一致
-3. 無ければ、IC名とマスタの `name` の末尾の「スマートIC」「スマート」「SIC」「JCT」「IC」「出入口」「入口」「出口」を取り除いて比べる。1件なら一致
+2. 全角の英数字・記号を半角にし、大文字・小文字を区別せず、空白を取り除いた（以下「そろえた」）IC名が、そろえたマスタの `name` と等しい地点を探す。1件なら一致
+3. 無ければ、そろえたIC名とマスタの `name` の末尾の「スマートIC」「スマート」「SIC」「JCT」「IC」「出入口」「入口」「出口」（どれか1つ）を取り除いて比べる。1件なら一致
 4. 2件以上あれば「複数候補」、0件なら「未一致」。どちらも利用者が決める（SCR-004）
 
 - NEXCO のIC名は「IC」が付くことが多く、首都高速などでは「出入口」「入口」「出口」が使われる。末尾の除去は、この違いをそろえるためのもの
