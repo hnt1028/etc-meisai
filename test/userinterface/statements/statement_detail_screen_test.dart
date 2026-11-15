@@ -13,6 +13,7 @@ StatementLineDTO _line({
   int? etcDiscount = -240,
   ConfirmationStatusValue status = ConfirmationStatusValue.confirmed,
   List<String> discountTypes = const ['深夜割引', '休日割引'],
+  List<String> routeNames = const ['テスト自動車道', 'テスト都市高速'],
 }) {
   return StatementLineDTO(
     entranceAt: entranceAt ?? DateTime(2026, 1, 10, 8, 30),
@@ -29,6 +30,7 @@ StatementLineDTO _line({
     cardNumberSuffix: '0001',
     status: status,
     discountTypes: discountTypes,
+    routeNames: routeNames,
   );
 }
 
@@ -61,6 +63,8 @@ void main() {
       '**** 0001',
       StatementDetailStrings.confirmed,
       '深夜割引・休日割引',
+      StatementDetailStrings.routeNames,
+      'テスト自動車道・テスト都市高速',
     ]) {
       expect(find.text(text), findsOneWidget, reason: text);
     }
@@ -88,8 +92,9 @@ void main() {
     );
     await _show(tester, line);
 
-    // Entrance date and time, entrance IC, gross fare and ETC discount.
-    expect(find.text(StatementDetailStrings.blank), findsNWidgets(4));
+    // Entrance date and time, entrance IC, route names, gross fare and ETC
+    // discount.
+    expect(find.text(StatementDetailStrings.blank), findsNWidgets(5));
     expect(find.text(StatementDetailStrings.none), findsOneWidget);
   });
 

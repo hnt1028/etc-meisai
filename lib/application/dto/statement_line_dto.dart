@@ -21,6 +21,7 @@ class StatementLineDTO {
     required this.cardNumberSuffix,
     required this.status,
     required this.discountTypes,
+    this.routeNames = const [],
   });
 
   /// Null when the CSV leaves the entrance blank.
@@ -53,4 +54,7 @@ class StatementLineDTO {
 
   /// Discount names such as 深夜割引. Empty when there is none.
   final List<String> discountTypes;
+
+  /// The routes the line ran on. Empty when they are not known.
+  final List<String> routeNames;
 }

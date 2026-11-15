@@ -35,6 +35,12 @@ class StatementDetailScreen extends StatelessWidget {
                   line.entranceIc ?? StatementDetailStrings.blank,
                 ),
                 _item(StatementDetailStrings.exitIc, line.exitIc),
+                _item(
+                  StatementDetailStrings.routeNames,
+                  line.routeNames.isEmpty
+                      ? StatementDetailStrings.blank
+                      : line.routeNames.join('・'),
+                ),
                 _item(StatementDetailStrings.grossFare, _yen(line.grossFare)),
                 _item(
                   StatementDetailStrings.etcDiscount,

@@ -1,8 +1,14 @@
 import 'dart:typed_data';
 
+import 'package:etc_meisai/application/interface/ic_mapping_if.dart';
+import 'package:etc_meisai/application/interface/ic_master_if.dart';
 import 'package:etc_meisai/application/interface/statement_if.dart';
 import 'package:etc_meisai/application/interface/statement_line_if.dart';
+import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
+import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
+import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
+import 'package:etc_meisai/domain/value/ic_kind_value.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/domain/value/vehicle_type_value.dart';
 
@@ -12,6 +18,7 @@ StatementLineEntity fakeStatementLine({
   ConfirmationStatusValue status = ConfirmationStatusValue.confirmed,
   DateTime? exitAt,
   DateTime? entranceAt,
+  String? entranceIc,
   bool withoutEntrance = false,
   int fare = 1000,
   int fareAfterRebate = 0,
@@ -28,7 +35,7 @@ StatementLineEntity fakeStatementLine({
         ? null
         : (entranceAt ?? DateTime(2026, 1, 10, 8, 30)),
     exitAt: exitAt ?? DateTime(2026, 1, 10, 9, 15),
-    entranceIc: withoutEntrance ? null : 'A-IC',
+    entranceIc: withoutEntrance ? null : (entranceIc ?? 'A-IC'),
     exitIc: exitIc,
     grossFare: grossFare,
     etcDiscount: etcDiscount,
@@ -109,4 +116,78 @@ class FakeStatementLineIF implements StatementLineIF {
     if (error != null) throw error!;
     stored.clear();
   }
+}
+
+/// A fictional IC point.
+IcPointEntity fakeIcPoint({
+  String? id,
+  required String name,
+  IcKindValue kind = IcKindValue.generalInterchange,
+  List<String> routeNames = const ['テスト自動車道'],
+  double latitude = 35.0,
+  double longitude = 139.0,
+}) {
+  return IcPointEntity(
+    id: id ?? 'id-$name',
+    name: name,
+    kind: kind,
+    latitude: latitude,
+    longitude: longitude,
+    routeNames: routeNames,
+  );
+}
+
+/// Returns the given IC points, or throws [error].
+class FakeIcMasterIF implements IcMasterIF {
+  FakeIcMasterIF(this.points, {this.error});
+
+  final List<IcPointEntity> points;
+  Object? error;
+
+  @override
+  Future<List<IcPointEntity>> findAll() async {
+    if (error != null) throw error!;
+    return points;
+  }
+}
+
+/// Keeps IC mappings in memory. Can fail on request.
+class FakeIcMappingIF implements IcMappingIF {
+  final List<IcMappingEntity> stored = [];
+
+  /// When set, every method throws it.
+  Object? error;
+
+  @override
+  Future<List<IcMappingEntity>> findAll() async {
+    if (error != null) throw error!;
+    return List.of(stored);
+  }
+
+  @override
+  Future<void> save(IcMappingEntity mapping) async {
+    if (error != null) throw error!;
+    stored.removeWhere((m) => m.icName == mapping.icName);
+    stored.add(mapping);
+  }
+
+  @override
+  Future<void> delete(String icName) async {
+    if (error != null) throw error!;
+    stored.removeWhere((m) => m.icName == icName);
+  }
+}
+
+/// The statement list use case on in-memory fakes. With no IC points, no line
+/// has a route name.
+ListStatementLinesUC fakeListUC(
+  FakeStatementLineIF lines, {
+  List<IcPointEntity> points = const [],
+  FakeIcMappingIF? mappings,
+}) {
+  return ListStatementLinesUC(
+    statementLines: lines,
+    icMaster: FakeIcMasterIF(points),
+    icMappings: mappings ?? FakeIcMappingIF(),
+  );
 }

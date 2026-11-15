@@ -38,6 +38,9 @@ abstract final class StatementListStrings {
   static String discounts(List<String> discountTypes) =>
       discountTypes.join('・');
 
+  /// Shows the route names, such as 東名高速道路・首都高速道路.
+  static String routes(List<String> routeNames) => routeNames.join('・');
+
   static const previousDay = '前の利用日';
   static const nextDay = '次の利用日';
 

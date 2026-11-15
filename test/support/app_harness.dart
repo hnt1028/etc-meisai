@@ -1,11 +1,18 @@
+import 'package:etc_meisai/application/usecase/ic_mapping/delete_ic_mapping_uc.dart';
+import 'package:etc_meisai/application/usecase/ic_mapping/list_ic_matches_uc.dart';
+import 'package:etc_meisai/application/usecase/ic_mapping/save_ic_mapping_uc.dart';
+import 'package:etc_meisai/application/usecase/ic_mapping/search_ic_points_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/delete_all_statement_lines_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/import_statement_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/infrastructure/repository/database/app_database.dart';
+import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_mapping_repo.dart';
+import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_master_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/statement_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/statements/statement_line_repo.dart';
 import 'package:etc_meisai/userinterface/app.dart';
 import 'package:etc_meisai/userinterface/app_strings.dart';
+import 'package:etc_meisai/userinterface/ic_mapping/ic_mapping_providers.dart';
 import 'package:etc_meisai/userinterface/settings/csv_picker.dart';
 import 'package:etc_meisai/userinterface/settings/settings_providers.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_providers.dart';
@@ -13,14 +20,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../fixtures/ic_master_fixture.dart';
+
 /// Starts the whole app on [database], wired like lib/main.dart. Only the file
-/// picker is replaced, because it opens a system screen.
+/// picker (it opens a system screen) and the IC master (a fictional one) are
+/// replaced.
 Future<void> pumpApp(
   WidgetTester tester, {
   required AppDatabase database,
   required CsvPicker picker,
 }) async {
   final statementLines = StatementLineRepo(database);
+  final icMaster = IcMasterRepo(loadJson: () async => icMasterFixtureJson());
+  final icMappings = IcMappingRepo(database);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -34,7 +46,27 @@ Future<void> pumpApp(
           DeleteAllStatementLinesUC(statementLines: statementLines),
         ),
         listStatementLinesUCProvider.overrideWithValue(
-          ListStatementLinesUC(statementLines: statementLines),
+          ListStatementLinesUC(
+            statementLines: statementLines,
+            icMaster: icMaster,
+            icMappings: icMappings,
+          ),
+        ),
+        listIcMatchesUCProvider.overrideWithValue(
+          ListIcMatchesUC(
+            statementLines: statementLines,
+            icMaster: icMaster,
+            icMappings: icMappings,
+          ),
+        ),
+        searchIcPointsUCProvider.overrideWithValue(
+          SearchIcPointsUC(icMaster: icMaster),
+        ),
+        saveIcMappingUCProvider.overrideWithValue(
+          SaveIcMappingUC(icMaster: icMaster, icMappings: icMappings),
+        ),
+        deleteIcMappingUCProvider.overrideWithValue(
+          DeleteIcMappingUC(icMappings: icMappings),
         ),
         csvPickerProvider.overrideWithValue(picker),
       ],

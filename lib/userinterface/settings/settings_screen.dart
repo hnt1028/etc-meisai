@@ -5,6 +5,7 @@ import 'package:etc_meisai/userinterface/settings/settings_controller.dart';
 import 'package:etc_meisai/userinterface/settings/settings_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// SCR-001: imports a usage statement CSV and deletes the imported data.
 class SettingsScreen extends ConsumerWidget {
@@ -53,6 +54,17 @@ class SettingsScreen extends ConsumerWidget {
             child: const Text(SettingsStrings.deleteButton),
           ),
           if (state.notice != null) MessageText(state.notice!),
+          const Divider(height: 32),
+          const SectionTitle(SettingsStrings.icMappingSection),
+          OutlinedButton(
+            onPressed: () => context.push('/settings/ic-mapping'),
+            child: const Text(SettingsStrings.icMappingButton),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            SettingsStrings.credit,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ],
       ),
     );

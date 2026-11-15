@@ -1,5 +1,4 @@
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
-import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/userinterface/app.dart';
 import 'package:etc_meisai/userinterface/statements/statement_detail_strings.dart';
@@ -18,9 +17,7 @@ Future<void> _start(WidgetTester tester, FakeStatementLineIF lines) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        listStatementLinesUCProvider.overrideWithValue(
-          ListStatementLinesUC(statementLines: lines),
-        ),
+        listStatementLinesUCProvider.overrideWithValue(fakeListUC(lines)),
       ],
       // ignore: prefer_const_constructors
       child: EtcMeisaiApp(),

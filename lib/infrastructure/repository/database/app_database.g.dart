@@ -955,10 +955,226 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
   }
 }
 
+class $IcMappingsTable extends IcMappings
+    with TableInfo<$IcMappingsTable, IcMapping> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $IcMappingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _icNameMeta = const VerificationMeta('icName');
+  @override
+  late final GeneratedColumn<String> icName = GeneratedColumn<String>(
+    'ic_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pointIdMeta = const VerificationMeta(
+    'pointId',
+  );
+  @override
+  late final GeneratedColumn<String> pointId = GeneratedColumn<String>(
+    'point_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [icName, pointId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ic_mappings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<IcMapping> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('ic_name')) {
+      context.handle(
+        _icNameMeta,
+        icName.isAcceptableOrUnknown(data['ic_name']!, _icNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_icNameMeta);
+    }
+    if (data.containsKey('point_id')) {
+      context.handle(
+        _pointIdMeta,
+        pointId.isAcceptableOrUnknown(data['point_id']!, _pointIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pointIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {icName};
+  @override
+  IcMapping map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return IcMapping(
+      icName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ic_name'],
+      )!,
+      pointId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}point_id'],
+      )!,
+    );
+  }
+
+  @override
+  $IcMappingsTable createAlias(String alias) {
+    return $IcMappingsTable(attachedDatabase, alias);
+  }
+}
+
+class IcMapping extends DataClass implements Insertable<IcMapping> {
+  /// The IC name as written in the CSV.
+  final String icName;
+
+  /// The id of the IC point in the IC master.
+  final String pointId;
+  const IcMapping({required this.icName, required this.pointId});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['ic_name'] = Variable<String>(icName);
+    map['point_id'] = Variable<String>(pointId);
+    return map;
+  }
+
+  IcMappingsCompanion toCompanion(bool nullToAbsent) {
+    return IcMappingsCompanion(icName: Value(icName), pointId: Value(pointId));
+  }
+
+  factory IcMapping.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return IcMapping(
+      icName: serializer.fromJson<String>(json['icName']),
+      pointId: serializer.fromJson<String>(json['pointId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'icName': serializer.toJson<String>(icName),
+      'pointId': serializer.toJson<String>(pointId),
+    };
+  }
+
+  IcMapping copyWith({String? icName, String? pointId}) => IcMapping(
+    icName: icName ?? this.icName,
+    pointId: pointId ?? this.pointId,
+  );
+  IcMapping copyWithCompanion(IcMappingsCompanion data) {
+    return IcMapping(
+      icName: data.icName.present ? data.icName.value : this.icName,
+      pointId: data.pointId.present ? data.pointId.value : this.pointId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('IcMapping(')
+          ..write('icName: $icName, ')
+          ..write('pointId: $pointId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(icName, pointId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is IcMapping &&
+          other.icName == this.icName &&
+          other.pointId == this.pointId);
+}
+
+class IcMappingsCompanion extends UpdateCompanion<IcMapping> {
+  final Value<String> icName;
+  final Value<String> pointId;
+  final Value<int> rowid;
+  const IcMappingsCompanion({
+    this.icName = const Value.absent(),
+    this.pointId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  IcMappingsCompanion.insert({
+    required String icName,
+    required String pointId,
+    this.rowid = const Value.absent(),
+  }) : icName = Value(icName),
+       pointId = Value(pointId);
+  static Insertable<IcMapping> custom({
+    Expression<String>? icName,
+    Expression<String>? pointId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (icName != null) 'ic_name': icName,
+      if (pointId != null) 'point_id': pointId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  IcMappingsCompanion copyWith({
+    Value<String>? icName,
+    Value<String>? pointId,
+    Value<int>? rowid,
+  }) {
+    return IcMappingsCompanion(
+      icName: icName ?? this.icName,
+      pointId: pointId ?? this.pointId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (icName.present) {
+      map['ic_name'] = Variable<String>(icName.value);
+    }
+    if (pointId.present) {
+      map['point_id'] = Variable<String>(pointId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('IcMappingsCompanion(')
+          ..write('icName: $icName, ')
+          ..write('pointId: $pointId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $StatementLinesTable statementLines = $StatementLinesTable(this);
+  late final $IcMappingsTable icMappings = $IcMappingsTable(this);
   late final Index statementLinesExitAt = Index(
     'statement_lines_exit_at',
     'CREATE INDEX statement_lines_exit_at ON statement_lines (exit_at)',
@@ -969,6 +1185,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     statementLines,
+    icMappings,
     statementLinesExitAt,
   ];
 }
@@ -1420,10 +1637,161 @@ typedef $$StatementLinesTableProcessedTableManager =
       StatementLine,
       PrefetchHooks Function()
     >;
+typedef $$IcMappingsTableCreateCompanionBuilder =
+    IcMappingsCompanion Function({
+      required String icName,
+      required String pointId,
+      Value<int> rowid,
+    });
+typedef $$IcMappingsTableUpdateCompanionBuilder =
+    IcMappingsCompanion Function({
+      Value<String> icName,
+      Value<String> pointId,
+      Value<int> rowid,
+    });
+
+class $$IcMappingsTableFilterComposer
+    extends Composer<_$AppDatabase, $IcMappingsTable> {
+  $$IcMappingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get icName => $composableBuilder(
+    column: $table.icName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pointId => $composableBuilder(
+    column: $table.pointId,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$IcMappingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $IcMappingsTable> {
+  $$IcMappingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get icName => $composableBuilder(
+    column: $table.icName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pointId => $composableBuilder(
+    column: $table.pointId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$IcMappingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $IcMappingsTable> {
+  $$IcMappingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get icName =>
+      $composableBuilder(column: $table.icName, builder: (column) => column);
+
+  GeneratedColumn<String> get pointId =>
+      $composableBuilder(column: $table.pointId, builder: (column) => column);
+}
+
+class $$IcMappingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $IcMappingsTable,
+          IcMapping,
+          $$IcMappingsTableFilterComposer,
+          $$IcMappingsTableOrderingComposer,
+          $$IcMappingsTableAnnotationComposer,
+          $$IcMappingsTableCreateCompanionBuilder,
+          $$IcMappingsTableUpdateCompanionBuilder,
+          (
+            IcMapping,
+            BaseReferences<_$AppDatabase, $IcMappingsTable, IcMapping>,
+          ),
+          IcMapping,
+          PrefetchHooks Function()
+        > {
+  $$IcMappingsTableTableManager(_$AppDatabase db, $IcMappingsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$IcMappingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$IcMappingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$IcMappingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> icName = const Value.absent(),
+                Value<String> pointId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => IcMappingsCompanion(
+                icName: icName,
+                pointId: pointId,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String icName,
+                required String pointId,
+                Value<int> rowid = const Value.absent(),
+              }) => IcMappingsCompanion.insert(
+                icName: icName,
+                pointId: pointId,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$IcMappingsTable, IcMapping>(table),
+                  BaseReferences<_$AppDatabase, $IcMappingsTable, IcMapping>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$IcMappingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $IcMappingsTable,
+      IcMapping,
+      $$IcMappingsTableFilterComposer,
+      $$IcMappingsTableOrderingComposer,
+      $$IcMappingsTableAnnotationComposer,
+      $$IcMappingsTableCreateCompanionBuilder,
+      $$IcMappingsTableUpdateCompanionBuilder,
+      (IcMapping, BaseReferences<_$AppDatabase, $IcMappingsTable, IcMapping>),
+      IcMapping,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
   $$StatementLinesTableTableManager get statementLines =>
       $$StatementLinesTableTableManager(_db, _db.statementLines);
+  $$IcMappingsTableTableManager get icMappings =>
+      $$IcMappingsTableTableManager(_db, _db.icMappings);
 }

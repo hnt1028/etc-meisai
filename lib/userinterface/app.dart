@@ -1,5 +1,6 @@
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/userinterface/app_shell.dart';
+import 'package:etc_meisai/userinterface/ic_mapping/ic_mapping_screen.dart';
 import 'package:etc_meisai/userinterface/settings/settings_screen.dart';
 import 'package:etc_meisai/userinterface/statements/statement_detail_screen.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_screen.dart';
@@ -38,6 +39,12 @@ GoRouter createRouter() {
               GoRoute(
                 path: '/settings',
                 builder: (context, state) => const SettingsScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'ic-mapping',
+                    builder: (context, state) => const IcMappingScreen(),
+                  ),
+                ],
               ),
             ],
           ),
