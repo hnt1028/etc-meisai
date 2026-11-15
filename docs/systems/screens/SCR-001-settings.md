@@ -17,7 +17,7 @@
 
 ## 呼び出し箇所
 
-- ルート `/settings`（`lib/userinterface/app.dart` の `GoRouter`）。現時点では、この画面だけが存在し、起動時に表示する
+- ルート `/settings`（`lib/userinterface/app.dart` の `GoRouter`）。下部のナビゲーションバーの「設定」で表示する（起動時に表示するのは [SCR-002](SCR-002-statement-list.md)）
 
 ## 基本設計
 
@@ -44,8 +44,8 @@
 
 | 操作ID | 操作 | きっかけ | 動作 | 遷移先 |
 |---|---|---|---|---|
-| OP-1 | CSVを取り込む | 取り込みボタンのタップ | ファイル選択（端末の標準画面）を開き、選んだCSVを取り込む。選ばなかったときは何もしない。完了したら、取り込み結果を表示する | なし |
-| OP-2 | データを削除する | 削除ボタンのタップ | 確認ダイアログを出す。「削除する」を選んだら、すべて削除し、「削除しました」を表示する。「キャンセル」なら何もしない | なし |
+| OP-1 | CSVを取り込む | 取り込みボタンのタップ | ファイル選択（端末の標準画面）を開き、選んだCSVを取り込む。選ばなかったときは何もしない。完了したら、取り込み結果を表示し、[SCR-002](SCR-002-statement-list.md) の一覧を更新させる（`dataRevisionProvider`） | なし |
+| OP-2 | データを削除する | 削除ボタンのタップ | 確認ダイアログを出す。「削除する」を選んだら、すべて削除し、「削除しました」を表示し、[SCR-002](SCR-002-statement-list.md) の一覧を更新させる。「キャンセル」なら何もしない | なし |
 
 ### エラー一覧
 
@@ -75,4 +75,4 @@
 
 - ウィジェット: `test/userinterface/settings/settings_screen_test.dart`（初期表示、取り込み結果、取り込みエラー、キャンセル、削除の確認、処理中）
 - 結合: `integration_test/settings_import_test.dart`（画面からDBまで、`lib/main.dart` と同じ組み立てで実行する。ファイル選択だけを差し替える。架空のCSV（`test/fixtures/statement_fixture.dart`）を取り込むと「追加 3 件」、もう一度取り込むと「上書き 1 件・無視 2 件」、削除するともう一度「追加 3 件」になること。形式が不正なCSVは、エラーを表示して、何も保存しないこと）
-- 単体: `test/application/usecase/settings/delete_all_statement_lines_uc_test.dart`（PRC-003）、`test/userinterface/settings/settings_controller_test.dart`（画面の状態と操作）
+- 単体: `test/application/usecase/settings/delete_all_statement_lines_uc_test.dart`（PRC-003）、`test/userinterface/settings/settings_controller_test.dart`（画面の状態と操作、一覧の更新通知）

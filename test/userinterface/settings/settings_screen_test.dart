@@ -3,7 +3,10 @@ import 'dart:typed_data';
 
 import 'package:etc_meisai/application/usecase/settings/delete_all_statement_lines_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/import_statement_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/userinterface/app.dart';
+import 'package:etc_meisai/userinterface/app_strings.dart';
+import 'package:etc_meisai/userinterface/statements/statement_list_providers.dart';
 import 'package:etc_meisai/userinterface/settings/settings_providers.dart';
 import 'package:etc_meisai/userinterface/settings/settings_strings.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +28,9 @@ Widget _app({
       deleteAllStatementLinesUCProvider.overrideWithValue(
         DeleteAllStatementLinesUC(statementLines: lines),
       ),
+      listStatementLinesUCProvider.overrideWithValue(
+        ListStatementLinesUC(statementLines: lines),
+      ),
       csvPickerProvider.overrideWithValue(
         picker ?? () async => Uint8List.fromList([1]),
       ),
@@ -37,16 +43,30 @@ Widget _app({
 
 Finder _text(String text) => find.text(text);
 
+/// Starts the app and opens the settings screen from the navigation bar.
+Future<void> _pump(WidgetTester tester, Widget app) async {
+  await tester.pumpWidget(app);
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(AppStrings.settingsTab));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('starts on the settings screen with nothing reported', (
     tester,
   ) async {
-    await tester.pumpWidget(
+    await _pump(
+      tester,
       _app(statement: FakeStatementIF([]), lines: FakeStatementLineIF()),
     );
-    await tester.pumpAndSettle();
 
-    expect(_text(SettingsStrings.title), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: _text(SettingsStrings.title),
+      ),
+      findsOneWidget,
+    );
     expect(_text(SettingsStrings.importButton), findsOneWidget);
     expect(_text(SettingsStrings.deleteButton), findsOneWidget);
     expect(find.textContaining('追加'), findsNothing);
@@ -55,7 +75,8 @@ void main() {
   });
 
   testWidgets('shows the counts after an import', (tester) async {
-    await tester.pumpWidget(
+    await _pump(
+      tester,
       _app(
         statement: FakeStatementIF([
           fakeStatementLine(),
@@ -64,7 +85,6 @@ void main() {
         lines: FakeStatementLineIF(),
       ),
     );
-    await tester.pumpAndSettle();
 
     await tester.tap(_text(SettingsStrings.importButton));
     await tester.pumpAndSettle();
@@ -73,14 +93,14 @@ void main() {
   });
 
   testWidgets('shows nothing when no file is chosen', (tester) async {
-    await tester.pumpWidget(
+    await _pump(
+      tester,
       _app(
         statement: FakeStatementIF([fakeStatementLine()]),
         lines: FakeStatementLineIF(),
         picker: () async => null,
       ),
     );
-    await tester.pumpAndSettle();
 
     await tester.tap(_text(SettingsStrings.importButton));
     await tester.pumpAndSettle();
@@ -89,13 +109,13 @@ void main() {
   });
 
   testWidgets('shows what is invalid in the CSV', (tester) async {
-    await tester.pumpWidget(
+    await _pump(
+      tester,
       _app(
         statement: FakeStatementIF([], error: const FormatException('2行目: 不正')),
         lines: FakeStatementLineIF(),
       ),
     );
-    await tester.pumpAndSettle();
 
     await tester.tap(_text(SettingsStrings.importButton));
     await tester.pumpAndSettle();
@@ -108,10 +128,10 @@ void main() {
   ) async {
     final gate = Completer<void>();
     final lines = FakeStatementLineIF()..gate = gate.future;
-    await tester.pumpWidget(
+    await _pump(
+      tester,
       _app(statement: FakeStatementIF([fakeStatementLine()]), lines: lines),
     );
-    await tester.pumpAndSettle();
 
     await tester.tap(_text(SettingsStrings.importButton));
     await tester.pump();
@@ -146,10 +166,7 @@ void main() {
     ) async {
       final lines = FakeStatementLineIF();
       await lines.save(fakeStatementLine());
-      await tester.pumpWidget(
-        _app(statement: FakeStatementIF([]), lines: lines),
-      );
-      await tester.pumpAndSettle();
+      await _pump(tester, _app(statement: FakeStatementIF([]), lines: lines));
 
       await tester.tap(_text(SettingsStrings.deleteButton));
       await tester.pumpAndSettle();
@@ -166,10 +183,7 @@ void main() {
     testWidgets('deletes everything once confirmed', (tester) async {
       final lines = FakeStatementLineIF();
       await lines.save(fakeStatementLine());
-      await tester.pumpWidget(
-        _app(statement: FakeStatementIF([]), lines: lines),
-      );
-      await tester.pumpAndSettle();
+      await _pump(tester, _app(statement: FakeStatementIF([]), lines: lines));
 
       await tester.tap(_text(SettingsStrings.deleteButton));
       await tester.pumpAndSettle();
@@ -185,10 +199,7 @@ void main() {
     ) async {
       final lines = FakeStatementLineIF();
       await lines.save(fakeStatementLine());
-      await tester.pumpWidget(
-        _app(statement: FakeStatementIF([]), lines: lines),
-      );
-      await tester.pumpAndSettle();
+      await _pump(tester, _app(statement: FakeStatementIF([]), lines: lines));
 
       await tester.tap(_text(SettingsStrings.deleteButton));
       await tester.pumpAndSettle();
@@ -201,10 +212,7 @@ void main() {
 
     testWidgets('shows a failure', (tester) async {
       final lines = FakeStatementLineIF()..error = StateError('disk');
-      await tester.pumpWidget(
-        _app(statement: FakeStatementIF([]), lines: lines),
-      );
-      await tester.pumpAndSettle();
+      await _pump(tester, _app(statement: FakeStatementIF([]), lines: lines));
 
       await tester.tap(_text(SettingsStrings.deleteButton));
       await tester.pumpAndSettle();
