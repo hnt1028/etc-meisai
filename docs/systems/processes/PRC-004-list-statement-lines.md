@@ -14,6 +14,7 @@
 | 使う窓口（明細行の保存・取得） | `lib/application/interface/statement_line_if.dart` | `StatementLineIF`（`findAll`） |
 | 使う窓口（ICマスタ） | `lib/application/interface/ic_master_if.dart` | `IcMasterIF`（`findAll`） |
 | 使う窓口（ICの対応づけ） | `lib/application/interface/ic_mapping_if.dart` | `IcMappingIF`（`findAll`） |
+| 使う部品（絞り込み、DTOへの詰め替え） | `lib/application/usecase/statements/statement_filter.dart` | `filterStatementLines`、`toStatementLineDTO` ほか。[PRC-009](PRC-009-list-route-map.md) と共通 |
 | 使う部品（IC名の照合、路線名の決定） | `lib/application/usecase/ic_mapping/ic_lookup.dart` | `IcLookup` |
 
 ## 呼び出し箇所
