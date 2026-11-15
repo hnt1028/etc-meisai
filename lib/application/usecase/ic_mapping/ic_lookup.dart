@@ -1,3 +1,4 @@
+import 'package:etc_meisai/application/usecase/ic_mapping/ic_route_supplements.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
@@ -166,16 +167,25 @@ class IcLookup {
   IcPointEntity? pointOf(String id) => _byId[id];
 
   /// The routes of a statement line. The routes both ICs share, or, when they
-  /// share none, the routes of both. With only one known point, its routes.
-  /// Empty when no point is known.
+  /// share none, the routes of both. With only one known IC, its routes (so a
+  /// blank entrance gives the routes of the exit). An IC is known by its point,
+  /// or else by [routeSupplementOf]. Empty when neither IC is known.
   List<String> routeNamesOf(String? entranceIc, String exitIc) {
-    final entrance = entranceIc == null ? null : resolve(entranceIc).point;
-    final exit = resolve(exitIc).point;
+    final entrance = entranceIc == null ? null : _routesOf(entranceIc);
+    final exit = _routesOf(exitIc);
     if (entrance == null && exit == null) return const [];
-    if (entrance == null) return List.unmodifiable(exit!.routeNames);
-    if (exit == null) return List.unmodifiable(entrance.routeNames);
-    final common = entrance.routeNames.where(exit.routeNames.contains).toList();
+    if (entrance == null) return List.unmodifiable(exit!);
+    if (exit == null) return List.unmodifiable(entrance);
+    final common = entrance.where(exit.contains).toList();
     if (common.isNotEmpty) return List.unmodifiable(common);
-    return List.unmodifiable({...entrance.routeNames, ...exit.routeNames});
+    return List.unmodifiable({...entrance, ...exit});
+  }
+
+  /// The routes of one IC name. Null when it is not known.
+  List<String>? _routesOf(String icName) {
+    final point = resolve(icName).point;
+    if (point != null) return point.routeNames;
+    final supplement = routeSupplementOf(icName);
+    return supplement == null ? null : [supplement];
   }
 }
