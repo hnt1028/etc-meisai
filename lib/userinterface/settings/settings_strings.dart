@@ -27,5 +27,7 @@ abstract final class SettingsStrings {
   /// The credit the terms of the IC master require (docs/route-map.md).
   static const credit =
       '出典：国土交通省 国土数値情報（高速道路時系列データ）'
-      '（https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N06-2025.html）を加工して作成';
+      '（https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N06-2025.html）を加工して作成'
+      '\n'
+      '一部の料金所・出入口の位置：© OpenStreetMap contributors（ODbL）';
 }

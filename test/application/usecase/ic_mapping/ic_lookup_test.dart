@@ -68,6 +68,43 @@ void main() {
       expect(_lookup(['高井戸']).resolve('高井戸本線').state, IcMatchValue.matched);
     });
 
+    test('matches a name without its direction or number, approximately', () {
+      for (final name in ['永福上', '横浜公園下', '霞が関内', '東扇島第二', '東扇島西']) {
+        final point = name.substring(
+          0,
+          name.length - (name.endsWith('第二') ? 2 : 1),
+        );
+        final r = _lookup([point]).resolve(name);
+
+        expect(r.state, IcMatchValue.matched, reason: name);
+        expect(r.point!.name, point, reason: name);
+        expect(r.approximate, isTrue, reason: name);
+      }
+    });
+
+    test('does not strip a direction when the name matches as it is', () {
+      final r = _lookup(['木更津北', '木更津']).resolve('木更津北');
+
+      expect(r.point!.name, '木更津北');
+      expect(r.approximate, isFalse);
+    });
+
+    test('does not strip a direction from a name of one character', () {
+      expect(_lookup(['東']).resolve('東西').state, IcMatchValue.unknown);
+      expect(_lookup(['甲']).resolve('甲上').state, IcMatchValue.unknown);
+    });
+
+    test('is ambiguous when two points fit without the direction', () {
+      final r = _lookup(['永福IC', '永福出入口']).resolve('永福上');
+
+      expect(r.state, IcMatchValue.ambiguous);
+      expect(r.approximate, isTrue);
+    });
+
+    test('is unknown when the name without the direction fits nothing', () {
+      expect(_lookup(['永福']).resolve('別上').state, IcMatchValue.unknown);
+    });
+
     test('is ambiguous when several points fit', () {
       final r = _lookup(['東京IC', '東京JCT']).resolve('東京');
 
@@ -171,6 +208,23 @@ void main() {
       expect(lookup.routeNamesOf('木更津金田第一', '不明'), ['東京湾アクアライン']);
     });
 
+    test('uses a supplement for a point that has no route', () {
+      final lookup = IcLookup(
+        points: [fakeIcPoint(name: '木更津金田', routeNames: const [])],
+        mappings: const [],
+      );
+
+      expect(lookup.routeNamesOf(null, '木更津金田第一'), ['東京湾アクアライン']);
+      // A point without a route and without a supplement is not known.
+      expect(
+        IcLookup(
+          points: [fakeIcPoint(name: '袖ヶ浦', routeNames: const [])],
+          mappings: const [],
+        ).routeNamesOf(null, '袖ヶ浦'),
+        isEmpty,
+      );
+    });
+
     test('prefers the point when the master has one', () {
       final lookup = IcLookup(
         points: [
@@ -224,6 +278,16 @@ void main() {
 
       expect(place.approximate, isTrue);
       expect(place.latitude, 35.5);
+    });
+
+    test('marks a name matched without its direction as approximate', () {
+      final place = IcLookup(
+        points: [fakeIcPoint(name: '永福', latitude: 35.6, longitude: 139.6)],
+        mappings: const [],
+      ).placeOf('永福上')!;
+
+      expect(place.approximate, isTrue);
+      expect(place.latitude, 35.6);
     });
 
     test('prefers the position the user chose', () {

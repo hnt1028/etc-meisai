@@ -230,5 +230,6 @@ void main() {
     expect(_text(SettingsStrings.credit), findsOneWidget);
     expect(SettingsStrings.credit, contains('国土数値情報'));
     expect(SettingsStrings.credit, contains('加工して作成'));
+    expect(SettingsStrings.credit, contains('OpenStreetMap contributors'));
   });
 }
