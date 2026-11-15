@@ -3,6 +3,7 @@ import 'package:etc_meisai/application/dto/statement_list_dto.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/userinterface/common/format.dart';
 import 'package:etc_meisai/userinterface/common/message_text.dart';
+import 'package:etc_meisai/userinterface/statements/statement_filter_bar.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_controller.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_strings.dart';
 import 'package:etc_meisai/userinterface/statements/statement_timeline.dart';
@@ -42,7 +43,11 @@ class StatementListScreen extends ConsumerWidget {
           children: [
             if (list.isLoading) const LinearProgressIndicator(),
             _ModeSwitch(mode: mode),
-            _FilterBar(filter: filter, data: data),
+            StatementFilterBar(
+              filter: filter,
+              vehicleNumberChoices: data.vehicleNumberChoices,
+              cardNumberChoices: data.cardNumberChoices,
+            ),
             _Totals(data: data),
             const Divider(height: 1),
             Expanded(
@@ -54,108 +59,6 @@ class StatementListScreen extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _FilterBar extends ConsumerWidget {
-  const _FilterBar({required this.filter, required this.data});
-
-  final StatementFilterState filter;
-  final StatementListDTO data;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final controller = ref.read(statementFilterProvider.notifier);
-    final from = filter.from;
-    final to = filter.to;
-    final periodText = from != null && to != null
-        ? StatementListStrings.period(from, to)
-        : StatementListStrings.periodNone;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          OutlinedButton(
-            onPressed: () async {
-              final range = await showDateRangePicker(
-                context: context,
-                firstDate: DateTime(2000),
-                lastDate: DateTime(2100),
-                initialDateRange: from != null && to != null
-                    ? DateTimeRange(start: from, end: to)
-                    : null,
-              );
-              if (range != null) controller.setPeriod(range.start, range.end);
-            },
-            child: Text('${StatementListStrings.periodLabel}: $periodText'),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<int?>(
-                  key: ValueKey('vehicle-${filter.vehicleNumber}'),
-                  initialValue: filter.vehicleNumber,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: StatementListStrings.vehicleNumberLabel,
-                    border: OutlineInputBorder(),
-                  ),
-                  items: [
-                    const DropdownMenuItem<int?>(
-                      value: null,
-                      child: Text(StatementListStrings.choiceAll),
-                    ),
-                    for (final number in data.vehicleNumberChoices)
-                      DropdownMenuItem<int?>(
-                        value: number,
-                        child: Text('$number'),
-                      ),
-                  ],
-                  onChanged: controller.setVehicleNumber,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: DropdownButtonFormField<String?>(
-                  key: ValueKey('card-${filter.cardNumberSuffix}'),
-                  initialValue: filter.cardNumberSuffix,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: StatementListStrings.cardNumberLabel,
-                    border: OutlineInputBorder(),
-                  ),
-                  items: [
-                    const DropdownMenuItem<String?>(
-                      value: null,
-                      child: Text(StatementListStrings.choiceAll),
-                    ),
-                    for (final suffix in data.cardNumberChoices)
-                      DropdownMenuItem<String?>(
-                        value: suffix,
-                        child: Text(
-                          StatementListStrings.cardNumberChoice(suffix),
-                        ),
-                      ),
-                  ],
-                  onChanged: controller.setCardNumberSuffix,
-                ),
-              ),
-            ],
-          ),
-          if (filter.isActive)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                onPressed: controller.clear,
-                child: const Text(StatementListStrings.clearFilter),
-              ),
-            ),
-        ],
       ),
     );
   }

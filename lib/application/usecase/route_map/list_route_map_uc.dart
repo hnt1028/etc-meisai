@@ -1,0 +1,114 @@
+import 'package:etc_meisai/application/dto/route_map_dto.dart';
+import 'package:etc_meisai/application/dto/route_place_dto.dart';
+import 'package:etc_meisai/application/dto/route_segment_dto.dart';
+import 'package:etc_meisai/application/dto/unlocated_ic_dto.dart';
+import 'package:etc_meisai/application/interface/ic_mapping_if.dart';
+import 'package:etc_meisai/application/interface/ic_master_if.dart';
+import 'package:etc_meisai/application/interface/ic_position_if.dart';
+import 'package:etc_meisai/application/interface/statement_line_if.dart';
+import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
+import 'package:etc_meisai/application/usecase/statements/statement_filter.dart';
+
+/// Lists what the route map draws. Design: PRC-009.
+class ListRouteMapUC {
+  const ListRouteMapUC({
+    required this.statementLines,
+    required this.icMaster,
+    required this.icMappings,
+    required this.icPositions,
+  });
+
+  final StatementLineIF statementLines;
+  final IcMasterIF icMaster;
+  final IcMappingIF icMappings;
+  final IcPositionIF icPositions;
+
+  /// The conditions are the ones of the statement list ([from] and [to] are
+  /// dates, and are included in the period).
+  Future<RouteMapDTO> execute({
+    DateTime? from,
+    DateTime? to,
+    int? vehicleNumber,
+    String? cardNumberSuffix,
+  }) async {
+    final all = await statementLines.findAll();
+    final lookup = IcLookup(
+      points: await icMaster.findAll(),
+      mappings: await icMappings.findAll(),
+      positions: await icPositions.findAll(),
+    );
+    final lines = filterStatementLines(
+      all,
+      from: from,
+      to: to,
+      vehicleNumber: vehicleNumber,
+      cardNumberSuffix: cardNumberSuffix,
+    );
+
+    final segments = <RouteSegmentDTO>[];
+    var undrawn = 0;
+    final lineCounts = <String, int>{};
+    for (final line in lines) {
+      final entranceName = line.entranceIc;
+      final entrance = entranceName == null
+          ? null
+          : lookup.placeOf(entranceName);
+      final exit = lookup.placeOf(line.exitIc);
+      if (entranceName != null && entrance != null && exit != null) {
+        segments.add(
+          RouteSegmentDTO(
+            line: toStatementLineDTO(line, lookup),
+            fromIcName: entranceName,
+            toIcName: line.exitIc,
+            fromLatitude: entrance.latitude,
+            fromLongitude: entrance.longitude,
+            toLatitude: exit.latitude,
+            toLongitude: exit.longitude,
+          ),
+        );
+      } else {
+        undrawn++;
+      }
+      // A line counts once for an IC name, even when both ICs have it.
+      for (final name in {?entranceName, line.exitIc}) {
+        lineCounts[name] = (lineCounts[name] ?? 0) + 1;
+      }
+    }
+
+    final places = <RoutePlaceDTO>[];
+    final unlocated = <UnlocatedIcDTO>[];
+    lineCounts.forEach((name, count) {
+      final place = lookup.placeOf(name);
+      if (place == null) {
+        unlocated.add(UnlocatedIcDTO(icName: name, lineCount: count));
+      } else {
+        places.add(
+          RoutePlaceDTO(
+            icName: name,
+            latitude: place.latitude,
+            longitude: place.longitude,
+            source: place.source,
+            approximate: place.approximate,
+            routeNames: List.unmodifiable(place.point?.routeNames ?? const []),
+            lineCount: count,
+          ),
+        );
+      }
+    });
+    places.sort((a, b) => a.icName.compareTo(b.icName));
+    unlocated.sort((a, b) {
+      final byCount = b.lineCount.compareTo(a.lineCount);
+      return byCount != 0 ? byCount : a.icName.compareTo(b.icName);
+    });
+
+    return RouteMapDTO(
+      segments: segments,
+      places: places,
+      unlocated: unlocated,
+      undrawnLineCount: undrawn,
+      lineCount: lines.length,
+      vehicleNumberChoices: vehicleNumberChoicesOf(all),
+      cardNumberChoices: cardNumberChoicesOf(all),
+    );
+  }
+}

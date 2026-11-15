@@ -24,6 +24,10 @@ class AppShell extends StatelessWidget {
             label: AppStrings.statementsTab,
           ),
           NavigationDestination(
+            icon: Icon(Icons.map),
+            label: AppStrings.routeMapTab,
+          ),
+          NavigationDestination(
             icon: Icon(Icons.settings),
             label: AppStrings.settingsTab,
           ),

@@ -2,11 +2,14 @@ import 'dart:typed_data';
 
 import 'package:etc_meisai/application/interface/ic_mapping_if.dart';
 import 'package:etc_meisai/application/interface/ic_master_if.dart';
+import 'package:etc_meisai/application/interface/ic_position_if.dart';
 import 'package:etc_meisai/application/interface/statement_if.dart';
 import 'package:etc_meisai/application/interface/statement_line_if.dart';
+import 'package:etc_meisai/application/usecase/route_map/list_route_map_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
+import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
 import 'package:etc_meisai/domain/value/ic_kind_value.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
@@ -178,16 +181,66 @@ class FakeIcMappingIF implements IcMappingIF {
   }
 }
 
+/// Keeps the positions the user chose in memory. Can fail on request.
+class FakeIcPositionIF implements IcPositionIF {
+  final List<IcPositionEntity> stored = [];
+
+  /// When set, every method throws it.
+  Object? error;
+
+  /// When set, only [save] / only [delete] throws it.
+  Object? saveError;
+  Object? deleteError;
+
+  @override
+  Future<List<IcPositionEntity>> findAll() async {
+    if (error != null) throw error!;
+    return List.of(stored);
+  }
+
+  @override
+  Future<void> save(IcPositionEntity position) async {
+    if (error != null) throw error!;
+    if (saveError != null) throw saveError!;
+    stored.removeWhere((p) => p.icName == position.icName);
+    stored.add(position);
+  }
+
+  @override
+  Future<void> delete(String icName) async {
+    if (error != null) throw error!;
+    if (deleteError != null) throw deleteError!;
+    stored.removeWhere((p) => p.icName == icName);
+  }
+}
+
 /// The statement list use case on in-memory fakes. With no IC points, no line
 /// has a route name.
 ListStatementLinesUC fakeListUC(
   FakeStatementLineIF lines, {
   List<IcPointEntity> points = const [],
   FakeIcMappingIF? mappings,
+  FakeIcPositionIF? positions,
 }) {
   return ListStatementLinesUC(
     statementLines: lines,
     icMaster: FakeIcMasterIF(points),
     icMappings: mappings ?? FakeIcMappingIF(),
+    icPositions: positions ?? FakeIcPositionIF(),
+  );
+}
+
+/// The route map use case on in-memory fakes.
+ListRouteMapUC fakeRouteMapUC(
+  FakeStatementLineIF lines, {
+  FakeIcMasterIF? master,
+  FakeIcMappingIF? mappings,
+  FakeIcPositionIF? positions,
+}) {
+  return ListRouteMapUC(
+    statementLines: lines,
+    icMaster: master ?? FakeIcMasterIF([]),
+    icMappings: mappings ?? FakeIcMappingIF(),
+    icPositions: positions ?? FakeIcPositionIF(),
   );
 }

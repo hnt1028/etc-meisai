@@ -1,5 +1,7 @@
 import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
+import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
+import 'package:etc_meisai/domain/value/ic_place_source_value.dart';
 import 'package:etc_meisai/domain/value/ic_match_value.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -163,6 +165,52 @@ void main() {
       );
 
       expect(lookup.routeNamesOf('A', '不明'), ['R1', 'R9']);
+    });
+  });
+
+  group('placeOf', () {
+    IcLookup lookup({List<IcPositionEntity> positions = const []}) => IcLookup(
+      points: [
+        fakeIcPoint(name: '高井戸', latitude: 35.5, longitude: 139.5),
+        fakeIcPoint(name: '東', latitude: 36.0, longitude: 140.0),
+      ],
+      mappings: const [],
+      positions: positions,
+    );
+
+    test('gives the position of the matched point', () {
+      final place = lookup().placeOf('東')!;
+
+      expect(place.latitude, 36.0);
+      expect(place.longitude, 140.0);
+      expect(place.source, IcPlaceSourceValue.master);
+      expect(place.approximate, isFalse);
+      expect(place.point!.name, '東');
+    });
+
+    test('marks a toll gate as approximate', () {
+      final place = lookup().placeOf('高井戸本線')!;
+
+      expect(place.approximate, isTrue);
+      expect(place.latitude, 35.5);
+    });
+
+    test('prefers the position the user chose', () {
+      final place = lookup(
+        positions: const [
+          IcPositionEntity(icName: '高井戸本線', latitude: 35.7, longitude: 139.7),
+        ],
+      ).placeOf('高井戸本線')!;
+
+      expect(place.latitude, 35.7);
+      expect(place.longitude, 139.7);
+      expect(place.source, IcPlaceSourceValue.specified);
+      expect(place.approximate, isFalse);
+      expect(place.point, isNull);
+    });
+
+    test('is null when no position is known', () {
+      expect(lookup().placeOf('不明'), isNull);
     });
   });
 }

@@ -2,17 +2,22 @@ import 'package:etc_meisai/application/usecase/ic_mapping/delete_ic_mapping_uc.d
 import 'package:etc_meisai/application/usecase/ic_mapping/list_ic_matches_uc.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/save_ic_mapping_uc.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/search_ic_points_uc.dart';
+import 'package:etc_meisai/application/usecase/route_map/delete_ic_position_uc.dart';
+import 'package:etc_meisai/application/usecase/route_map/list_route_map_uc.dart';
+import 'package:etc_meisai/application/usecase/route_map/save_ic_position_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/delete_all_statement_lines_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/import_statement_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/infrastructure/repository/database/app_database.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_mapping_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_master_repo.dart';
+import 'package:etc_meisai/infrastructure/repository/ic_position/ic_position_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/statement_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/statements/statement_line_repo.dart';
 import 'package:etc_meisai/userinterface/app.dart';
 import 'package:etc_meisai/userinterface/app_strings.dart';
 import 'package:etc_meisai/userinterface/ic_mapping/ic_mapping_providers.dart';
+import 'package:etc_meisai/userinterface/route_map/route_map_providers.dart';
 import 'package:etc_meisai/userinterface/settings/csv_picker.dart';
 import 'package:etc_meisai/userinterface/settings/settings_providers.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_providers.dart';
@@ -33,6 +38,7 @@ Future<void> pumpApp(
   final statementLines = StatementLineRepo(database);
   final icMaster = IcMasterRepo(loadJson: () async => icMasterFixtureJson());
   final icMappings = IcMappingRepo(database);
+  final icPositions = IcPositionRepo(database);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -50,8 +56,25 @@ Future<void> pumpApp(
             statementLines: statementLines,
             icMaster: icMaster,
             icMappings: icMappings,
+            icPositions: icPositions,
           ),
         ),
+        listRouteMapUCProvider.overrideWithValue(
+          ListRouteMapUC(
+            statementLines: statementLines,
+            icMaster: icMaster,
+            icMappings: icMappings,
+            icPositions: icPositions,
+          ),
+        ),
+        saveIcPositionUCProvider.overrideWithValue(
+          SaveIcPositionUC(icPositions: icPositions),
+        ),
+        deleteIcPositionUCProvider.overrideWithValue(
+          DeleteIcPositionUC(icPositions: icPositions),
+        ),
+        // The map tiles need the network, so the tests draw no tiles.
+        tileLayerProvider.overrideWithValue(const SizedBox.shrink()),
         listIcMatchesUCProvider.overrideWithValue(
           ListIcMatchesUC(
             statementLines: statementLines,

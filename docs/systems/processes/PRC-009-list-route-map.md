@@ -1,0 +1,95 @@
+# PRC-009 ルートマップの取得（ListRouteMapUC）
+
+## 概要
+
+保存済みの明細行を絞り込み条件で絞り、地図に描く区間（入口ICから出口ICまで）、IC・料金所のマーカー、位置不明のICを返す。絞り込みの規則は [PRC-004](PRC-004-list-statement-lines.md) と同じ。位置の決め方は [route-map.md](../../route-map.md) の「位置の優先順」に従う。
+
+## 実装箇所
+
+| 役割 | ファイル | クラス |
+|---|---|---|
+| 処理本体 | `lib/application/usecase/route_map/list_route_map_uc.dart` | `ListRouteMapUC` |
+| 結果の受け渡し | `lib/application/dto/route_map_dto.dart` | `RouteMapDTO` |
+| 結果の区間 | `lib/application/dto/route_segment_dto.dart` | `RouteSegmentDTO` |
+| 結果のマーカー | `lib/application/dto/route_place_dto.dart` | `RoutePlaceDTO` |
+| 結果の位置不明のIC | `lib/application/dto/unlocated_ic_dto.dart` | `UnlocatedIcDTO` |
+| 使う部品（絞り込み、DTOへの詰め替え） | `lib/application/usecase/statements/statement_filter.dart` | `filterStatementLines`、`toStatementLineDTO` ほか。PRC-004 と共通 |
+| 使う部品（IC名の照合、位置の決定） | `lib/application/usecase/ic_mapping/ic_lookup.dart` | `IcLookup`（`placeOf`） |
+| 使う窓口（明細行） | `lib/application/interface/statement_line_if.dart` | `StatementLineIF`（`findAll`） |
+| 使う窓口（ICマスタ） | `lib/application/interface/ic_master_if.dart` | `IcMasterIF`（`findAll`） |
+| 使う窓口（ICの対応づけ） | `lib/application/interface/ic_mapping_if.dart` | `IcMappingIF`（`findAll`） |
+| 使う窓口（ICの位置） | `lib/application/interface/ic_position_if.dart` | `IcPositionIF`（`findAll`） |
+| 窓口の実装 | `lib/infrastructure/repository/ic_position/ic_position_repo.dart` | `IcPositionRepo`（[TBL-003](../tables/TBL-003-ic-positions.md)） |
+
+## 呼び出し箇所
+
+- [SCR-005](../screens/SCR-005-route-map.md) の OP-1（地図を表示する）、OP-2（絞り込む）、OP-9（再読み込みする）が呼び出す
+
+## 入力
+
+[PRC-004](PRC-004-list-statement-lines.md) と同じ（`from`、`to`、`vehicleNumber`、`cardNumberSuffix`）。
+
+## 手順
+
+1. `StatementLineIF`、`IcMasterIF`、`IcMappingIF`、`IcPositionIF` の `findAll` で、明細行、ICマスタ、対応づけ、位置の指定を取得し、`IcLookup` を作る
+2. 絞り込み用の選択肢（車両番号、カード番号の下4桁）を、絞り込む前の全明細行から集める（PRC-004 と同じ）
+3. 明細行を絞る（PRC-004 と同じ）
+4. 絞った明細行ごとに、入口IC・出口ICの位置を `IcLookup` の `placeOf` で調べる
+   - 両方の位置が分かるときは、区間にする（明細行は `StatementLineDTO` にする）
+   - 入口が空欄、または、どちらかの位置が分からないときは、区間にしない（「描けない明細行」と数える）
+5. 絞った明細行に出てくるIC名（入口が空欄のときは数えない）のうち、位置が分かるものを、マーカーにする。IC名ごとに1つ。そのIC名が出る明細行の数も付ける。位置が分からないものは、位置不明のICにする（明細行の数が多い順、同じなら名前の順）
+6. マーカーは、位置の種類（指定、マスタ）と、近似か（マスタの位置で、IC名の末尾が「本線」）を付ける。路線名は、マスタの地点があるときだけ付ける
+
+## シーケンス図
+
+```mermaid
+sequenceDiagram
+    participant UI as ルートマップの画面
+    participant UC as 地図取得の処理<br/>(ListRouteMapUC)
+    participant SL as 明細行の保存窓口<br/>(StatementLineIF)
+    participant IM as ICマスタ・対応づけ・位置の窓口<br/>(IcMasterIF, IcMappingIF, IcPositionIF)
+
+    UI-)UC: execute(from, to, vehicleNumber, cardNumberSuffix)
+    activate UC
+    UC-)SL: findAll()
+    activate SL
+    SL--)UC: 明細行のリスト
+    deactivate SL
+    UC-)IM: findAll()
+    activate IM
+    IM--)UC: ICマスタ・対応づけ・位置の指定
+    deactivate IM
+    Note over UC: 期間・車両番号・カード番号で明細行を絞る
+    Note over UC: 入口IC・出口ICの位置が分かる明細行を、区間にする
+    Note over UC: IC名ごとに、マーカーか位置不明のICにする
+    UC--)UI: RouteMapDTO
+    deactivate UC
+```
+
+## 出力
+
+`RouteMapDTO`
+
+| 項目 | 型 | 内容 |
+|---|---|---|
+| `segments` | `List<RouteSegmentDTO>` | 描く区間（絞った明細行の順） |
+| `places` | `List<RoutePlaceDTO>` | マーカー（IC名の順） |
+| `unlocated` | `List<UnlocatedIcDTO>` | 位置不明のIC |
+| `undrawnLineCount` | `int` | 区間にできなかった明細行の数 |
+| `vehicleNumberChoices` | `List<int>` | 絞り込みで選べる車両番号 |
+| `cardNumberChoices` | `List<String>` | 絞り込みで選べるカード番号（下4桁） |
+
+`RouteSegmentDTO`: `line`（`StatementLineDTO`）、`fromIcName`、`toIcName`、`fromLatitude`、`fromLongitude`、`toLatitude`、`toLongitude`
+
+`RoutePlaceDTO`: `icName`、`latitude`、`longitude`、`source`（`IcPlaceSourceValue`: `master`、`specified`）、`approximate`（`bool`）、`routeNames`（`List<String>`）、`lineCount`
+
+`UnlocatedIcDTO`: `icName`、`lineCount`
+
+## エラー時の動作
+
+- 取得に失敗したときは、例外をそのまま呼び出し元に返す。呼び出し元（画面）が ER-1 を表示する
+
+## 関連するテスト
+
+- 単体: `test/application/usecase/route_map/list_route_map_uc_test.dart`（0件、絞り込み、区間・マーカー・位置不明、入口が空欄の行、位置の優先順、近似、選択肢が全体から作られること、取得の失敗）
+- 単体: `test/application/usecase/statements/list_statement_lines_uc_test.dart`（絞り込みを共通の部品にしても、PRC-004 の結果が変わらないこと）

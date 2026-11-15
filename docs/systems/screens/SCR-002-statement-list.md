@@ -13,6 +13,7 @@
 | 画面の状態と操作 | `lib/userinterface/statements/statement_list_controller.dart` | `StatementFilterState`、`StatementFilterController`、`StatementListModeController`、`TimelineDayController`、`statementListProvider` |
 | 画面の文言 | `lib/userinterface/statements/statement_list_strings.dart` | `StatementListStrings` |
 | 依存の受け口 | `lib/userinterface/statements/statement_list_providers.dart` | `listStatementLinesUCProvider`（実体は `lib/main.dart` で渡す） |
+| 絞り込みの部品 | `lib/userinterface/statements/statement_filter_bar.dart` | `StatementFilterBar`（[SCR-005](SCR-005-route-map.md) と共通。絞り込みの状態も共通） |
 | 取り込み・削除のあとの更新 | `lib/userinterface/common/data_revision.dart` | `dataRevisionProvider` |
 | 金額・日時の表示形式 | `lib/userinterface/common/format.dart` | `formatYen`、`formatDate`、`formatDateTime` |
 | 画面の切り替え | `lib/userinterface/app_shell.dart` | `AppShell`（下部のナビゲーションバー） |
@@ -64,6 +65,7 @@
 - 一覧が0件のときは、一覧またはタイムラインの代わりに文言を表示する（取り込み済みの明細行が無いとき: 「取り込んだ明細行がありません」。絞り込みで0件のとき: 「条件に合う明細行がありません」）。0件のときも、合計金額は「0円」で表示する
 - 表示中の日に明細行が無くなったとき（絞り込みを変えたときなど）は、絞り込み後の最新の利用日を表示する
 - 絞り込みと合計金額は、一覧とタイムラインで共通。切り替えても、条件は保たれる
+- 絞り込みの条件は、[SCR-005](SCR-005-route-map.md)（ルートマップ）とも共通
 
 ### 操作一覧
 

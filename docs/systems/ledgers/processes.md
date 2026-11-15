@@ -10,3 +10,6 @@
 | PRC-006 | IC地点の検索（SearchIcPointsUC） | [PRC-006-search-ic-points.md](../processes/PRC-006-search-ic-points.md) | 草案 |
 | PRC-007 | ICの対応づけの登録（SaveIcMappingUC） | [PRC-007-save-ic-mapping.md](../processes/PRC-007-save-ic-mapping.md) | 草案 |
 | PRC-008 | ICの対応づけの解除（DeleteIcMappingUC） | [PRC-008-delete-ic-mapping.md](../processes/PRC-008-delete-ic-mapping.md) | 草案 |
+| PRC-009 | ルートマップの取得（ListRouteMapUC） | [PRC-009-list-route-map.md](../processes/PRC-009-list-route-map.md) | 草案 |
+| PRC-010 | ICの位置の登録（SaveIcPositionUC） | [PRC-010-save-ic-position.md](../processes/PRC-010-save-ic-position.md) | 草案 |
+| PRC-011 | ICの位置の解除（DeleteIcPositionUC） | [PRC-011-delete-ic-position.md](../processes/PRC-011-delete-ic-position.md) | 草案 |
