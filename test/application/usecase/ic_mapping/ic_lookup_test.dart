@@ -33,12 +33,14 @@ void main() {
       expect(IcLookup.baseName('霞が関出入口'), '霞が関');
       expect(IcLookup.baseName('霞が関入口'), '霞が関');
       expect(IcLookup.baseName('霞が関出口'), '霞が関');
+      expect(IcLookup.baseName('高井戸本線'), '高井戸');
     });
 
     test('keeps a name without a suffix, and a name that would be empty', () {
       expect(IcLookup.baseName('東京'), '東京');
       expect(IcLookup.baseName('IC'), 'ic');
       expect(IcLookup.baseName('入口'), '入口');
+      expect(IcLookup.baseName('本線'), '本線');
     });
   });
 
@@ -61,6 +63,7 @@ void main() {
       expect(_lookup(['七尾IC']).resolve('七尾').state, IcMatchValue.matched);
       expect(_lookup(['幸手SIC']).resolve('幸手スマート').state, IcMatchValue.matched);
       expect(_lookup(['霞が関出入口']).resolve('霞が関入口').state, IcMatchValue.matched);
+      expect(_lookup(['高井戸']).resolve('高井戸本線').state, IcMatchValue.matched);
     });
 
     test('is ambiguous when several points fit', () {

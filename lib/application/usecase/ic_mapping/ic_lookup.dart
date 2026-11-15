@@ -42,6 +42,8 @@ class IcLookup {
 
   /// The suffixes that differ between road operators (NEXCO writes IC, urban
   /// expressways write 出入口, 入口 or 出口). The longer ones come first.
+  /// 本線 is a toll gate on the main line: it is tied to the IC point of the
+  /// same name, which is only close to the gate (docs/route-map.md).
   static const _suffixes = [
     'スマートic',
     'スマート',
@@ -51,6 +53,7 @@ class IcLookup {
     '出入口',
     '入口',
     '出口',
+    '本線',
   ];
 
   /// Makes full-width letters, digits and symbols half-width, ignores the case
