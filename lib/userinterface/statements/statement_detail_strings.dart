@@ -28,4 +28,10 @@ abstract final class StatementDetailStrings {
   static String cardNumberValue(String suffix) => '**** $suffix';
 
   static const notFound = '明細行が見つかりません';
+
+  /// Above the map, when a position is not known.
+  static String unlocatedNotice(List<String> icNames) =>
+      '位置が分からないICがあります: ${icNames.join('、')}';
+
+  static const routeLoadFailed = 'ルートを取得できませんでした';
 }

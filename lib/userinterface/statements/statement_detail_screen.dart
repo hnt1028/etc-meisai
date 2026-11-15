@@ -1,6 +1,7 @@
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/userinterface/common/format.dart';
+import 'package:etc_meisai/userinterface/statements/line_route_map.dart';
 import 'package:etc_meisai/userinterface/statements/statement_detail_strings.dart';
 import 'package:flutter/material.dart';
 
@@ -20,6 +21,7 @@ class StatementDetailScreen extends StatelessWidget {
           ? const Center(child: Text(StatementDetailStrings.notFound))
           : ListView(
               children: [
+                LineRouteMap(line: line),
                 _item(
                   StatementDetailStrings.entranceAt,
                   line.entranceAt == null
