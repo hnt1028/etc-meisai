@@ -32,7 +32,12 @@ UI・文書では **日本語**、コードの識別子（変数・関数・ク�
 |---|---|---|---|
 | 入口IC | 利用ＩＣ（自） | `entranceIc` | 明細行の入口にあたるIC |
 | 出口IC | 利用ＩＣ（至） | `exitIc` | 明細行の出口にあたるIC |
-| ICマスタ | - | `IcMaster` | IC名と緯度経度の対応表（アプリ同梱） |
+| ICマスタ | - | `IcMaster` | IC名・座標・路線名の対応表（アプリ同梱。出どころは [route-map.md](route-map.md)） |
+| IC地点 | - | `IcPoint` | ICマスタの1件。IC・JCT・スマートIC・PAなどの1地点 |
+| IC種別 | - | `IcKind` | 一般IC、スマートIC、JCT、その他。`IcKindValue` で表す |
+| 路線名 | - | `routeName` | 高速道路・自動車専用道路の名前（例: 東名高速道路）。IC地点が載っている路線 |
+| 対応づけ | - | `icMapping` | CSVのIC名と、IC地点を結びつけること。利用者が登録したもの |
+| 一致状態 | - | `IcMatch` | IC名がIC地点に決まるかどうか。一致・複数候補・未一致。`IcMatchValue` で表す |
 | 位置不明 | - | `unknownLocation` | ICマスタに無く、地図に描けない区間 |
 | ルート | - | `route` | 明細行の入口ICから出口ICまでの経路 |
 

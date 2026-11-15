@@ -35,7 +35,7 @@
 
 ![SCR-002 利用明細一覧（タイムライン表示）の画面イメージ](images/SCR-002-statement-timeline.drawio.png)
 
-破線の枠は、状況によって表示する項目（絞り込みの解除、確認中の表示、割引種別）。
+破線の枠は、状況によって表示する項目（絞り込みの解除、確認中の表示、割引種別、路線名）。
 
 ### 入出力項目一覧
 
@@ -50,6 +50,7 @@
 | 合計の内訳 | 出力 | `totalFareAfterRebate`、`totalPostpaidFare` | 「還元額適用料金 0円 / 後納料金 1,234円」 |
 | 入口・出口のIC（一覧） | 出力 | `entranceIc`、`exitIc` | 「入口IC → 出口IC」。入口が空欄のときは「- → 出口IC」 |
 | 入口・出口の日時（一覧） | 出力 | `entranceAt`、`exitAt` | 「2026/01/10 08:30 → 2026/01/10 09:15」。入口が空欄のときは「- → …」 |
+| 路線名（一覧） | 出力 | `StatementLineDTO.routeNames` | 路線名が1つ以上あるときだけ、「東名高速道路・首都高速道路」のように「・」でつないで表示する |
 | 通行料金 | 出力 | `StatementLineDTO.fare` | 「960円」 |
 | 状態 | 出力 | `StatementLineDTO.status` | 確認中の明細行にだけ「確認中」を表示する。確定は表示しない |
 | 割引種別 | 出力 | `StatementLineDTO.discountTypes` | 割引種別が1つ以上あるときだけ、「深夜割引・休日割引」のように「・」でつないで表示する |
@@ -103,7 +104,7 @@
 
 ## 関連するテスト
 
-- ウィジェット: `test/userinterface/statements/statement_list_screen_test.dart`（一覧の表示項目、確認中と割引種別の表示、入口が空欄の行、合計と内訳、0件の2種類の文言、絞り込みの操作と解除、読み込み中、ER-1と再読み込み、詳細へ移ること）
+- ウィジェット: `test/userinterface/statements/statement_list_screen_test.dart`（一覧の表示項目、確認中・割引種別・路線名の表示、入口が空欄の行、合計と内訳、0件の2種類の文言、絞り込みの操作と解除、読み込み中、ER-1と再読み込み、詳細へ移ること）
 - ウィジェット: `test/userinterface/statements/statement_timeline_test.dart`（表示の切り替え、帯の並びと位置、確認中・入口が空欄・日またぎの帯、前後の利用日への移動、絞り込みでの日の戻し、帯のタップで詳細へ移ること）
 - ウィジェット: `test/userinterface/app_shell_test.dart`（起動時に一覧が出ること、ナビゲーションバーで設定と一覧を切り替えられること）
 - 結合: `integration_test/statement_list_test.dart`（画面からDBまで。設定画面でCSVを取り込むと、一覧に3件と合計が出ること。タイムライン、詳細を開けること。全削除すると、一覧が空になること）

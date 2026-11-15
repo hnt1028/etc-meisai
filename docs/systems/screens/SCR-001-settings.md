@@ -10,7 +10,7 @@
 |---|---|---|
 | 画面 | `lib/userinterface/settings/settings_screen.dart` | `SettingsScreen` |
 | 画面の状態と操作 | `lib/userinterface/settings/settings_controller.dart` | `SettingsController`、`SettingsState` |
-| 画面の文言 | `lib/userinterface/settings/settings_strings.dart` | `SettingsStrings` |
+| 画面の文言 | `lib/userinterface/settings/settings_strings.dart` | `SettingsStrings`（出典の文を含む） |
 | ファイル選択 | `lib/userinterface/settings/csv_picker.dart` | `CsvPicker`（関数の型）、`pickCsv` |
 | 共通のウィジェット | `lib/userinterface/common/section_title.dart`、`message_text.dart`、`confirm_dialog.dart` | `SectionTitle`、`MessageText`、`showConfirmDialog` |
 | 依存の受け口 | `lib/userinterface/settings/settings_providers.dart` | 各 `Provider`（実体は `lib/main.dart` で渡す） |
@@ -38,6 +38,8 @@
 | 取り込みエラー | 出力 | 文字列 | 「取り込めませんでした: 」に、不正な箇所の説明を続ける（[PRC-002](../processes/PRC-002-parse-statement.md) のエラー）。無いときは表示しない |
 | 削除ボタン | 入力 | ボタン | 「すべて削除する」。処理中は押せない |
 | 削除の確認 | 入力 | ダイアログ | 「取り込んだデータをすべて削除します。元に戻せません。」と、「キャンセル」「削除する」 |
+| ICの対応づけを開くボタン | 入力 | ボタン | 「ICの対応づけを開く」 |
+| ICマスタの出典 | 出力 | 文字列 | 「出典：国土交通省 国土数値情報（高速道路時系列データ）（URL）を加工して作成」。画面の下部に、常に表示する |
 | 処理中の表示 | 出力 | 進捗の表示 | 取り込み・削除の間、表示する |
 
 ### 操作一覧
@@ -46,6 +48,7 @@
 |---|---|---|---|---|
 | OP-1 | CSVを取り込む | 取り込みボタンのタップ | ファイル選択（端末の標準画面）を開き、選んだCSVを取り込む。選ばなかったときは何もしない。完了したら、取り込み結果を表示し、[SCR-002](SCR-002-statement-list.md) の一覧を更新させる（`dataRevisionProvider`） | なし |
 | OP-2 | データを削除する | 削除ボタンのタップ | 確認ダイアログを出す。「削除する」を選んだら、すべて削除し、「削除しました」を表示し、[SCR-002](SCR-002-statement-list.md) の一覧を更新させる。「キャンセル」なら何もしない | なし |
+| OP-3 | ICの対応づけを開く | 「ICの対応づけを開く」のタップ | ICの対応づけの画面を表示する | [SCR-004](SCR-004-ic-mapping.md) |
 
 ### エラー一覧
 
@@ -73,6 +76,6 @@
 
 ## 関連するテスト
 
-- ウィジェット: `test/userinterface/settings/settings_screen_test.dart`（初期表示、取り込み結果、取り込みエラー、キャンセル、削除の確認、処理中）
+- ウィジェット: `test/userinterface/settings/settings_screen_test.dart`（初期表示、取り込み結果、取り込みエラー、キャンセル、削除の確認、処理中、出典の表示、ICの対応づけの画面へ移ること）
 - 結合: `integration_test/settings_import_test.dart`（画面からDBまで、`lib/main.dart` と同じ組み立てで実行する。ファイル選択だけを差し替える。架空のCSV（`test/fixtures/statement_fixture.dart`）を取り込むと「追加 3 件」、もう一度取り込むと「上書き 1 件・無視 2 件」、削除するともう一度「追加 3 件」になること。形式が不正なCSVは、エラーを表示して、何も保存しないこと）
 - 単体: `test/application/usecase/settings/delete_all_statement_lines_uc_test.dart`（PRC-003）、`test/userinterface/settings/settings_controller_test.dart`（画面の状態と操作、一覧の更新通知）
