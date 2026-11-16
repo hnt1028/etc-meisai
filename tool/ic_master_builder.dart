@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:math' as math;
 
+import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
+
 /// Makes the IC master from the GeoJSON of N06 (国土数値情報 高速道路時系列データ).
 /// See docs/route-map.md.
 ///
@@ -10,6 +12,7 @@ import 'dart:math' as math;
 Map<String, Object?> buildIcMaster({
   required String jointJson,
   required String sectionJson,
+  String? osmJson,
   required String source,
 }) {
   final joints = _features(
@@ -45,8 +48,87 @@ Map<String, Object?> buildIcMaster({
       'routes': _routesNear(sections, lon, lat),
     });
   }
+  if (osmJson != null) points.addAll(_osmPoints(osmJson, points, sections));
   points.sort((a, b) => (a['id'] as String).compareTo(b['id'] as String));
   return {'source': source, 'points': points};
+}
+
+/// Points of OpenStreetMap (toll booths and junctions, `out tags center` of
+/// Overpass) whose name no point of N06 has, even without its suffix. PA and
+/// SA are left out. Points of one name are made one point at their average
+/// position, without the ones more than [osmGroupMeters] from the first.
+List<Map<String, Object?>> _osmPoints(
+  String osmJson,
+  List<Map<String, Object?>> n06Points,
+  List<_Section> sections,
+) {
+  final known = {
+    for (final p in n06Points) IcLookup.baseName(p['name'] as String),
+  };
+  final groups = <String, List<Map<String, Object?>>>{};
+  for (final element in (jsonDecode(osmJson) as Map)['elements'] as List) {
+    final e = element as Map<String, Object?>;
+    final tags = e['tags'] as Map<String, Object?>?;
+    final name = tags?['name'] as String?;
+    if (name == null || e['lat'] == null || e['lon'] == null) continue;
+    if (RegExp(r'(PA|SA|パーキング|サービスエリア)').hasMatch(name)) continue;
+    final base = IcLookup.baseName(name);
+    // A name that is only a suffix (ＩＣ) tells nothing.
+    if (base.length < 2 || RegExp(r'^(ic|jct|sic)$').hasMatch(base)) continue;
+    if (known.contains(base)) continue;
+    groups.putIfAbsent(base, () => []).add(e);
+  }
+
+  final points = <Map<String, Object?>>[];
+  for (final entry in groups.entries) {
+    final members = entry.value;
+    final first = members.first;
+    final lat0 = (first['lat'] as num).toDouble();
+    final lon0 = (first['lon'] as num).toDouble();
+    final near = [
+      for (final m in members)
+        if (_meters(
+              lat0,
+              lon0,
+              (m['lat'] as num).toDouble(),
+              (m['lon'] as num).toDouble(),
+            ) <=
+            osmGroupMeters)
+          m,
+    ];
+    final lat =
+        near.map((m) => (m['lat'] as num).toDouble()).reduce((a, b) => a + b) /
+        near.length;
+    final lon =
+        near.map((m) => (m['lon'] as num).toDouble()).reduce((a, b) => a + b) /
+        near.length;
+    // The shortest name is the one that is nearest to the base name.
+    final name =
+        (near.map((m) => (m['tags'] as Map)['name'] as String).toList()..sort(
+              (a, b) => a.length != b.length
+                  ? a.length.compareTo(b.length)
+                  : a.compareTo(b),
+            ))
+            .first;
+    points.add({
+      'id': 'osm:${first['id']}',
+      'name': name,
+      'kind': 4,
+      'lat': _round(lat),
+      'lon': _round(lon),
+      'routes': _routesNear(sections, lon, lat),
+    });
+  }
+  return points;
+}
+
+/// Points of one name farther apart than this are not one toll gate.
+const osmGroupMeters = 1500.0;
+
+double _meters(double lat1, double lon1, double lat2, double lon2) {
+  final dx = (lon2 - lon1) * 111320 * math.cos(lat1 * math.pi / 180);
+  final dy = (lat2 - lat1) * 110574;
+  return math.sqrt(dx * dx + dy * dy);
 }
 
 /// A route name is kept when a line of the route passes this close to the

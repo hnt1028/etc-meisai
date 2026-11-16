@@ -16,6 +16,7 @@
 | 使う窓口（ICの対応づけ） | `lib/application/interface/ic_mapping_if.dart` | `IcMappingIF`（`findAll`） |
 | 使う部品（絞り込み、DTOへの詰め替え） | `lib/application/usecase/statements/statement_filter.dart` | `filterStatementLines`、`toStatementLineDTO` ほか。[PRC-009](PRC-009-list-route-map.md) と共通 |
 | 使う部品（IC名の照合、路線名の決定） | `lib/application/usecase/ic_mapping/ic_lookup.dart` | `IcLookup` |
+| 使う部品（ICマスタに無い路線の補足） | `lib/application/usecase/ic_mapping/ic_route_supplements.dart` | `routeSupplementOf` |
 
 ## 呼び出し箇所
 
@@ -112,4 +113,4 @@ sequenceDiagram
 
 ## 関連するテスト
 
-- 単体: `test/application/usecase/statements/list_statement_lines_uc_test.dart`（0件、並び順、期間の境界日を含むこと、車両番号・カード番号の絞り込み、合計と内訳、入口が空欄の行、選択肢が絞り込み前の全体から作られること、カード番号が下4桁になること、割引種別・車種・車両番号・割引前料金などが詰め替えられること、路線名が共通・和集合・片方のみ・無しになること）
+- 単体: `test/application/usecase/statements/list_statement_lines_uc_test.dart`（0件、並び順、期間の境界日を含むこと、車両番号・カード番号の絞り込み、合計と内訳、入口が空欄の行、選択肢が絞り込み前の全体から作られること、カード番号が下4桁になること、割引種別・車種・車両番号・割引前料金などが詰め替えられること、路線名が共通・和集合・片方のみ・無しになること。補足の路線（入口が空欄を含む）は、`ic_lookup_test.dart`）

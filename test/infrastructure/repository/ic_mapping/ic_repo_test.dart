@@ -78,12 +78,17 @@ void main() {
     expect({for (final p in points) p.id}, hasLength(points.length));
     for (final p in points) {
       expect(p.name, isNotEmpty, reason: p.id);
-      expect(p.routeNames, isNotEmpty, reason: p.id);
+      // The points of OpenStreetMap can lie off the routes of N06.
+      if (!p.id.startsWith('osm:')) {
+        expect(p.routeNames, isNotEmpty, reason: p.id);
+      }
       // Inside Japan.
       expect(p.latitude, inInclusiveRange(20, 46), reason: p.id);
       expect(p.longitude, inInclusiveRange(122, 154), reason: p.id);
     }
     expect((jsonDecode(text) as Map)['source'], contains('国土数値情報'));
+    expect((jsonDecode(text) as Map)['source'], contains('OpenStreetMap'));
+    expect(points.where((p) => p.id.startsWith('osm:')), isNotEmpty);
   });
 
   group('IcMappingRepo', () {

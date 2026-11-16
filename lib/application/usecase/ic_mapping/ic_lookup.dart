@@ -1,3 +1,4 @@
+import 'package:etc_meisai/application/usecase/ic_mapping/ic_route_supplements.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
@@ -10,6 +11,7 @@ class IcResolution {
     required this.state,
     this.point,
     this.candidates = const [],
+    this.approximate = false,
   });
 
   final IcMatchValue state;
@@ -19,6 +21,9 @@ class IcResolution {
 
   /// The points that fit, when [state] is ambiguous.
   final List<IcPointEntity> candidates;
+
+  /// True when the name matched only after its direction was removed.
+  final bool approximate;
 }
 
 /// Where an IC name is on the map. See [IcLookup.placeOf].
@@ -80,10 +85,29 @@ class IcLookup {
     '出入口',
     '入口',
     '出口',
+    '本線料金所',
+    '料金所',
     _tollGateSuffix,
   ];
 
   static const _tollGateSuffix = '本線';
+
+  /// Urban expressways add the direction (上, 下, 内, 外, a compass point) or
+  /// the number of a toll gate (第一) to an IC name. Used only when nothing
+  /// else matches, and the position is then only close (approximate).
+  static const _directionSuffixes = [
+    '第一',
+    '第二',
+    '第三',
+    '上',
+    '下',
+    '内',
+    '外',
+    '東',
+    '西',
+    '南',
+    '北',
+  ];
 
   /// Makes full-width letters, digits and symbols half-width, ignores the case
   /// and removes spaces, so that ＩＣ and IC are the same.
@@ -123,12 +147,27 @@ class IcLookup {
     if (registered != null) {
       return IcResolution(state: IcMatchValue.registered, point: registered);
     }
-    final exact = _byName[fold(icName)] ?? const [];
-    final candidates = exact.isNotEmpty
-        ? exact
-        : (_byBase[baseName(icName)] ?? const []);
+    var candidates = _candidatesOf(icName);
+    var approximate = false;
+    if (candidates.isEmpty) {
+      final folded = fold(icName);
+      for (final suffix in _directionSuffixes) {
+        if (!folded.endsWith(suffix)) continue;
+        final stripped = folded.substring(0, folded.length - suffix.length);
+        if (stripped.length < 2) continue;
+        candidates = _candidatesOf(stripped);
+        if (candidates.isNotEmpty) {
+          approximate = true;
+          break;
+        }
+      }
+    }
     if (candidates.length == 1) {
-      return IcResolution(state: IcMatchValue.matched, point: candidates.first);
+      return IcResolution(
+        state: IcMatchValue.matched,
+        point: candidates.first,
+        approximate: approximate,
+      );
     }
     if (candidates.isEmpty) {
       return const IcResolution(state: IcMatchValue.unknown);
@@ -136,7 +175,14 @@ class IcLookup {
     return IcResolution(
       state: IcMatchValue.ambiguous,
       candidates: List.unmodifiable(candidates),
+      approximate: approximate,
     );
+  }
+
+  /// The points whose name is [name], else whose name without its suffix is.
+  List<IcPointEntity> _candidatesOf(String name) {
+    final exact = _byName[fold(name)] ?? const [];
+    return exact.isNotEmpty ? exact : (_byBase[baseName(name)] ?? const []);
   }
 
   /// The position of [icName]: the one the user chose on the map, else the one
@@ -151,13 +197,15 @@ class IcLookup {
         approximate: false,
       );
     }
-    final point = resolve(icName).point;
+    final resolution = resolve(icName);
+    final point = resolution.point;
     if (point == null) return null;
     return IcPlace(
       latitude: point.latitude,
       longitude: point.longitude,
       source: IcPlaceSourceValue.master,
-      approximate: fold(icName).endsWith(_tollGateSuffix),
+      approximate:
+          resolution.approximate || fold(icName).endsWith(_tollGateSuffix),
       point: point,
     );
   }
@@ -166,16 +214,25 @@ class IcLookup {
   IcPointEntity? pointOf(String id) => _byId[id];
 
   /// The routes of a statement line. The routes both ICs share, or, when they
-  /// share none, the routes of both. With only one known point, its routes.
-  /// Empty when no point is known.
+  /// share none, the routes of both. With only one known IC, its routes (so a
+  /// blank entrance gives the routes of the exit). An IC is known by its point,
+  /// or else by [routeSupplementOf]. Empty when neither IC is known.
   List<String> routeNamesOf(String? entranceIc, String exitIc) {
-    final entrance = entranceIc == null ? null : resolve(entranceIc).point;
-    final exit = resolve(exitIc).point;
+    final entrance = entranceIc == null ? null : _routesOf(entranceIc);
+    final exit = _routesOf(exitIc);
     if (entrance == null && exit == null) return const [];
-    if (entrance == null) return List.unmodifiable(exit!.routeNames);
-    if (exit == null) return List.unmodifiable(entrance.routeNames);
-    final common = entrance.routeNames.where(exit.routeNames.contains).toList();
+    if (entrance == null) return List.unmodifiable(exit!);
+    if (exit == null) return List.unmodifiable(entrance);
+    final common = entrance.where(exit.contains).toList();
     if (common.isNotEmpty) return List.unmodifiable(common);
-    return List.unmodifiable({...entrance.routeNames, ...exit.routeNames});
+    return List.unmodifiable({...entrance, ...exit});
+  }
+
+  /// The routes of one IC name. Null when it is not known.
+  List<String>? _routesOf(String icName) {
+    final point = resolve(icName).point;
+    if (point != null && point.routeNames.isNotEmpty) return point.routeNames;
+    final supplement = routeSupplementOf(icName);
+    return supplement == null ? null : [supplement];
   }
 }
