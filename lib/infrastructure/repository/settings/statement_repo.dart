@@ -98,7 +98,7 @@ class StatementRepo implements StatementIF {
       grossFare: _parseOptionalAmount(row[6], _headers[6], line),
       etcDiscount: _parseOptionalAmount(row[7], _headers[7], line),
       fare: _parseAmount(row[8], _headers[8], line),
-      fareAfterRebate: _parseAmount(row[9], _headers[9], line),
+      fareAfterRebate: _parseRebateAmount(row[9], _headers[9], line),
       postpaidFare: _parseAmount(row[10], _headers[10], line),
       vehicleType: _parseVehicleType(row[11], line),
       vehicleNumber: _parseVehicleNumber(row[12], line),
@@ -166,6 +166,11 @@ class StatementRepo implements StatementIF {
     if (value.isEmpty) return null;
     return _parseAmount(value, column, line);
   }
+
+  /// A blank rebate fare is 0: pending lines (the discounts are not reflected
+  /// yet) leave it blank (docs/csv-format.md).
+  int _parseRebateAmount(String value, String column, int line) =>
+      value.isEmpty ? 0 : _parseAmount(value, column, line);
 
   int _parseAmount(String value, String column, int line) {
     if (value.isEmpty) throw FormatException(_Messages.blank(line, column));
