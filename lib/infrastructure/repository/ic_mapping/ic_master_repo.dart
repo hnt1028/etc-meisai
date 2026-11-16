@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:etc_meisai/application/interface/ic_master_if.dart';
+import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
 import 'package:etc_meisai/domain/value/ic_kind_value.dart';
 
@@ -13,13 +14,41 @@ class IcMasterRepo implements IcMasterIF {
   final Future<String> Function() loadJson;
 
   List<IcPointEntity>? _points;
+  List<IcLinkEntity>? _links;
+
+  Future<void> _load() async {
+    if (_points != null) return;
+    final json = jsonDecode(await loadJson()) as Map;
+    _points = _parsePoints(json);
+    _links = _parseLinks(json);
+  }
 
   @override
-  Future<List<IcPointEntity>> findAll() async =>
-      _points ??= _parse(await loadJson());
+  Future<List<IcPointEntity>> findAll() async {
+    await _load();
+    return _points!;
+  }
 
-  static List<IcPointEntity> _parse(String json) {
-    final points = (jsonDecode(json) as Map)['points'] as List;
+  @override
+  Future<List<IcLinkEntity>> findLinks() async {
+    await _load();
+    return _links!;
+  }
+
+  static List<IcLinkEntity> _parseLinks(Map json) {
+    final links = (json['links'] as List?) ?? const [];
+    return List.unmodifiable([
+      for (final l in links.cast<List>())
+        IcLinkEntity(
+          fromId: l[0] as String,
+          toId: l[1] as String,
+          meters: l[2] as int,
+        ),
+    ]);
+  }
+
+  static List<IcPointEntity> _parsePoints(Map json) {
+    final points = json['points'] as List;
     return List.unmodifiable([
       for (final p in points.cast<Map<String, Object?>>())
         IcPointEntity(

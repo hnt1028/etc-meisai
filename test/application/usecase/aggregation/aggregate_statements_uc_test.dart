@@ -1,4 +1,6 @@
 import 'package:etc_meisai/application/dto/aggregation_row_dto.dart';
+import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
+import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -237,6 +239,169 @@ void main() {
 
       expect(result.routesOtherCount, 0);
       expect(result.icsOtherCount, 0);
+    });
+
+    group('distance', () {
+      // 北 - 東 - 西 along a road: 3 km and 4 km.
+      FakeIcMasterIF master() => FakeIcMasterIF(
+        [
+          fakeIcPoint(name: '北', routeNames: const ['東名高速道路']),
+          fakeIcPoint(name: '東', routeNames: const ['東名高速道路']),
+          fakeIcPoint(name: '西', routeNames: const ['東名高速道路']),
+        ],
+        links: const [
+          IcLinkEntity(fromId: 'id-北', toId: 'id-東', meters: 3000),
+          IcLinkEntity(fromId: 'id-東', toId: 'id-西', meters: 4000),
+        ],
+      );
+
+      test('adds the links between the entrance and the exit', () async {
+        final uc = fakeAggregateUC(
+          _lines([
+            fakeStatementLine(entranceIc: '北', exitIc: '東'),
+            fakeStatementLine(
+              entranceIc: '北',
+              exitIc: '西',
+              exitAt: DateTime(2026, 1, 11),
+            ),
+          ]),
+          master: master(),
+        );
+
+        final result = await uc.execute();
+
+        // 3 km, and 3 km + 4 km through 東.
+        expect(result.summary.distanceTotal, 10000);
+        expect(result.summary.distanceUnknownCount, 0);
+        expect(result.months.single.distance, 10000);
+        expect(result.years.single.distance, 10000);
+        expect(result.weeks.single.distance, 10000);
+        expect(result.operators.single.distance, 10000);
+        // The first line exits at 9:15, the second at midnight.
+        expect(result.hours[9].distance, 3000);
+        expect(result.hours[0].distance, 7000);
+        // Not for the routes, the ICs and the discount types.
+        expect(result.routes.every((r) => r.distance == null), isTrue);
+        expect(result.ics.every((r) => r.distance == null), isTrue);
+      });
+
+      test('is 0 when the entrance and the exit are one point', () async {
+        final uc = fakeAggregateUC(
+          _lines([fakeStatementLine(entranceIc: '北', exitIc: '北')]),
+          master: master(),
+        );
+
+        final result = await uc.execute();
+
+        expect(result.summary.distanceTotal, 0);
+        expect(result.summary.distanceUnknownCount, 0);
+      });
+
+      test('does not count a line without a distance, but counts it', () async {
+        final uc = fakeAggregateUC(
+          _lines([
+            fakeStatementLine(entranceIc: '北', exitIc: '東'),
+            // A blank entrance.
+            fakeStatementLine(
+              exitIc: '東',
+              withoutEntrance: true,
+              exitAt: DateTime(2026, 1, 11),
+            ),
+            // An IC that is not in the master.
+            fakeStatementLine(
+              entranceIc: '北',
+              exitIc: '不明',
+              exitAt: DateTime(2026, 1, 12),
+            ),
+          ]),
+          master: master(),
+        );
+
+        final result = await uc.execute();
+
+        expect(result.summary.lineCount, 3);
+        expect(result.summary.distanceTotal, 3000);
+        expect(result.summary.distanceUnknownCount, 2);
+        // The month has a distance (3 km), the lines without one add 0.
+        expect(result.months.single.distance, 3000);
+        expect(result.months.single.count, 3);
+      });
+
+      test('measures straight when the user chose a position', () async {
+        // 0.1 degrees of latitude is about 11.1 km.
+        final uc = fakeAggregateUC(
+          _lines([fakeStatementLine(entranceIc: '北', exitIc: '新')]),
+          master: master(),
+          positions: FakeIcPositionIF()
+            ..stored.addAll(const [
+              IcPositionEntity(icName: '北', latitude: 35.0, longitude: 139.0),
+              IcPositionEntity(icName: '新', latitude: 35.1, longitude: 139.0),
+            ]),
+        );
+
+        final result = await uc.execute();
+
+        expect(result.summary.distanceTotal, closeTo(11120, 30));
+        expect(result.summary.distanceUnknownCount, 0);
+      });
+
+      test('measures straight when two points are not linked', () async {
+        // Both points are at 35.0, 139.0 (the default), so 0 m.
+        final uc = fakeAggregateUC(
+          _lines([fakeStatementLine(entranceIc: '北', exitIc: '東')]),
+          master: FakeIcMasterIF([
+            fakeIcPoint(name: '北', latitude: 35.0, longitude: 139.0),
+            fakeIcPoint(name: '東', latitude: 35.0, longitude: 139.1),
+          ]),
+        );
+
+        final result = await uc.execute();
+
+        expect(result.summary.distanceTotal, closeTo(9110, 30));
+      });
+
+      test('gives every hour a distance, 0 when nothing was run', () async {
+        final uc = fakeAggregateUC(
+          _lines([fakeStatementLine(entranceIc: '北', exitIc: '東')]),
+          master: master(),
+        );
+
+        final hours = (await uc.execute()).hours;
+
+        expect(hours.every((h) => h.distance != null), isTrue);
+        expect(hours[0].distance, 0);
+        expect(hours[9].distance, 3000);
+      });
+
+      test('groups the distance with the operator of the line', () async {
+        final uc = fakeAggregateUC(
+          _lines([
+            fakeStatementLine(entranceIc: '北', exitIc: '東', fare: 100),
+            fakeStatementLine(
+              entranceIc: '東',
+              exitIc: '西',
+              fare: 200,
+              exitAt: DateTime(2026, 1, 11),
+            ),
+          ]),
+          master: master(),
+        );
+
+        final operators = (await uc.execute()).operators;
+
+        expect(operators.single.label, 'NEXCO中日本');
+        expect(operators.single.distance, 7000);
+      });
+
+      test('passes on a failure to read the links', () {
+        final lines = _lines([fakeStatementLine()]);
+        final master = FakeIcMasterIF([])..error = StateError('x');
+
+        expect(
+          fakeAggregateUC(lines, master: master).execute(),
+          throwsStateError,
+        );
+      });
     });
 
     test('counts an IC once for a line, and skips a blank entrance', () async {

@@ -10,9 +10,15 @@ abstract final class AggregationStrings {
   static const loadFailed = '読み込めませんでした';
   static const retry = '再読み込み';
 
-  static String summary(int count, int fare, int discount) =>
+  static String summary(int count, int fare, int discount, int meters) =>
       '回数 ${countText(count)}　利用額 ${formatYen(fare)}　'
-      '割引額 ${formatYen(discount)}';
+      '割引額 ${formatYen(discount)}　距離 ${formatKm(meters)}';
+
+  /// Under the totals, when some lines have no distance.
+  static String distanceUnknown(int count) =>
+      '距離が分からない明細行: $count件（距離の合計に含みません）';
+
+  static const distanceNote = '距離は道路に沿った道のりの推定です';
 
   static const operatorNote = '路線名からの推定です';
 
@@ -48,13 +54,17 @@ abstract final class AggregationStrings {
     AggregationMetric.count => '回数',
     AggregationMetric.fare => '利用額',
     AggregationMetric.discount => '割引額',
+    AggregationMetric.distance => '距離',
   };
 
   static String countText(int count) => '$count回';
 
   /// The text of a value: a count in times, an amount in yen.
-  static String value(AggregationMetric metric, int value) =>
-      metric == AggregationMetric.count ? countText(value) : formatYen(value);
+  static String value(AggregationMetric metric, int value) => switch (metric) {
+    AggregationMetric.count => countText(value),
+    AggregationMetric.distance => formatKm(value),
+    _ => formatYen(value),
+  };
 
   /// The name of a row as shown. [label] is the one of the DTO.
   static String rowLabel(

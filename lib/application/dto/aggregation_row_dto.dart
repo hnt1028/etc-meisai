@@ -5,6 +5,7 @@ class AggregationRowDTO {
     required this.count,
     this.fare,
     this.discount,
+    this.distance,
   });
 
   /// The name of the row: a period ("2026/01/05", "2026/01", "2026"), an
@@ -19,4 +20,7 @@ class AggregationRowDTO {
 
   /// The total discount in yen. Null when the aggregation does not give it.
   final int? discount;
+
+  /// The total distance in meters. Null when the aggregation does not give it.
+  final int? distance;
 }

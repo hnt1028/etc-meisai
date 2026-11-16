@@ -33,10 +33,14 @@ void main(List<String> args) {
     ..writeln('"source": ${jsonEncode(master['source'])},')
     ..writeln('"points": [')
     ..writeln(points.map(jsonEncode).join(',\n'))
+    ..writeln('],')
+    ..writeln('"links": [')
+    ..writeln((master['links'] as List).map(jsonEncode).join(',\n'))
     ..writeln(']')
     ..writeln('}');
   File(args[2]).writeAsStringSync(buffer.toString());
   stdout.writeln(
-    'wrote ${(master['points'] as List).length} points to ${args[2]}',
+    'wrote ${points.length} points and ${(master['links'] as List).length} '
+    'links to ${args[2]}',
   );
 }

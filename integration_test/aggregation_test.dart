@@ -40,8 +40,13 @@ void main() {
     await tester.pumpAndSettle();
     await openTab(tester, AppStrings.aggregationTab);
 
-    // Three lines of 960 yen, each with a 240 yen discount.
-    expect(find.text(AggregationStrings.summary(3, 2880, 720)), findsOneWidget);
+    // Three lines of 960 yen, each with a 240 yen discount. テスト北ＩＣ has
+    // two points in the fictional IC master, so no distance is known.
+    expect(
+      find.text(AggregationStrings.summary(3, 2880, 720, 0)),
+      findsOneWidget,
+    );
+    expect(find.text(AggregationStrings.distanceUnknown(3)), findsOneWidget);
     expect(find.text('2026/01'), findsOneWidget);
     expect(find.text('3回'), findsOneWidget);
 

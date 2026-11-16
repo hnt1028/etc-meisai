@@ -4,6 +4,8 @@ class AggregationSummaryDTO {
     required this.lineCount,
     required this.fareTotal,
     required this.discountTotal,
+    this.distanceTotal = 0,
+    this.distanceUnknownCount = 0,
   });
 
   final int lineCount;
@@ -13,4 +15,11 @@ class AggregationSummaryDTO {
 
   /// The total of the ETC discounts (as positive amounts), in yen.
   final int discountTotal;
+
+  /// The total distance in meters, without the lines whose distance is not
+  /// known.
+  final int distanceTotal;
+
+  /// How many lines have no distance (docs/aggregation.md).
+  final int distanceUnknownCount;
 }

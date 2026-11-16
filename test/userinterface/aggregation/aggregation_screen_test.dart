@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_pie.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_providers.dart';
@@ -15,10 +16,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/fakes.dart';
 
-FakeIcMasterIF _master() => FakeIcMasterIF([
-  fakeIcPoint(name: '北', routeNames: const ['東名高速道路']),
-  fakeIcPoint(name: '東', routeNames: const ['東名高速道路']),
-]);
+FakeIcMasterIF _master() => FakeIcMasterIF(
+  [
+    fakeIcPoint(name: '北', routeNames: const ['東名高速道路']),
+    fakeIcPoint(name: '東', routeNames: const ['東名高速道路']),
+  ],
+  // 北 and 東 are 3 km apart along the road.
+  links: const [IcLinkEntity(fromId: 'id-北', toId: 'id-東', meters: 3000)],
+);
 
 /// January: 1,000 yen (2 times, with a 240 yen discount) and 500 yen.
 /// February: 250 yen.
@@ -96,7 +101,10 @@ void main() {
   ) async {
     await _show(tester, lines: _lines());
 
-    expect(find.text(AggregationStrings.summary(3, 1750, 240)), findsOneWidget);
+    expect(
+      find.text(AggregationStrings.summary(3, 1750, 240, 9000)),
+      findsOneWidget,
+    );
     // The month is the first unit. Newest first.
     expect(find.text('2026/02'), findsOneWidget);
     expect(find.text('2026/01'), findsOneWidget);
@@ -106,6 +114,69 @@ void main() {
     expect(find.text('240円'), findsOneWidget);
     expect(find.text('250円'), findsOneWidget);
     expect(find.text('0円'), findsOneWidget);
+  });
+
+  testWidgets('shows the distance in the table, with a note', (tester) async {
+    await _show(tester, lines: _lines());
+
+    // January has two lines of 3 km, February one.
+    expect(find.text('6.0km'), findsOneWidget);
+    expect(find.text('3.0km'), findsOneWidget);
+    expect(find.text(AggregationStrings.distanceNote), findsOneWidget);
+    // Every line has a distance.
+    expect(find.textContaining('距離が分からない'), findsNothing);
+
+    // The note is only where a distance is.
+    await _tap(tester, AggregationStrings.kind(AggregationKind.route));
+    expect(find.text(AggregationStrings.distanceNote), findsNothing);
+    await _tap(tester, AggregationStrings.kind(AggregationKind.discount));
+    expect(find.text(AggregationStrings.distanceNote), findsNothing);
+    await _tap(tester, AggregationStrings.kind(AggregationKind.operator));
+    expect(find.text('9.0km'), findsOneWidget);
+    expect(find.text(AggregationStrings.distanceNote), findsOneWidget);
+    await _tap(tester, AggregationStrings.kind(AggregationKind.hour));
+    expect(find.text(AggregationStrings.distanceNote), findsOneWidget);
+  });
+
+  testWidgets('draws the distance as bars and as a pie', (tester) async {
+    await _show(tester, lines: _lines());
+    await _tap(tester, AggregationStrings.display(AggregationDisplay.graph));
+    // A graph of the fare has no note.
+    expect(find.text(AggregationStrings.distanceNote), findsNothing);
+
+    await _tap(tester, AggregationStrings.metric(AggregationMetric.distance));
+    // February 3 km, January 6 km.
+    expect(_bar(tester, 0), 0.5);
+    expect(_bar(tester, 1), 1);
+    expect(find.text('3.0km'), findsOneWidget);
+    expect(find.text(AggregationStrings.distanceNote), findsOneWidget);
+
+    await _tap(tester, AggregationStrings.kind(AggregationKind.operator));
+    expect(_pie(tester).sections.single.value, 9000);
+    expect(find.text('9.0km'), findsOneWidget);
+  });
+
+  testWidgets('says how many lines have no distance', (tester) async {
+    // The entrance A-IC and the exit B-IC are not in the master.
+    await _show(
+      tester,
+      lines: [
+        fakeStatementLine(fare: 100),
+        fakeStatementLine(fare: 200, exitAt: DateTime(2026, 1, 11)),
+        fakeStatementLine(
+          entranceIc: '北',
+          exitIc: '東',
+          fare: 300,
+          exitAt: DateTime(2026, 1, 12),
+        ),
+      ],
+    );
+
+    expect(
+      find.text(AggregationStrings.summary(3, 600, 0, 3000)),
+      findsOneWidget,
+    );
+    expect(find.text(AggregationStrings.distanceUnknown(2)), findsOneWidget);
   });
 
   testWidgets('switches the unit of the period', (tester) async {
@@ -400,7 +471,7 @@ void main() {
         ),
       ],
     );
-    expect(find.text(AggregationStrings.summary(2, 800, 0)), findsOneWidget);
+    expect(find.text(AggregationStrings.summary(2, 800, 0, 0)), findsOneWidget);
     // The filter starts closed.
     expect(find.text(StatementListStrings.vehicleNumberLabel), findsNothing);
 
@@ -410,7 +481,7 @@ void main() {
     await tester.tap(find.text('2').last);
     await tester.pumpAndSettle();
 
-    expect(find.text(AggregationStrings.summary(1, 700, 0)), findsOneWidget);
+    expect(find.text(AggregationStrings.summary(1, 700, 0, 0)), findsOneWidget);
     expect(container(tester).read(statementFilterProvider).vehicleNumber, 2);
   });
 
@@ -463,7 +534,10 @@ void main() {
 
     lines.readError = null;
     await _tap(tester, AggregationStrings.retry);
-    expect(find.text(AggregationStrings.summary(3, 1750, 240)), findsOneWidget);
+    expect(
+      find.text(AggregationStrings.summary(3, 1750, 240, 9000)),
+      findsOneWidget,
+    );
   });
 
   testWidgets('the use case must be overridden', (tester) async {

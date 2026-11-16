@@ -5,6 +5,7 @@ import 'package:etc_meisai/application/interface/ic_mapping_if.dart';
 import 'package:etc_meisai/application/interface/ic_master_if.dart';
 import 'package:etc_meisai/application/interface/ic_position_if.dart';
 import 'package:etc_meisai/application/interface/statement_line_if.dart';
+import 'package:etc_meisai/application/usecase/aggregation/ic_distance.dart';
 import 'package:etc_meisai/application/usecase/aggregation/route_operators.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
 import 'package:etc_meisai/application/usecase/statements/statement_filter.dart';
@@ -42,6 +43,7 @@ class AggregateStatementsUC {
       mappings: await icMappings.findAll(),
       positions: await icPositions.findAll(),
     );
+    final distance = IcDistance(await icMaster.findLinks());
     final lines = filterStatementLines(
       all,
       from: from,
@@ -53,12 +55,17 @@ class AggregateStatementsUC {
     final weeks = _Tally(), months = _Tally(), years = _Tally();
     final operators = _Tally(), hours = _Tally();
     final routes = _Tally(), ics = _Tally(), discountTypes = _Tally();
-    var fareTotal = 0, discountTotal = 0;
+    var fareTotal = 0, discountTotal = 0, distanceTotal = 0, unknown = 0;
 
     for (final line in lines) {
       final discount = _discountOf(line);
+      final meters = _metersOf(line, lookup, distance);
       fareTotal += line.fare;
       discountTotal += discount;
+      distanceTotal += meters ?? 0;
+      if (meters == null) unknown++;
+      // A line without a distance adds 0 to the rows that have a distance.
+      final m = meters ?? 0;
 
       final exit = line.exitAt;
       final monday = DateTime(
@@ -66,13 +73,13 @@ class AggregateStatementsUC {
         exit.month,
         exit.day,
       ).subtract(Duration(days: exit.weekday - 1));
-      weeks.add(_date(monday), line.fare, discount);
-      months.add('${exit.year}/${_two(exit.month)}', line.fare, discount);
-      years.add('${exit.year}', line.fare, discount);
-      hours.add('${exit.hour}', line.fare, discount);
+      weeks.add(_date(monday), line.fare, discount, m);
+      months.add('${exit.year}/${_two(exit.month)}', line.fare, discount, m);
+      years.add('${exit.year}', line.fare, discount, m);
+      hours.add('${exit.hour}', line.fare, discount, m);
 
       final routeNames = lookup.routeNamesOf(line.entranceIc, line.exitIc);
-      operators.add(operatorOfRoutes(routeNames), line.fare, discount);
+      operators.add(operatorOfRoutes(routeNames), line.fare, discount, m);
       for (final name in routeNames) {
         routes.add(name);
       }
@@ -90,6 +97,8 @@ class AggregateStatementsUC {
         lineCount: lines.length,
         fareTotal: fareTotal,
         discountTotal: discountTotal,
+        distanceTotal: distanceTotal,
+        distanceUnknownCount: unknown,
       ),
       weeks: weeks.rows(byLabelDescending: true),
       months: months.rows(byLabelDescending: true),
@@ -102,11 +111,43 @@ class AggregateStatementsUC {
       hours: [
         for (var hour = 0; hour < 24; hour++)
           hours.rowOf('$hour') ??
-              AggregationRowDTO(label: '$hour', count: 0, fare: 0, discount: 0),
+              AggregationRowDTO(
+                label: '$hour',
+                count: 0,
+                fare: 0,
+                discount: 0,
+                distance: 0,
+              ),
       ],
       discountTypes: discountTypes.rows(),
       vehicleNumberChoices: vehicleNumberChoicesOf(all),
       cardNumberChoices: cardNumberChoicesOf(all),
+    );
+  }
+
+  /// The distance of a line in meters, or null when it is not known
+  /// (docs/aggregation.md, "距離の求め方").
+  static int? _metersOf(
+    StatementLineEntity line,
+    IcLookup lookup,
+    IcDistance distance,
+  ) {
+    final entranceName = line.entranceIc;
+    if (entranceName == null) return null;
+    final entrance = lookup.placeOf(entranceName);
+    final exit = lookup.placeOf(line.exitIc);
+    if (entrance == null || exit == null) return null;
+    // Two master points: the way over the roads. A position the user chose
+    // has no point, and is measured straight.
+    final entrancePoint = entrance.point, exitPoint = exit.point;
+    if (entrancePoint != null && exitPoint != null) {
+      return distance.metersBetween(entrancePoint, exitPoint);
+    }
+    return IcDistance.straightMeters(
+      entrance.latitude,
+      entrance.longitude,
+      exit.latitude,
+      exit.longitude,
     );
   }
 
@@ -126,12 +167,16 @@ class _Tally {
   final _counts = <String, int>{};
   final _fares = <String, int>{};
   final _discounts = <String, int>{};
+  final _distances = <String, int>{};
 
-  void add(String label, [int? fare, int? discount]) {
+  void add(String label, [int? fare, int? discount, int? distance]) {
     _counts[label] = (_counts[label] ?? 0) + 1;
     if (fare != null) _fares[label] = (_fares[label] ?? 0) + fare;
     if (discount != null) {
       _discounts[label] = (_discounts[label] ?? 0) + discount;
+    }
+    if (distance != null) {
+      _distances[label] = (_distances[label] ?? 0) + distance;
     }
   }
 
@@ -143,6 +188,7 @@ class _Tally {
       count: count,
       fare: _fares[label],
       discount: _discounts[label],
+      distance: _distances[label],
     );
   }
 

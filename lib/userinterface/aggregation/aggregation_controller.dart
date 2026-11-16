@@ -32,13 +32,15 @@ enum AggregationDisplay { table, graph }
 enum AggregationMetric {
   count,
   fare,
-  discount;
+  discount,
+  distance;
 
   /// The value of [row], or null when the aggregation does not give it.
   int? of(AggregationRowDTO row) => switch (this) {
     count => row.count,
     fare => row.fare,
     discount => row.discount,
+    distance => row.distance,
   };
 }
 

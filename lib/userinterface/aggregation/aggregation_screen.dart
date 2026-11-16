@@ -96,10 +96,19 @@ class _Body extends ConsumerWidget {
                 summary.lineCount,
                 summary.fareTotal,
                 summary.discountTotal,
+                summary.distanceTotal,
               ),
             ),
           ),
         ),
+        if (summary.distanceUnknownCount > 0)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            child: Text(
+              AggregationStrings.distanceUnknown(summary.distanceUnknownCount),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Wrap(
@@ -167,6 +176,14 @@ class _Body extends ConsumerWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
+        if (_showsDistance(view, metrics))
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Text(
+              AggregationStrings.distanceNote,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
         const SizedBox(height: 8),
         if (view.display == AggregationDisplay.table)
           AggregationTable(rows: rows, kind: view.kind, unit: view.unit)
@@ -187,3 +204,13 @@ class _Body extends ConsumerWidget {
     );
   }
 }
+
+/// The note about the distance is shown where the distance is: in a table with
+/// a distance column, and in a graph of the distance.
+bool _showsDistance(
+  AggregationViewState view,
+  List<AggregationMetric> metrics,
+) =>
+    metrics.contains(AggregationMetric.distance) &&
+    (view.display == AggregationDisplay.table ||
+        view.metric == AggregationMetric.distance);

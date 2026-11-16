@@ -9,6 +9,7 @@ import 'package:etc_meisai/application/usecase/aggregation/aggregate_statements_
 import 'package:etc_meisai/application/usecase/route_map/list_route_map_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
+import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
@@ -143,10 +144,17 @@ IcPointEntity fakeIcPoint({
 
 /// Returns the given IC points, or throws [error].
 class FakeIcMasterIF implements IcMasterIF {
-  FakeIcMasterIF(this.points, {this.error});
+  FakeIcMasterIF(this.points, {this.links = const [], this.error});
 
   final List<IcPointEntity> points;
+  final List<IcLinkEntity> links;
   Object? error;
+
+  @override
+  Future<List<IcLinkEntity>> findLinks() async {
+    if (error != null) throw error!;
+    return links;
+  }
 
   @override
   Future<List<IcPointEntity>> findAll() async {
