@@ -80,7 +80,11 @@ Future<void> _open(WidgetTester tester, _World world) async {
   await tester.pumpAndSettle();
   await tester.tap(find.text(AppStrings.settingsTab));
   await tester.pumpAndSettle();
-  await tester.ensureVisible(find.text(SettingsStrings.icMappingButton));
+  // The button is far down the settings, which are a long list.
+  await tester.scrollUntilVisible(
+    find.text(SettingsStrings.icMappingButton),
+    100,
+  );
   await tester.tap(find.text(SettingsStrings.icMappingButton));
   await tester.pumpAndSettle();
 }
@@ -223,7 +227,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text(AppStrings.settingsTab));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text(SettingsStrings.icMappingButton));
+    // The button is far down the settings, which are a long list.
+    await tester.scrollUntilVisible(
+      find.text(SettingsStrings.icMappingButton),
+      100,
+    );
 
     final gate = Completer<void>();
     world.lines.readGate = gate.future;

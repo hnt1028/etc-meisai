@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:etc_meisai/application/interface/app_data_if.dart';
+import 'package:etc_meisai/application/interface/backup_if.dart';
 import 'package:etc_meisai/application/interface/ic_mapping_if.dart';
 import 'package:etc_meisai/application/interface/ic_master_if.dart';
 import 'package:etc_meisai/application/interface/ic_position_if.dart';
@@ -10,7 +12,9 @@ import 'package:etc_meisai/application/usecase/statements/statement_line_copy.da
 import 'package:etc_meisai/application/usecase/route_map/list_route_map_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
+import 'package:etc_meisai/domain/entity/app_data_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
+import 'package:etc_meisai/domain/entity/statement_line_record_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
@@ -309,5 +313,112 @@ AggregateStatementsUC fakeAggregateUC(
     icMaster: master ?? FakeIcMasterIF([]),
     icMappings: mappings ?? FakeIcMappingIF(),
     icPositions: positions ?? FakeIcPositionIF(),
+  );
+}
+
+/// Keeps the whole data in memory. Can fail on request.
+class FakeAppDataIF implements AppDataIF {
+  FakeAppDataIF([AppDataEntity? data]) : data = data ?? emptyAppData();
+
+  AppDataEntity data;
+
+  /// When set, [readAll] throws it.
+  Object? readError;
+
+  /// When set, [replaceAll] throws it, and the data stays.
+  Object? replaceError;
+
+  /// When set, [deleteAll] throws it, and the data stays.
+  Object? deleteError;
+
+  /// When set, [replaceAll] and [deleteAll] wait for it.
+  Future<void>? gate;
+
+  int replaceCount = 0;
+  int deleteCount = 0;
+
+  @override
+  Future<AppDataEntity> readAll() async {
+    if (readError != null) throw readError!;
+    return data;
+  }
+
+  @override
+  Future<void> replaceAll(AppDataEntity data) async {
+    await gate;
+    if (replaceError != null) throw replaceError!;
+    replaceCount++;
+    this.data = data;
+  }
+
+  @override
+  Future<void> deleteAll() async {
+    await gate;
+    if (deleteError != null) throw deleteError!;
+    deleteCount++;
+    data = emptyAppData();
+  }
+}
+
+AppDataEntity emptyAppData() =>
+    const AppDataEntity(statementLines: [], icMappings: [], icPositions: []);
+
+/// A backup format for tests: the bytes are a marker, and [decode] gives what
+/// was set, or throws [error].
+class FakeBackupIF implements BackupIF {
+  FakeBackupIF({this.decoded, this.error});
+
+  AppDataEntity? decoded;
+  FormatException? error;
+
+  /// What [encode] was given.
+  AppDataEntity? encodedData;
+  DateTime? encodedAt;
+
+  @override
+  Uint8List encode(AppDataEntity data, DateTime exportedAt) {
+    encodedData = data;
+    encodedAt = exportedAt;
+    return Uint8List.fromList([1, 2, 3]);
+  }
+
+  @override
+  AppDataEntity decode(Uint8List bytes) {
+    if (error != null) throw error!;
+    return decoded ?? emptyAppData();
+  }
+}
+
+/// A stored row of the statement lines for tests.
+StatementLineRecordEntity fakeRecord({
+  String id = 'id-1',
+  String duplicateKey = 'key-1',
+  DateTime? entranceAt,
+  DateTime? enteredEntranceAt,
+  String? entranceIc = 'A-IC',
+  String? enteredEntranceIc,
+  int? vehicleNumber = 1234,
+  ConfirmationStatusValue status = ConfirmationStatusValue.confirmed,
+  List<String> discountTypes = const [],
+}) {
+  return StatementLineRecordEntity(
+    id: id,
+    duplicateKey: duplicateKey,
+    entranceAt: entranceAt,
+    exitAt: DateTime(2026, 1, 10, 9, 15),
+    entranceIc: entranceIc,
+    exitIc: 'B-IC',
+    grossFare: null,
+    etcDiscount: null,
+    fare: 1000,
+    fareAfterRebate: 0,
+    postpaidFare: 1000,
+    vehicleType: VehicleTypeValue.standard,
+    vehicleNumber: vehicleNumber,
+    enteredEntranceAt: enteredEntranceAt,
+    enteredEntranceIc: enteredEntranceIc,
+    cardNumber: '0000-****-0001',
+    status: status,
+    discountTypes: discountTypes,
   );
 }

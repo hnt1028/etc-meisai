@@ -18,3 +18,6 @@
 | PRC-014 | 車両番号の保存（SaveVehicleNumberUC） | [PRC-014-save-vehicle-number.md](../processes/PRC-014-save-vehicle-number.md) | 草案 |
 | PRC-015 | 入口日時・入口ICの保存（SaveEntranceUC） | [PRC-015-save-entrance.md](../processes/PRC-015-save-entrance.md) | 草案 |
 | PRC-016 | 入口日時の目安の計算（EstimateEntranceAtUC） | [PRC-016-estimate-entrance-at.md](../processes/PRC-016-estimate-entrance-at.md) | 草案 |
+| PRC-017 | データの書き出し（ExportDataUC） | [PRC-017-export-data.md](../processes/PRC-017-export-data.md) | 草案 |
+| PRC-018 | データの読み込み（ImportDataUC） | [PRC-018-import-data.md](../processes/PRC-018-import-data.md) | 草案 |
+| PRC-019 | すべてのデータの削除（DeleteAllDataUC） | [PRC-019-delete-all-data.md](../processes/PRC-019-delete-all-data.md) | 草案 |

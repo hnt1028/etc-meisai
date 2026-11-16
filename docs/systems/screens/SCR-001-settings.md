@@ -2,7 +2,7 @@
 
 ## 概要
 
-利用明細CSVの取り込みと、取り込んだデータの削除を行う画面（[specification.md](../../specification.md) の 3.3）。
+利用明細CSVの取り込み、データのバックアップ（書き出し・読み込み）、データの削除を行う画面（[specification.md](../../specification.md) の 3.3）。
 
 ## 実装箇所
 
@@ -12,6 +12,7 @@
 | 画面の状態と操作 | `lib/userinterface/settings/settings_controller.dart` | `SettingsController`、`SettingsState` |
 | 画面の文言 | `lib/userinterface/settings/settings_strings.dart` | `SettingsStrings`（出典の文を含む） |
 | ファイル選択 | `lib/userinterface/settings/csv_picker.dart` | `CsvPicker`（関数の型）、`pickCsv` |
+| バックアップのファイル選択・保存 | `lib/userinterface/settings/backup_files.dart` | `BackupPicker`、`BackupSaver`（関数の型）、`pickBackup`、`saveBackup` |
 | 共通のウィジェット | `lib/userinterface/common/section_title.dart`、`message_text.dart`、`confirm_dialog.dart` | `SectionTitle`、`MessageText`、`showConfirmDialog` |
 | 依存の受け口 | `lib/userinterface/settings/settings_providers.dart` | 各 `Provider`（実体は `lib/main.dart` で渡す） |
 
@@ -27,7 +28,13 @@
 
 ![SCR-001 設定の画面イメージ](images/SCR-001-settings.drawio.png)
 
-破線の枠は、状況によって表示する項目（処理中の進捗表示、取り込み結果、取り込みエラー、削除の完了）。
+画面は縦にスクロールする。画像は、画面の上のほう（出典の表示は、いちばん下にある）。
+
+データを読み込むときの、確認のダイアログ（注意）:
+
+![SCR-001 読み込みの確認の画面イメージ](images/SCR-001-restore-confirm.drawio.png)
+
+破線の枠は、状況によって表示する項目（処理中の進捗表示、取り込み結果、取り込みエラー、書き出し・読み込み・削除の結果）。
 
 ### 入出力項目一覧
 
@@ -36,11 +43,18 @@
 | 取り込みボタン | 入力 | ボタン | 「CSVを選んで取り込む」。処理中は押せない |
 | 取り込み結果 | 出力 | `ImportResultDTO` | 「追加 N 件 / 上書き N 件 / 無視 N 件」。まだ取り込んでいないときは表示しない |
 | 取り込みエラー | 出力 | 文字列 | 「取り込めませんでした: 」に、不正な箇所の説明を続ける（[PRC-002](../processes/PRC-002-parse-statement.md) のエラー）。無いときは表示しない |
-| 削除ボタン | 入力 | ボタン | 「すべて削除する」。処理中は押せない |
-| 削除の確認 | 入力 | ダイアログ | 「取り込んだデータをすべて削除します。元に戻せません。」と、「キャンセル」「削除する」 |
+| 書き出しボタン | 入力 | ボタン | 「データを書き出す」。処理中は押せない。下に、「書き出したファイルには、車両番号とETCカード番号が含まれます。保管に注意してください。」 |
+| 読み込みボタン | 入力 | ボタン | 「データを読み込む（すべて置き換え）」。処理中は押せない |
+| 読み込みの確認 | 入力 | ダイアログ（注意） | 「読み込むファイルの内容で、いまのすべてのデータ（明細行・ICの対応づけ・位置の指定）を置き換えます。いまのデータはすべて消え、元に戻せません。」と、「キャンセル」「置き換える」 |
+| 書き出し・読み込みの結果 | 出力 | 文字列 | 「書き出しました（明細行 N 件 / 対応づけ N 件 / 位置の指定 N 件）」「読み込みました（同じ形式）」。まだ行っていないときは表示しない |
+| 書き出し・読み込みのエラー | 出力 | 文字列 | ER-4〜ER-6。無いときは表示しない |
+| 明細行の削除ボタン | 入力 | ボタン | 「取り込んだ明細行をすべて削除する」。処理中は押せない |
+| 明細行の削除の確認 | 入力 | ダイアログ | 「取り込んだデータをすべて削除します。元に戻せません。」と、「キャンセル」「削除する」 |
+| 全データの削除ボタン | 入力 | ボタン | 「すべてのデータを削除する」。処理中は押せない |
+| 全データの削除の確認 | 入力 | ダイアログ（注意） | 「すべてのデータ（明細行・ICの対応づけ・位置の指定）を削除します。元に戻せません。」と、「キャンセル」「削除する」 |
 | ICの対応づけを開くボタン | 入力 | ボタン | 「ICの対応づけを開く」 |
 | ICマスタの出典 | 出力 | 文字列 | 「出典：国土交通省 国土数値情報（高速道路時系列データ）（URL）を加工して作成」と、「一部の料金所・出入口の位置：© OpenStreetMap contributors（ODbL）」。画面の下部に、常に表示する |
-| 処理中の表示 | 出力 | 進捗の表示 | 取り込み・削除の間、表示する |
+| 処理中の表示 | 出力 | 進捗の表示 | 取り込み・書き出し・読み込み・削除の間、表示する |
 
 ### 操作一覧
 
@@ -49,6 +63,9 @@
 | OP-1 | CSVを取り込む | 取り込みボタンのタップ | ファイル選択（端末の標準画面）を開き、選んだCSVを取り込む。選ばなかったときは何もしない。完了したら、取り込み結果を表示し、[SCR-002](SCR-002-statement-list.md) の一覧を更新させる（`dataRevisionProvider`） | なし |
 | OP-2 | データを削除する | 削除ボタンのタップ | 確認ダイアログを出す。「削除する」を選んだら、すべて削除し、「削除しました」を表示し、[SCR-002](SCR-002-statement-list.md) の一覧を更新させる。「キャンセル」なら何もしない | なし |
 | OP-3 | ICの対応づけを開く | 「ICの対応づけを開く」のタップ | ICの対応づけの画面を表示する | [SCR-004](SCR-004-ic-mapping.md) |
+| OP-4 | データを書き出す | 書き出しボタンのタップ | バックアップの内容を作り（[PRC-017](../processes/PRC-017-export-data.md)）、保存先の選択（端末の標準画面）を開いて、ファイルに保存する。選ばなかったときは、何も保存せず、メッセージも出さない。保存できたら、結果を表示する | なし |
+| OP-5 | データを読み込む | 読み込みボタンのタップ | 確認のダイアログを出す。「置き換える」を選んだら、ファイル選択（端末の標準画面）を開き、選んだファイルで、すべてのデータを置き換える（[PRC-018](../processes/PRC-018-import-data.md)）。「キャンセル」、またはファイルを選ばなかったときは、何もしない。完了したら、結果を表示し、一覧・ルートマップ・集計を更新させる（`dataRevisionProvider`） | なし |
+| OP-6 | すべてのデータを削除する | 全データの削除ボタンのタップ | 確認のダイアログを出す。「削除する」を選んだら、明細行・ICの対応づけ・ICの位置の指定をすべて削除し（[PRC-019](../processes/PRC-019-delete-all-data.md)）、「すべてのデータを削除しました」を表示し、一覧・ルートマップ・集計を更新させる。「キャンセル」なら何もしない | なし |
 
 ### エラー一覧
 
@@ -57,8 +74,13 @@
 | ER-1 | OP-1 で、CSVの形式が不正（[PRC-002](../processes/PRC-002-parse-statement.md) の `FormatException`） | `SettingsStrings.importFailed(message)` | 既存のデータは変わらない。CSVを直して、もう一度取り込む |
 | ER-2 | OP-1 で、形式以外の失敗（保存の失敗など） | `SettingsStrings.importUnexpected` | 保存の途中で失敗すると、一部だけ取り込まれていることがある。もう一度取り込めば、同じ明細行は重複しない。直らないときは、データを削除して取り込み直す |
 | ER-3 | OP-2 で、削除に失敗 | `SettingsStrings.deleteFailed` | もう一度削除する |
+| ER-4 | OP-4 で、書き出しに失敗（データの読み込みの失敗、ファイルへの保存の失敗） | `SettingsStrings.exportFailed` | もう一度書き出す |
+| ER-5 | OP-5 で、ファイルの形式が合わない（[PRC-018](../processes/PRC-018-import-data.md) の `FormatException`） | `SettingsStrings.restoreFailed(message)`（「読み込めませんでした: 」に、不正な箇所の説明を続ける） | **データは、変わっていない**。正しいバックアップのファイルを選んで、もう一度読み込む |
+| ER-6 | OP-5 で、形式以外の失敗（保存の失敗など） | `SettingsStrings.restoreUnexpected` | **データは、変わっていない**（トランザクション）。もう一度読み込む |
+| ER-7 | OP-6 で、削除に失敗 | `SettingsStrings.deleteAllFailed` | データは、変わっていない。もう一度削除する |
 
-- ER-2、ER-3 には、失敗の詳細（例外の内容）を出さない。個人情報が含まれることがあるため（[privacy.md](../../privacy.md)）
+- 結果とエラーは、押したボタンの下に出す（取り込みはCSVの取り込みの節、書き出し・読み込みはデータのバックアップの節、削除は削除の節）。画面が長いので、押した場所から離れた所に出さない
+- ER-2〜ER-4、ER-6、ER-7 には、失敗の詳細（例外の内容）を出さない。個人情報が含まれることがあるため（[privacy.md](../../privacy.md)）
 
 ## 詳細設計
 
@@ -70,12 +92,16 @@
 |---|---|---|
 | OP-1 | 利用明細CSVの取込（`ImportStatementUC`） | [PRC-001](../processes/PRC-001-import-statement.md) |
 | OP-2 | 取り込んだ明細行の全削除（`DeleteAllStatementLinesUC`） | [PRC-003](../processes/PRC-003-delete-all-statement-lines.md) |
+| OP-4 | データの書き出し（`ExportDataUC`） | [PRC-017](../processes/PRC-017-export-data.md) |
+| OP-5 | データの読み込み（`ImportDataUC`） | [PRC-018](../processes/PRC-018-import-data.md) |
+| OP-6 | すべてのデータの削除（`DeleteAllDataUC`） | [PRC-019](../processes/PRC-019-delete-all-data.md) |
 
-- ファイル選択は画面側の処理（Userinterface）で、業務の処理ではない。選んだCSVのバイト列だけを、処理に渡す
-- 画面は `StatementLineEntity` を扱わない。結果は `ImportResultDTO` で受け取る
+- ファイル選択と、ファイルへの保存は、画面側の処理（Userinterface）で、業務の処理ではない。選んだファイルのバイト列だけを、処理に渡し、処理が返したバイト列だけを、保存する
+- 画面は `StatementLineEntity` を扱わない。結果は `ImportResultDTO`、`ExportDataDTO`、`DataSummaryDTO` で受け取る
 
 ## 関連するテスト
 
-- ウィジェット: `test/userinterface/settings/settings_screen_test.dart`（初期表示、取り込み結果、取り込みエラー、キャンセル、削除の確認、処理中、出典の表示、ICの対応づけの画面へ移ること）
+- ウィジェット: `test/userinterface/settings/settings_screen_test.dart`（初期表示、取り込み結果、取り込みエラー、キャンセル、削除の確認、処理中、出典の表示、ICの対応づけの画面へ移ること、書き出し（保存先を選ばないとき、ER-4）、読み込み（確認、キャンセル、ファイルを選ばないとき、ER-5、ER-6）、すべてのデータの削除（確認、ER-7））
 - 結合: `integration_test/settings_import_test.dart`（画面からDBまで、`lib/main.dart` と同じ組み立てで実行する。ファイル選択だけを差し替える。架空のCSV（`test/fixtures/statement_fixture.dart`）を取り込むと「追加 3 件」、もう一度取り込むと「上書き 1 件・無視 2 件」、削除するともう一度「追加 3 件」になること。形式が不正なCSVは、エラーを表示して、何も保存しないこと）
+- 結合: `integration_test/data_backup_test.dart`（書き出して、全削除して、読み込むと、元と同じになること。形式が不正なファイルは、何も変えないこと。すべてのデータの削除）
 - 単体: `test/application/usecase/settings/delete_all_statement_lines_uc_test.dart`（PRC-003）、`test/userinterface/settings/settings_controller_test.dart`（画面の状態と操作、一覧の更新通知）

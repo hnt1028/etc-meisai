@@ -226,7 +226,7 @@ void main() {
       _app(statement: FakeStatementIF([]), lines: FakeStatementLineIF()),
     );
 
-    await tester.ensureVisible(_text(SettingsStrings.credit));
+    await tester.scrollUntilVisible(_text(SettingsStrings.credit), 100);
     expect(_text(SettingsStrings.credit), findsOneWidget);
     expect(SettingsStrings.credit, contains('国土数値情報'));
     expect(SettingsStrings.credit, contains('加工して作成'));
