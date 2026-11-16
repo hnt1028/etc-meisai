@@ -37,11 +37,16 @@ void main() {
       await pumpApp(
         tester,
         database: database,
-        // One line has no vehicle number, so its detail has the enter button.
+        // One line has no vehicle number and no entrance, so its detail has
+        // the buttons to enter them.
         picker: () async => StatementFixture.csv([
           StatementFixture.header,
           StatementFixture.row(exitIc: 'テスト東ＩＣ'),
-          [...StatementFixture.row(exitIc: 'テスト西ＩＣ', note: '確認中')]..[12] = '',
+          [...StatementFixture.row(exitIc: 'テスト西ＩＣ', note: '確認中')]
+            ..[0] = ''
+            ..[1] = ''
+            ..[4] = ''
+            ..[12] = '',
         ]),
       );
 

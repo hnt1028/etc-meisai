@@ -283,10 +283,120 @@ void main() {
 
       await db.migration.onUpgrade(db.createMigrator(), 3, 4);
 
+      // The columns for the entrance the user enters are there too.
+      final id = (await repo.findAll()).single.id!;
+      await repo.updateEntrance(id, entranceIc: '入力');
+      expect((await repo.findById(id))!.entranceIc, '入力');
+
       // The line stays, and a line without a vehicle number can be stored.
       expect((await repo.findAll()).single.vehicleNumber, 1234);
       await repo.save(_statementLine(vehicleNumber: null));
       expect(await repo.findAll(), hasLength(2));
+    });
+  });
+
+  group('entrance the user entered', () {
+    // _statementLine gives a default entrance when it is null, so these lines
+    // are built by hand.
+    StatementLineEntity blank({int fare = 1000, String exitIc = 'B-IC'}) =>
+        StatementLineEntity(
+          entranceAt: null,
+          exitAt: DateTime(2026, 1, 10, 9, 15),
+          entranceIc: null,
+          exitIc: exitIc,
+          grossFare: null,
+          etcDiscount: null,
+          fare: fare,
+          fareAfterRebate: 0,
+          postpaidFare: fare,
+          vehicleType: VehicleTypeValue.standard,
+          vehicleNumber: null,
+          cardNumber: '0000-****-0001',
+          status: ConfirmationStatusValue.pending,
+          discountTypes: const [],
+        );
+
+    test('is stored apart, and read as the entrance of the line', () async {
+      await repo.save(blank());
+      final id = (await repo.findAll()).single.id!;
+
+      await repo.updateEntrance(
+        id,
+        entranceAt: DateTime(2026, 1, 10, 8),
+        entranceIc: 'テスト北',
+      );
+
+      final line = (await repo.findAll()).single;
+      expect(line.entranceAt, DateTime(2026, 1, 10, 8));
+      expect(line.entranceIc, 'テスト北');
+      expect((await repo.findById(id))!.entranceIc, 'テスト北');
+    });
+
+    test('updates one of them and leaves the other', () async {
+      await repo.save(blank());
+      final id = (await repo.findAll()).single.id!;
+
+      await repo.updateEntrance(id, entranceIc: '北');
+      await repo.updateEntrance(id, entranceAt: DateTime(2026, 1, 10, 8));
+
+      final line = (await repo.findAll()).single;
+      expect(line.entranceIc, '北');
+      expect(line.entranceAt, DateTime(2026, 1, 10, 8));
+    });
+
+    test('does not change the duplicate key', () async {
+      await repo.save(blank());
+      final id = (await repo.findAll()).single.id!;
+      await repo.updateEntrance(
+        id,
+        entranceAt: DateTime(2026, 1, 10, 8),
+        entranceIc: '北',
+      );
+
+      // The same CSV line again is the same line, not a new one.
+      final again = await repo.findSame(blank());
+      expect(again!.id, id);
+      await repo.save(blank(fare: 2000));
+
+      final lines = await repo.findAll();
+      expect(lines, hasLength(1));
+      expect(lines.single.id, id);
+      expect(lines.single.fare, 2000);
+      // What the user entered is still there.
+      expect(lines.single.entranceAt, DateTime(2026, 1, 10, 8));
+      expect(lines.single.entranceIc, '北');
+    });
+
+    test('is not used instead of a value the CSV has', () async {
+      await repo.save(blank());
+      final id = (await repo.findAll()).single.id!;
+      await repo.updateEntrance(id, entranceIc: '入力した');
+
+      // A later CSV (for the same key) cannot have an entrance, because the
+      // entrance is in the key; the line the CSV gives for a stored line with
+      // an entrance keeps the CSV's value over any entered one.
+      await repo.save(_statementLine(vehicleNumber: null));
+      final lines = await repo.findAll();
+      final fromCsv = lines.firstWhere((l) => l.entranceIc == 'A-IC');
+      await repo.updateEntrance(fromCsv.id!, entranceIc: 'ignored');
+      expect((await repo.findById(fromCsv.id!))!.entranceIc, 'A-IC');
+    });
+
+    test('does nothing for an id that is not stored', () async {
+      await repo.save(blank());
+
+      await repo.updateEntrance('no-such-id', entranceIc: '北');
+
+      expect((await repo.findAll()).single.entranceIc, isNull);
+    });
+
+    test('has no entrance until the user enters one', () async {
+      await repo.save(blank());
+
+      final line = (await repo.findAll()).single;
+
+      expect(line.entranceAt, isNull);
+      expect(line.entranceIc, isNull);
     });
   });
 }

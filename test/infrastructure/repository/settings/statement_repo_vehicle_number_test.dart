@@ -8,7 +8,9 @@ List<String> _row(String vehicleNumber) =>
     [...StatementFixture.row()]..[12] = vehicleNumber;
 
 void main() {
-  const repo = StatementRepo();
+  // Not const, like the other tests of the repository.
+  // ignore: prefer_const_constructors
+  final repo = StatementRepo();
 
   test('reads a blank vehicle number as no vehicle number', () {
     final lines = repo.parse(

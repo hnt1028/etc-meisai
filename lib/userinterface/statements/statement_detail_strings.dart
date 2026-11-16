@@ -32,7 +32,15 @@ abstract final class StatementDetailStrings {
   static const vehicleNumberEnter = '入力';
   static const vehicleNumberDialogTitle = '車両番号を入力';
   static const vehicleNumberInputLabel = '車両番号（1〜4桁の数字）';
-  static const vehicleNumberOnceNotice = '保存すると、あとから変更できません';
+  static const vehicleNumberOnceNotice = enteredOnceNotice;
+  static const enteredOnceNotice = '保存すると、あとから変更できません';
+
+  static const entranceAtPickDate = '入口の日付';
+  static const entranceAtPickTime = '入口の時刻';
+  static const entranceAtDialogTitle = '入口日時を保存';
+  static const entranceIcDialogTitle = '入口ICを入力';
+  static const entranceIcInputLabel = '入口IC';
+  static const entranceAfterExit = '入口日時は、出口日時より前にしてください';
   static const cancel = 'キャンセル';
   static const save = '保存';
   static const saveVehicleNumberFailed = '保存できませんでした';

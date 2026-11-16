@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/application/usecase/route_map/get_line_route_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/save_entrance_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_vehicle_number_uc.dart';
+import 'package:etc_meisai/userinterface/statements/statement_list_providers.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
@@ -29,10 +31,13 @@ StatementLineDTO _line({
   List<String> routeNames = const ['テスト自動車道', 'テスト都市高速'],
   String? id,
   bool withoutVehicleNumber = false,
+  bool blankEntranceAt = false,
 }) {
   return StatementLineDTO(
     id: id,
-    entranceAt: entranceAt ?? DateTime(2026, 1, 10, 8, 30),
+    entranceAt: blankEntranceAt
+        ? null
+        : (entranceAt ?? DateTime(2026, 1, 10, 8, 30)),
     exitAt: DateTime(2026, 1, 10, 9, 15),
     entranceIc: entranceIc,
     exitIc: exitIc,
@@ -78,6 +83,7 @@ Future<void> _show(
   FakeIcMasterIF? master,
   FakeIcPositionIF? positions,
   FakeStatementLineIF? lines,
+  FakeStatementLineIF? listLines,
   bool settle = true,
 }) async {
   tester.view.physicalSize = const Size(800, 1600);
@@ -92,6 +98,16 @@ Future<void> _show(
     ProviderScope(
       overrides: [
         getLineRouteUCProvider.overrideWithValue(uc),
+        saveEntranceUCProvider.overrideWithValue(
+          SaveEntranceUC(statementLines: lines ?? FakeStatementLineIF()),
+        ),
+        // The list is read again after a save, with the stored lines.
+        listStatementLinesUCProvider.overrideWithValue(
+          fakeListUC(
+            listLines ?? lines ?? FakeStatementLineIF(),
+            points: (master ?? _master()).points,
+          ),
+        ),
         saveVehicleNumberUCProvider.overrideWithValue(
           SaveVehicleNumberUC(statementLines: lines ?? FakeStatementLineIF()),
         ),
@@ -435,10 +451,11 @@ void main() {
       expect(enter, findsOneWidget);
     });
 
-    testWidgets('says so when the line already has a number elsewhere', (
+    testWidgets('shows the stored number when it was entered elsewhere', (
       tester,
     ) async {
-      // The screen has a line without a number, but the stored one has one.
+      // The screen was opened with a line that had no number, but the stored
+      // one has one: the screen reads the lines again and shows it.
       final lines = FakeStatementLineIF()
         ..stored.add(fakeStatementLine(id: 'blank', vehicleNumber: 1));
       await _show(
@@ -446,18 +463,9 @@ void main() {
         _line(id: 'blank', withoutVehicleNumber: true),
         lines: lines,
       );
-      await tester.tap(enter);
-      await tester.pumpAndSettle();
-      await typeNumber(tester, '4321');
 
-      await tester.tap(find.text(StatementDetailStrings.save));
-      await tester.pumpAndSettle();
-
-      expect(
-        find.text(StatementDetailStrings.saveVehicleNumberFailed),
-        findsOneWidget,
-      );
-      expect(lines.stored.single.vehicleNumber, 1);
+      expect(find.text('1'), findsOneWidget);
+      expect(enter, findsNothing);
     });
   });
 
@@ -469,5 +477,262 @@ void main() {
       () => container.read(saveVehicleNumberUCProvider),
       throwsA(anything),
     );
+    expect(() => container.read(saveEntranceUCProvider), throwsA(anything));
+  });
+
+  group('entrance', () {
+    final enterAt = find.byKey(const ValueKey('enter-entrance-at'));
+    final enterIc = find.byKey(const ValueKey('enter-entrance-ic'));
+
+    /// A stored line without any entrance, and the screen for it. The line
+    /// exits at 09:15, like the one on the screen.
+    Future<FakeStatementLineIF> showBlank(
+      WidgetTester tester, {
+      DateTime? storedExitAt,
+    }) async {
+      FakeStatementLineIF store(DateTime exitAt) => FakeStatementLineIF()
+        ..stored.add(
+          fakeStatementLine(id: 'blank', withoutEntrance: true, exitAt: exitAt),
+        );
+      final lines = store(storedExitAt ?? DateTime(2026, 1, 10, 9, 15));
+      await _show(
+        tester,
+        _line(id: 'blank', entranceIc: null, blankEntranceAt: true),
+        lines: lines,
+        // What the list reads is what the screen shows (09:15), so that the
+        // screen is not changed by it.
+        listLines: storedExitAt == null
+            ? null
+            : store(DateTime(2026, 1, 10, 9, 15)),
+      );
+      return lines;
+    }
+
+    Future<void> tapOk(WidgetTester tester) async {
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('shows - and enter buttons when the CSV left them blank', (
+      tester,
+    ) async {
+      await showBlank(tester);
+
+      expect(enterAt, findsOneWidget);
+      expect(enterIc, findsOneWidget);
+    });
+
+    testWidgets('shows no button when the line has them', (tester) async {
+      await _show(tester, _line(id: 'x'));
+
+      expect(enterAt, findsNothing);
+      expect(enterIc, findsNothing);
+    });
+
+    testWidgets('shows no button for a line that is not stored', (
+      tester,
+    ) async {
+      await _show(tester, _line(entranceIc: null, blankEntranceAt: true));
+
+      expect(enterAt, findsNothing);
+      expect(enterIc, findsNothing);
+    });
+
+    testWidgets('saves the entrance date and time once, and shows it', (
+      tester,
+    ) async {
+      final lines = await showBlank(tester);
+
+      await tester.tap(enterAt);
+      await tester.pumpAndSettle();
+      // A date, a time and then the confirmation, which says it is once only.
+      await tapOk(tester);
+      await tapOk(tester);
+      expect(find.text('2026/01/10 09:15'), findsNWidgets(2));
+      expect(
+        find.text(StatementDetailStrings.enteredOnceNotice),
+        findsOneWidget,
+      );
+      await tester.tap(find.text(StatementDetailStrings.save));
+      await tester.pumpAndSettle();
+
+      // The date and time of the exit, which the pickers started with.
+      expect(lines.stored.single.entranceAt, DateTime(2026, 1, 10, 9, 15));
+      expect(enterAt, findsNothing);
+      // The IC is still blank, and can be entered.
+      expect(enterIc, findsOneWidget);
+    });
+
+    testWidgets('saves nothing when the date picker is cancelled', (
+      tester,
+    ) async {
+      final lines = await showBlank(tester);
+      await tester.tap(enterAt);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(lines.stored.single.entranceAt, isNull);
+      expect(enterAt, findsOneWidget);
+    });
+
+    testWidgets('saves nothing when the time picker is cancelled', (
+      tester,
+    ) async {
+      final lines = await showBlank(tester);
+      await tester.tap(enterAt);
+      await tester.pumpAndSettle();
+      await tapOk(tester);
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(lines.stored.single.entranceAt, isNull);
+    });
+
+    testWidgets('saves nothing when the confirmation is cancelled', (
+      tester,
+    ) async {
+      final lines = await showBlank(tester);
+      await tester.tap(enterAt);
+      await tester.pumpAndSettle();
+      await tapOk(tester);
+      await tapOk(tester);
+
+      await tester.tap(find.text(StatementDetailStrings.cancel));
+      await tester.pumpAndSettle();
+
+      expect(lines.stored.single.entranceAt, isNull);
+      expect(enterAt, findsOneWidget);
+    });
+
+    testWidgets('says so when the entrance would be after the exit', (
+      tester,
+    ) async {
+      // The line the use case saves exits earlier than the screen says (the
+      // other screen of the app changed it, for instance).
+      final lines = await showBlank(
+        tester,
+        storedExitAt: DateTime(2026, 1, 10, 8),
+      );
+      await tester.tap(enterAt);
+      await tester.pumpAndSettle();
+      await tapOk(tester);
+      await tapOk(tester);
+
+      await tester.tap(find.text(StatementDetailStrings.save));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(StatementDetailStrings.entranceAfterExit),
+        findsOneWidget,
+      );
+      expect(lines.stored.single.entranceAt, isNull);
+      expect(enterAt, findsOneWidget);
+    });
+
+    testWidgets('saves the entrance IC once, and shows it', (tester) async {
+      final lines = await showBlank(tester);
+
+      await tester.tap(enterIc);
+      await tester.pumpAndSettle();
+      expect(
+        find.text(StatementDetailStrings.enteredOnceNotice),
+        findsOneWidget,
+      );
+      await tester.enterText(find.byType(TextField), '  テスト北  ');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(StatementDetailStrings.save));
+      await tester.pumpAndSettle();
+
+      expect(lines.stored.single.entranceIc, 'テスト北');
+      expect(find.text('テスト北'), findsWidgets);
+      expect(enterIc, findsNothing);
+      expect(enterAt, findsOneWidget);
+    });
+
+    testWidgets('cannot save a blank entrance IC', (tester) async {
+      await showBlank(tester);
+      await tester.tap(enterIc);
+      await tester.pumpAndSettle();
+
+      FilledButton save() => tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, StatementDetailStrings.save),
+      );
+      expect(save().onPressed, isNull);
+      await tester.enterText(find.byType(TextField), '   ');
+      await tester.pumpAndSettle();
+      expect(save().onPressed, isNull);
+      await tester.enterText(find.byType(TextField), '北');
+      await tester.pumpAndSettle();
+      expect(save().onPressed, isNotNull);
+    });
+
+    testWidgets('saves nothing when the IC dialog is cancelled', (
+      tester,
+    ) async {
+      final lines = await showBlank(tester);
+      await tester.tap(enterIc);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), '北');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(StatementDetailStrings.cancel));
+      await tester.pumpAndSettle();
+
+      expect(lines.stored.single.entranceIc, isNull);
+      expect(enterIc, findsOneWidget);
+    });
+
+    testWidgets('says so when saving fails, without details', (tester) async {
+      final lines = await showBlank(tester);
+      lines.error = StateError('secret テスト北');
+      await tester.tap(enterIc);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'テスト北');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(StatementDetailStrings.save));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(StatementDetailStrings.saveVehicleNumberFailed),
+        findsOneWidget,
+      );
+      expect(find.textContaining('secret'), findsNothing);
+      expect(enterIc, findsOneWidget);
+    });
+
+    testWidgets('shows the route names of the line again after a save', (
+      tester,
+    ) async {
+      final lines = FakeStatementLineIF()
+        ..stored.add(
+          fakeStatementLine(id: 'blank', withoutEntrance: true, exitIc: 'テスト東'),
+        );
+      final master = FakeIcMasterIF([
+        fakeIcPoint(name: 'テスト北', routeNames: const ['北の路線']),
+        fakeIcPoint(name: 'テスト東', routeNames: const ['東の路線']),
+      ]);
+      await _show(
+        tester,
+        _line(id: 'blank', entranceIc: null, exitIc: 'テスト東'),
+        lines: lines,
+        master: master,
+      );
+      // With the exit only, the routes are the exit's.
+      expect(find.text('東の路線'), findsOneWidget);
+
+      await tester.tap(enterIc);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'テスト北');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(StatementDetailStrings.save));
+      await tester.pumpAndSettle();
+
+      // The lines were read again: with the entrance, both routes.
+      expect(find.text('北の路線・東の路線'), findsOneWidget);
+    });
   });
 }

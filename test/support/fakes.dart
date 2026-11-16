@@ -132,6 +132,23 @@ class FakeStatementLineIF implements StatementLineIF {
   }
 
   @override
+  Future<void> updateEntrance(
+    String id, {
+    DateTime? entranceAt,
+    String? entranceIc,
+  }) async {
+    await gate;
+    if (error != null) throw error!;
+    final index = stored.indexWhere((s) => s.id == id);
+    if (index >= 0) {
+      stored[index] = stored[index].withEntrance(
+        entranceAt: entranceAt,
+        entranceIc: entranceIc,
+      );
+    }
+  }
+
+  @override
   Future<List<StatementLineEntity>> findAll() async {
     readCount++;
     await readGate;

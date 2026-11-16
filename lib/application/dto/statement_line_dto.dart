@@ -83,4 +83,26 @@ class StatementLineDTO {
     discountTypes: discountTypes,
     routeNames: routeNames,
   );
+
+  /// The same line with the entrance the user entered. A null argument keeps
+  /// what the line has. The route names are not made again.
+  StatementLineDTO withEntrance({DateTime? entranceAt, String? entranceIc}) =>
+      StatementLineDTO(
+        id: id,
+        entranceAt: entranceAt ?? this.entranceAt,
+        exitAt: exitAt,
+        entranceIc: entranceIc ?? this.entranceIc,
+        exitIc: exitIc,
+        grossFare: grossFare,
+        etcDiscount: etcDiscount,
+        fare: fare,
+        fareAfterRebate: fareAfterRebate,
+        postpaidFare: postpaidFare,
+        vehicleType: vehicleType,
+        vehicleNumber: vehicleNumber,
+        cardNumberSuffix: cardNumberSuffix,
+        status: status,
+        discountTypes: discountTypes,
+        routeNames: routeNames,
+      );
 }

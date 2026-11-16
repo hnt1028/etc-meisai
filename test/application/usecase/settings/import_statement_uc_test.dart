@@ -45,6 +45,13 @@ class _FakeStatementLineIF implements StatementLineIF {
   Future<void> updateVehicleNumber(String id, int vehicleNumber) async {}
 
   @override
+  Future<void> updateEntrance(
+    String id, {
+    DateTime? entranceAt,
+    String? entranceIc,
+  }) async {}
+
+  @override
   Future<List<StatementLineEntity>> findAll() async => stored.values.toList();
 
   @override

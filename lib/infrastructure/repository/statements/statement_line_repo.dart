@@ -61,6 +61,20 @@ class StatementLineRepo implements StatementLineIF {
   }
 
   @override
+  Future<void> updateEntrance(
+    String id, {
+    DateTime? entranceAt,
+    String? entranceIc,
+  }) async {
+    await (_db.update(_db.statementLines)..where((t) => t.id.equals(id))).write(
+      StatementLinesCompanion(
+        enteredEntranceAt: Value.absentIfNull(entranceAt),
+        enteredEntranceIc: Value.absentIfNull(entranceIc),
+      ),
+    );
+  }
+
+  @override
   Future<List<StatementLineEntity>> findAll() async {
     final rows = await (_db.select(
       _db.statementLines,
@@ -96,9 +110,10 @@ class StatementLineRepo implements StatementLineIF {
   StatementLineEntity _toEntity(StatementLine row) {
     return StatementLineEntity(
       id: row.id,
-      entranceAt: row.entranceAt,
+      // What the CSV has, or else what the user entered.
+      entranceAt: row.entranceAt ?? row.enteredEntranceAt,
       exitAt: row.exitAt,
-      entranceIc: row.entranceIc,
+      entranceIc: row.entranceIc ?? row.enteredEntranceIc,
       exitIc: row.exitIc,
       grossFare: row.grossFare,
       etcDiscount: row.etcDiscount,

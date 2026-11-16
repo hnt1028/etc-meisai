@@ -36,6 +36,8 @@
 | 後納料金 | `postpaid_fare` | INTEGER | - | ◯ |
 | 車種 | `vehicle_type` | INTEGER（1〜5。下の「車種の値」） | - | ◯ |
 | 車両番号 | `vehicle_number` | INTEGER | - | |
+| 入力した入口日時 | `entered_entrance_at` | DATETIME | - | |
+| 入力した入口IC | `entered_entrance_ic` | TEXT | - | |
 | ETCカード番号 | `card_number` | TEXT | - | ◯ |
 | 状態 | `status` | INTEGER（0: 確定、1: 確認中） | - | ◯ |
 | 割引種別 | `discount_types` | TEXT（`;` 区切り。無いときは空文字） | - | ◯ |
@@ -45,6 +47,7 @@
 - IDは、保存するときにアプリが UUIDv7 を作って入れる。同じ重複判定キーの行を上書きしても、IDは変わらない
 - 金額はすべて円の整数で保存する（小数は使わない）
 - 状態は `ConfirmationStatusValue` の並び順の番号で保存する。並び順を変えない
+- 入口日時・入口ICは、CSVの値を `entrance_at`・`entrance_ic` に、利用者が入力した値を `entered_entrance_at`・`entered_entrance_ic` に、別々に保存する（スキーマ版4から）。重複判定のキーには、CSVの値（`entrance_at`・`entrance_ic`）だけを使う。画面に出す値は、CSVの値があればそれ、無ければ入力した値。入力した値は、取り込みの上書きでは変えない。NULL の行の項目だけ、入力できる
 - 車両番号は、CSVで空欄のとき NULL（スキーマ版4から、NULL を許す。版3までは NotNull だった）。利用者が入力すると、数字が入る（[PRC-014](../processes/PRC-014-save-vehicle-number.md)）。NULL の行だけ、更新できる
 - 車両番号とETCカード番号は個人情報。端末内にだけ保存する（[privacy.md](../../privacy.md)）
 

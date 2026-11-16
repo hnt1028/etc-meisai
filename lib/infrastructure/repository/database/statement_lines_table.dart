@@ -31,6 +31,13 @@ class StatementLines extends Table {
 
   /// Null when the CSV leaves it blank and the user has not entered one.
   IntColumn get vehicleNumber => integer().nullable()();
+
+  /// What the user entered when the CSV left the entrance blank. They are kept
+  /// apart from [entranceAt] and [entranceIc], which the duplicate key uses,
+  /// so that entering them does not change the key (docs/csv-format.md).
+  DateTimeColumn get enteredEntranceAt => dateTime().nullable()();
+  TextColumn get enteredEntranceIc => text().nullable()();
+
   TextColumn get cardNumber => text()();
 
   /// Stored as the position in [ConfirmationStatusValue] (0 confirmed, 1 pending).

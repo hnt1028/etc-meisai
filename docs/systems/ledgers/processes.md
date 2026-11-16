@@ -16,3 +16,4 @@
 | PRC-012 | 明細行のルートの取得（GetLineRouteUC） | [PRC-012-get-line-route.md](../processes/PRC-012-get-line-route.md) | 草案 |
 | PRC-013 | 明細行の集計（AggregateStatementsUC） | [PRC-013-aggregate-statements.md](../processes/PRC-013-aggregate-statements.md) | 草案 |
 | PRC-014 | 車両番号の保存（SaveVehicleNumberUC） | [PRC-014-save-vehicle-number.md](../processes/PRC-014-save-vehicle-number.md) | 草案 |
+| PRC-015 | 入口日時・入口ICの保存（SaveEntranceUC） | [PRC-015-save-entrance.md](../processes/PRC-015-save-entrance.md) | 草案 |

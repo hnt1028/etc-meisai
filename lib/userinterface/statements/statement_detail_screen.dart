@@ -5,6 +5,8 @@ import 'package:etc_meisai/userinterface/statements/line_route_map.dart';
 import 'package:etc_meisai/userinterface/statements/statement_detail_strings.dart';
 import 'package:etc_meisai/userinterface/common/data_revision.dart';
 import 'package:etc_meisai/userinterface/statements/statement_detail_providers.dart';
+import 'package:etc_meisai/userinterface/statements/entrance_dialogs.dart';
+import 'package:etc_meisai/userinterface/statements/statement_list_controller.dart';
 import 'package:etc_meisai/userinterface/statements/vehicle_number_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -51,8 +53,107 @@ class _StatementDetailScreenState extends ConsumerState<StatementDetailScreen> {
     if (mounted) setState(() => _line = line.withVehicleNumber(number));
   }
 
+  /// OP-4: asks for the entrance date and time, saves it, and shows it.
+  Future<void> _enterEntranceAt() async {
+    final line = _line;
+    final id = line?.id;
+    if (line == null || id == null) return;
+    final entranceAt = await showEntranceAtDialog(context, exitAt: line.exitAt);
+    if (entranceAt == null || !mounted) return;
+    await _saveEntrance(
+      line,
+      () => ref
+          .read(saveEntranceUCProvider)
+          .execute(id: id, entranceAt: entranceAt),
+      line.withEntrance(entranceAt: entranceAt),
+    );
+  }
+
+  /// OP-5: asks for the entrance IC, saves it, and shows it.
+  Future<void> _enterEntranceIc() async {
+    final line = _line;
+    final id = line?.id;
+    if (line == null || id == null) return;
+    final entranceIc = await showEntranceIcDialog(context);
+    if (entranceIc == null || !mounted) return;
+    await _saveEntrance(
+      line,
+      () => ref
+          .read(saveEntranceUCProvider)
+          .execute(id: id, entranceIc: entranceIc),
+      line.withEntrance(entranceIc: entranceIc.trim()),
+    );
+  }
+
+  /// Runs [save], and then shows [saved] and makes the other screens read the
+  /// lines again. A failure is shown as a message, without details.
+  Future<void> _saveEntrance(
+    StatementLineDTO line,
+    Future<void> Function() save,
+    StatementLineDTO saved,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await save();
+    } on ArgumentError {
+      // The only input the dialogs let through that the use case refuses is an
+      // entrance time on the exit day that is after the exit (ER-4).
+      messenger.showSnackBar(
+        const SnackBar(content: Text(StatementDetailStrings.entranceAfterExit)),
+      );
+      return;
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(StatementDetailStrings.saveVehicleNumberFailed),
+        ),
+      );
+      return;
+    }
+    ref.read(dataRevisionProvider.notifier).changed();
+    if (mounted) setState(() => _line = saved);
+  }
+
+  /// A field the CSV left blank: a dash, and a button to enter it when the
+  /// line is stored.
+  Widget _blankItem(
+    String label,
+    StatementLineDTO line,
+    Key buttonKey,
+    VoidCallback onPressed,
+  ) {
+    return ListTile(
+      dense: true,
+      title: Text(label),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(StatementDetailStrings.blank),
+          if (line.id != null)
+            TextButton(
+              key: buttonKey,
+              onPressed: onPressed,
+              child: const Text(StatementDetailStrings.vehicleNumberEnter),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // When the lines are read again (after a save), show the fresh line: its
+    // route names are made again from the new entrance.
+    ref.listen(statementListProvider, (_, next) {
+      final id = _line?.id;
+      if (id == null || !next.hasValue) return;
+      for (final fresh in next.value!.lines) {
+        if (fresh.id == id && mounted) {
+          setState(() => _line = fresh);
+          return;
+        }
+      }
+    });
     final line = _line;
     return Scaffold(
       appBar: AppBar(title: const Text(StatementDetailStrings.title)),
@@ -61,20 +162,31 @@ class _StatementDetailScreenState extends ConsumerState<StatementDetailScreen> {
           : ListView(
               children: [
                 LineRouteMap(line: line),
-                _item(
-                  StatementDetailStrings.entranceAt,
-                  line.entranceAt == null
-                      ? StatementDetailStrings.blank
-                      : formatDateTime(line.entranceAt!),
-                ),
+                if (line.entranceAt == null)
+                  _blankItem(
+                    StatementDetailStrings.entranceAt,
+                    line,
+                    const ValueKey('enter-entrance-at'),
+                    _enterEntranceAt,
+                  )
+                else
+                  _item(
+                    StatementDetailStrings.entranceAt,
+                    formatDateTime(line.entranceAt!),
+                  ),
                 _item(
                   StatementDetailStrings.exitAt,
                   formatDateTime(line.exitAt),
                 ),
-                _item(
-                  StatementDetailStrings.entranceIc,
-                  line.entranceIc ?? StatementDetailStrings.blank,
-                ),
+                if (line.entranceIc == null)
+                  _blankItem(
+                    StatementDetailStrings.entranceIc,
+                    line,
+                    const ValueKey('enter-entrance-ic'),
+                    _enterEntranceIc,
+                  )
+                else
+                  _item(StatementDetailStrings.entranceIc, line.entranceIc!),
                 _item(StatementDetailStrings.exitIc, line.exitIc),
                 _item(
                   StatementDetailStrings.routeNames,
@@ -101,23 +213,11 @@ class _StatementDetailScreenState extends ConsumerState<StatementDetailScreen> {
                   line.vehicleType.label,
                 ),
                 if (line.vehicleNumber == null)
-                  ListTile(
-                    dense: true,
-                    title: const Text(StatementDetailStrings.vehicleNumber),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(StatementDetailStrings.blank),
-                        if (line.id != null)
-                          TextButton(
-                            key: const ValueKey('enter-vehicle-number'),
-                            onPressed: _enterVehicleNumber,
-                            child: const Text(
-                              StatementDetailStrings.vehicleNumberEnter,
-                            ),
-                          ),
-                      ],
-                    ),
+                  _blankItem(
+                    StatementDetailStrings.vehicleNumber,
+                    line,
+                    const ValueKey('enter-vehicle-number'),
+                    _enterVehicleNumber,
                   )
                 else
                   _item(

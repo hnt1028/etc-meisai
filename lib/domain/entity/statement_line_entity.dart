@@ -28,11 +28,13 @@ class StatementLineEntity {
   /// line that was only read from a CSV.
   final String? id;
 
-  /// May be null when the CSV leaves the entrance blank.
+  /// The entrance date and time. The CSV's, or else the one the user entered
+  /// (docs/csv-format.md). Null while both are blank.
   final DateTime? entranceAt;
   final DateTime exitAt;
 
-  /// May be null when the CSV leaves the entrance blank.
+  /// The entrance IC. The CSV's, or else the one the user entered. Null while
+  /// both are blank.
   final String? entranceIc;
   final String exitIc;
 
@@ -80,4 +82,27 @@ class StatementLineEntity {
         status: status,
         discountTypes: discountTypes,
       );
+
+  /// The same line with the entrance the user entered. A null argument keeps
+  /// what the line has.
+  StatementLineEntity withEntrance({
+    DateTime? entranceAt,
+    String? entranceIc,
+  }) => StatementLineEntity(
+    id: id,
+    entranceAt: entranceAt ?? this.entranceAt,
+    exitAt: exitAt,
+    entranceIc: entranceIc ?? this.entranceIc,
+    exitIc: exitIc,
+    grossFare: grossFare,
+    etcDiscount: etcDiscount,
+    fare: fare,
+    fareAfterRebate: fareAfterRebate,
+    postpaidFare: postpaidFare,
+    vehicleType: vehicleType,
+    vehicleNumber: vehicleNumber,
+    cardNumber: cardNumber,
+    status: status,
+    discountTypes: discountTypes,
+  );
 }
