@@ -9,9 +9,11 @@ import 'package:flutter/material.dart';
 /// [knownOperators], as a Material color: its darker shade on a light theme,
 /// its lighter shade on a dark theme, so that it can be seen on the map.
 const _colors = <String, MaterialColor>{
-  'NEXCO東日本': Colors.blue,
-  'NEXCO中日本': Colors.green,
-  'NEXCO西日本': Colors.orange,
+  // NEXCO: the colors of the logos (ネクスコグリーン / オレンジ / ブルー).
+  'NEXCO東日本': Colors.green,
+  'NEXCO中日本': Colors.orange,
+  'NEXCO西日本': Colors.blue,
+  // The others are not yet the colors of the logos (docs/route-map.md).
   '首都高速道路': Colors.purple,
   '阪神高速道路': Colors.red,
   '名古屋高速道路公社': Colors.teal,
