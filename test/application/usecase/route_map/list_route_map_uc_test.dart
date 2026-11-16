@@ -1,5 +1,6 @@
 import 'package:etc_meisai/application/usecase/route_map/delete_ic_position_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/save_ic_position_uc.dart';
+import 'package:etc_meisai/domain/entity/geo_point_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
@@ -275,6 +276,43 @@ void main() {
       // The ends are as before.
       expect(segment.fromLatitude, 35.1);
       expect(segment.toLatitude, 35.2);
+    });
+
+    test('follows the shape of the roads between the points', () async {
+      final shaped = FakeIcMasterIF(
+        [
+          fakeIcPoint(name: '北', latitude: 35.1, longitude: 139.1),
+          fakeIcPoint(name: '中', latitude: 35.5, longitude: 139.2),
+          fakeIcPoint(name: '東', latitude: 35.2, longitude: 139.2),
+        ],
+        links: const [
+          IcLinkEntity(
+            fromId: 'id-北',
+            toId: 'id-中',
+            meters: 1000,
+            shape: [GeoPointEntity(latitude: 35.2, longitude: 139.15)],
+          ),
+          IcLinkEntity(
+            fromId: 'id-中',
+            toId: 'id-東',
+            meters: 1000,
+            shape: [
+              GeoPointEntity(latitude: 35.4, longitude: 139.25),
+              GeoPointEntity(latitude: 35.3, longitude: 139.3),
+            ],
+          ),
+        ],
+      );
+      final lines = FakeStatementLineIF()
+        ..stored.add(fakeStatementLine(entranceIc: '北', exitIc: '東'));
+
+      final result = await fakeRouteMapUC(lines, master: shaped).execute();
+
+      // The bend, the point 中, and the two bends.
+      expect(
+        result.segments.single.via.map((v) => '${v.latitude},${v.longitude}'),
+        ['35.2,139.15', '35.5,139.2', '35.4,139.25', '35.3,139.3'],
+      );
     });
 
     test('goes through them in the order of the way, backwards too', () async {

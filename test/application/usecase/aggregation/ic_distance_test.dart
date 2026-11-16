@@ -1,5 +1,8 @@
 import 'package:etc_meisai/application/usecase/aggregation/ic_distance.dart';
+import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
+import 'package:etc_meisai/domain/entity/geo_point_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
+import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/fakes.dart';
@@ -205,6 +208,145 @@ void main() {
       )!;
 
       expect(route.pointIds, ['id-A', 'id-D', 'id-C']);
+    });
+  });
+
+  group('the shape of the road', () {
+    GeoPointEntity at(double lat, double lon) =>
+        GeoPointEntity(latitude: lat, longitude: lon);
+
+    // A - B - C, with a bend between A and B and two between B and C.
+    // The link B-C is written the other way round (C first).
+    final shaped = IcDistance([
+      IcLinkEntity(
+        fromId: 'id-A',
+        toId: 'id-B',
+        meters: 1000,
+        shape: [at(35.01, 139.01)],
+      ),
+      IcLinkEntity(
+        fromId: 'id-C',
+        toId: 'id-B',
+        meters: 2000,
+        shape: [at(35.04, 139.04), at(35.03, 139.03)],
+      ),
+    ]);
+
+    List<String> text(List<GeoPointEntity> shape) => [
+      for (final p in shape) '${p.latitude},${p.longitude}',
+    ];
+
+    test('is given from the point asked, whichever way the link is', () {
+      expect(text(shaped.shapeBetween('id-A', 'id-B')), ['35.01,139.01']);
+      expect(text(shaped.shapeBetween('id-B', 'id-A')), ['35.01,139.01']);
+      expect(text(shaped.shapeBetween('id-C', 'id-B')), [
+        '35.04,139.04',
+        '35.03,139.03',
+      ]);
+      expect(text(shaped.shapeBetween('id-B', 'id-C')), [
+        '35.03,139.03',
+        '35.04,139.04',
+      ]);
+    });
+
+    test('is empty for points that are not next to each other', () {
+      expect(shaped.shapeBetween('id-A', 'id-C'), isEmpty);
+      expect(shaped.shapeBetween('id-A', 'id-X'), isEmpty);
+    });
+
+    test('is the one of the shorter link when a pair has two', () {
+      final two = IcDistance([
+        IcLinkEntity(
+          fromId: 'id-A',
+          toId: 'id-B',
+          meters: 900,
+          shape: [at(1, 1)],
+        ),
+        IcLinkEntity(
+          fromId: 'id-A',
+          toId: 'id-B',
+          meters: 500,
+          shape: [at(2, 2)],
+        ),
+      ]);
+
+      expect(text(two.shapeBetween('id-A', 'id-B')), ['2.0,2.0']);
+    });
+
+    IcLookup lookup(List<IcPositionEntity> positions) => IcLookup(
+      points: [
+        fakeIcPoint(name: 'A', latitude: 35.0, longitude: 139.0),
+        fakeIcPoint(name: 'B', latitude: 35.02, longitude: 139.02),
+        fakeIcPoint(name: 'C', latitude: 35.05, longitude: 139.05),
+      ],
+      mappings: const [],
+      positions: positions,
+    );
+
+    List<String> vertices(
+      String from,
+      String to, {
+      List<IcPositionEntity> positions = const [],
+      IcDistance? distance,
+    }) {
+      final l = lookup(positions);
+      return text(
+        routeVerticesOf(
+          entrance: l.placeOf(from),
+          exit: l.placeOf(to),
+          lookup: l,
+          distance: distance ?? shaped,
+        ),
+      );
+    }
+
+    test('are the roads and the points between, in order', () {
+      // A to B: the bend. B to C: the two bends, with the point B before.
+      expect(vertices('A', 'C'), [
+        '35.01,139.01',
+        '35.02,139.02',
+        '35.03,139.03',
+        '35.04,139.04',
+      ]);
+    });
+
+    test('are in the order of the way backwards', () {
+      expect(vertices('C', 'A'), [
+        '35.04,139.04',
+        '35.03,139.03',
+        '35.02,139.02',
+        '35.01,139.01',
+      ]);
+    });
+
+    test('are the shape alone for two points next to each other', () {
+      expect(vertices('A', 'B'), ['35.01,139.01']);
+    });
+
+    test('are empty when the way has no shape', () {
+      final bare = IcDistance([_link('A', 'B', 1000), _link('B', 'C', 2000)]);
+
+      // The point between them still gives a vertex.
+      expect(vertices('A', 'C', distance: bare), ['35.02,139.02']);
+      expect(vertices('A', 'B', distance: bare), isEmpty);
+    });
+
+    test('are empty when there is no way, or a position is the user\'s', () {
+      expect(vertices('A', 'C', distance: IcDistance(const [])), isEmpty);
+      expect(
+        vertices(
+          'A',
+          'C',
+          positions: const [
+            IcPositionEntity(icName: 'C', latitude: 36, longitude: 140),
+          ],
+        ),
+        isEmpty,
+      );
+      // An IC that is not known has no place.
+      expect(vertices('A', '不明'), isEmpty);
+      // One point: no road at all.
+      expect(vertices('A', 'A'), isEmpty);
     });
   });
 }

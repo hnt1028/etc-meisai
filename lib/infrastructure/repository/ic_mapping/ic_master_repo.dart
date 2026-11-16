@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:etc_meisai/application/interface/ic_master_if.dart';
+import 'package:etc_meisai/domain/entity/geo_point_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
 import 'package:etc_meisai/domain/value/ic_kind_value.dart';
@@ -35,6 +36,17 @@ class IcMasterRepo implements IcMasterIF {
     return _links!;
   }
 
+  /// `[lat, lon, lat, lon, ...]` to points.
+  static List<GeoPointEntity> _parseShape(List flat) {
+    return List.unmodifiable([
+      for (var i = 0; i + 1 < flat.length; i += 2)
+        GeoPointEntity(
+          latitude: (flat[i] as num).toDouble(),
+          longitude: (flat[i + 1] as num).toDouble(),
+        ),
+    ]);
+  }
+
   static List<IcLinkEntity> _parseLinks(Map json) {
     final links = (json['links'] as List?) ?? const [];
     return List.unmodifiable([
@@ -43,6 +55,7 @@ class IcMasterRepo implements IcMasterIF {
           fromId: l[0] as String,
           toId: l[1] as String,
           meters: l[2] as int,
+          shape: l.length > 3 ? _parseShape(l[3] as List) : const [],
         ),
     ]);
   }

@@ -65,7 +65,7 @@ class GetLineRouteUC {
             toLatitude: exit.latitude,
             toLongitude: exit.longitude,
             via: [
-              for (final point in viaPointsOf(
+              for (final point in routeVerticesOf(
                 entrance: entrance,
                 exit: exit,
                 lookup: lookup,

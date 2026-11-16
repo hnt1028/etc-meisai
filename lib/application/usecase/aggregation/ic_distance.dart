@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:math' as math;
 
 import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
+import 'package:etc_meisai/domain/entity/geo_point_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
 
@@ -23,10 +24,27 @@ class IcDistance {
     for (final link in links) {
       (_neighbors[link.fromId] ??= []).add((link.toId, link.meters));
       (_neighbors[link.toId] ??= []).add((link.fromId, link.meters));
+      // The shortest link of a pair is the one that counts.
+      final key = _pairKey(link.fromId, link.toId);
+      final known = _links[key];
+      if (known == null || link.meters < known.meters) _links[key] = link;
     }
   }
 
   final _neighbors = <String, List<(String, int)>>{};
+  final _links = <String, IcLinkEntity>{};
+
+  static String _pairKey(String a, String b) =>
+      a.compareTo(b) <= 0 ? '$a\u0000$b' : '$b\u0000$a';
+
+  /// The shape of the road from the point [from] to the point [to], which are
+  /// next to each other: the points between them. Empty when it is not known.
+  List<GeoPointEntity> shapeBetween(String from, String to) {
+    final link = _links[_pairKey(from, to)];
+    if (link == null) return const [];
+    return link.fromId == from ? link.shape : link.shape.reversed.toList();
+  }
+
   final _routes = <String, IcRoute?>{};
 
   /// The distance in meters from [a] to [b]: the shortest way over the links,
@@ -138,10 +156,12 @@ int? lineMeters({
 }
 
 /// The points between the entrance and the exit of a line, in order, for the
-/// line to be drawn through them (docs/route-map.md, "地図に描く経路"). Empty
-/// when the line is drawn straight: a position is the user's own (it is not a
-/// point of the master), or there is no way over the links.
-List<IcPointEntity> viaPointsOf({
+/// line to be drawn along the road (docs/route-map.md, "地図に描く経路"): the
+/// points of the shape of each road between two points of the way, and the
+/// points of the way between them. Empty when the line is drawn straight: a
+/// position is the user's own (it is not a point of the master), or there is
+/// no way over the links.
+List<GeoPointEntity> routeVerticesOf({
   required IcPlace? entrance,
   required IcPlace? exit,
   required IcLookup lookup,
@@ -150,9 +170,20 @@ List<IcPointEntity> viaPointsOf({
   final from = entrance?.point, to = exit?.point;
   if (from == null || to == null) return const [];
   final route = distance.roadRouteBetween(from, to);
-  if (route == null || route.pointIds.length < 3) return const [];
-  return [
-    for (final id in route.pointIds.sublist(1, route.pointIds.length - 1))
-      ?lookup.pointOf(id),
-  ];
+  if (route == null) return const [];
+  final ids = route.pointIds;
+  final vertices = <GeoPointEntity>[];
+  for (var i = 0; i + 1 < ids.length; i++) {
+    vertices.addAll(distance.shapeBetween(ids[i], ids[i + 1]));
+    // The point where one road ends and the next begins: not the exit.
+    if (i + 2 < ids.length) {
+      final point = lookup.pointOf(ids[i + 1]);
+      if (point != null) {
+        vertices.add(
+          GeoPointEntity(latitude: point.latitude, longitude: point.longitude),
+        );
+      }
+    }
+  }
+  return vertices;
 }

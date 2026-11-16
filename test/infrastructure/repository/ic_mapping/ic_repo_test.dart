@@ -90,6 +90,26 @@ void main() {
       expect(await repo.findAll(), hasLength(1));
     });
 
+    test('have a shape, which is read as points', () async {
+      final repo = IcMasterRepo(
+        loadJson: () async => json(
+          links:
+              ', "links": [["a", "b", 100, [35.1, 139.1, 35.2, 139.2]], '
+              '["b", "c", 5, []], ["c", "d", 7]]',
+        ),
+      );
+
+      final links = await repo.findLinks();
+
+      expect(links[0].shape.map((p) => '${p.latitude},${p.longitude}'), [
+        '35.1,139.1',
+        '35.2,139.2',
+      ]);
+      // An empty shape, and a link without one (an older master).
+      expect(links[1].shape, isEmpty);
+      expect(links[2].shape, isEmpty);
+    });
+
     test('are empty when the master has none', () async {
       final repo = IcMasterRepo(loadJson: () async => json());
 
@@ -137,6 +157,8 @@ void main() {
     final links = await IcMasterRepo(loadJson: () async => text).findLinks();
     final ids = {for (final p in points) p.id};
     expect(links.length, greaterThan(2000));
+    // Most links have a shape: the road between the two points.
+    expect(links.where((l) => l.shape.isNotEmpty).length, greaterThan(2000));
     for (final l in links) {
       expect(ids, contains(l.fromId));
       expect(ids, contains(l.toId));

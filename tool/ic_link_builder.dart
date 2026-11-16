@@ -23,8 +23,10 @@ const _cellDegrees = 2e-4;
 /// length of the road between them. See docs/route-map.md ("リンクの作り方").
 ///
 /// [lines] are the lines of the route sections: each is a list of
-/// `[longitude, latitude]`. A link is `[idA, idB, meters]`, with the ids in
-/// order and one link for a pair.
+/// `[longitude, latitude]`. A link is `[idA, idB, meters, shape]`, with the ids
+/// in order and one link for a pair. The shape is `[lat, lon, lat, lon, ...]`:
+/// the road from A to B, without the two points, thinned out ([shapeMeters])
+/// and rounded to 5 decimals. It is empty for two points at one place.
 List<List<Object>> buildIcLinks({
   required Iterable<List<List<double>>> lines,
   required List<LinkPoint> points,
@@ -48,14 +50,26 @@ List<List<Object>> buildIcLinks({
   }
 
   final links = <String, List<Object>>{};
-  void link(int a, int b, double meters) {
+
+  /// Keeps the shorter of two links of a pair. [shape] makes the road from [a]
+  /// to [b] (`[lon, lat]` of the vertices); it is only made for a link that
+  /// is kept.
+  void link(
+    int a,
+    int b,
+    double meters, [
+    List<List<double>> Function()? shape,
+  ]) {
     final idA = points[a].id, idB = points[b].id;
-    final ordered = idA.compareTo(idB) <= 0 ? [idA, idB] : [idB, idA];
+    final forward = idA.compareTo(idB) <= 0;
+    final ordered = forward ? [idA, idB] : [idB, idA];
     final key = '${ordered[0]}\u0000${ordered[1]}';
     final rounded = meters.round();
     final known = links[key];
     if (known == null || (known[2] as int) > rounded) {
-      links[key] = [ordered[0], ordered[1], rounded];
+      var road = shape == null ? <List<double>>[] : shape();
+      if (!forward) road = road.reversed.toList();
+      links[key] = [ordered[0], ordered[1], rounded, _flat(road)];
     }
   }
 
@@ -71,6 +85,9 @@ List<List<Object>> buildIcLinks({
   // The nearest point (by road) of every vertex, from all the points at once.
   final distance = List<double>.filled(network.count, double.infinity);
   final owner = List<int>.filled(network.count, -1);
+
+  // The vertex before each vertex on its way to its owner.
+  final parent = List<int>.filled(network.count, -1);
   final heap = _Heap();
   owners.forEach((vertex, point) {
     distance[vertex] = 0;
@@ -85,6 +102,7 @@ List<List<Object>> buildIcLinks({
       if (next < distance[v]) {
         distance[v] = next;
         owner[v] = owner[u];
+        parent[v] = u;
         heap.add(next, v);
       }
     }
@@ -95,7 +113,18 @@ List<List<Object>> buildIcLinks({
     if (owner[u] < 0) continue;
     for (final (v, w) in network.edgesOf(u)) {
       if (u < v && owner[v] >= 0 && owner[v] != owner[u]) {
-        link(owner[u], owner[v], distance[u] + w + distance[v]);
+        link(owner[u], owner[v], distance[u] + w + distance[v], () {
+          // From the owner of u, to u, then v, to the owner of v.
+          final way = <int>[];
+          for (var x = u; x >= 0; x = parent[x]) {
+            way.add(x);
+          }
+          final road = [...way.reversed];
+          for (var x = v; x >= 0; x = parent[x]) {
+            road.add(x);
+          }
+          return [for (final x in road) network.coordinatesOf(x)];
+        });
       }
     }
   }
@@ -110,6 +139,76 @@ List<List<Object>> buildIcLinks({
   return result;
 }
 
+/// How far a point may be from the straight line between its neighbors in the
+/// shape of a road, in meters, to be left out (Douglas-Peucker method).
+const shapeMeters = 15.0;
+
+/// A shape as `[lat, lon, lat, lon, ...]`: thinned out, rounded to 5 decimals.
+///
+/// [road] is the whole way, from the vertex the first point was put on to the
+/// vertex of the last. Those two can be off the road by up to the snap
+/// distance, and the points themselves take their places, so they are left out
+/// (they are the ends the thinning keeps).
+List<double> _flat(List<List<double>> road) {
+  final kept = _thin(road, shapeMeters);
+  final inner = kept.length > 2
+      ? kept.sublist(1, kept.length - 1)
+      : const <List<double>>[];
+  return [
+    for (final c in inner) ...[_round5(c[1]), _round5(c[0])],
+  ];
+}
+
+double _round5(double value) => (value * 1e5).roundToDouble() / 1e5;
+
+/// Douglas-Peucker: the points of [line] (`[lon, lat]`) that are needed to keep
+/// the line within [meters] of the original. The ends are kept.
+List<List<double>> _thin(List<List<double>> line, double meters) {
+  if (line.length < 3) return line;
+  final keep = List<bool>.filled(line.length, false);
+  keep[0] = keep[line.length - 1] = true;
+  final stack = <(int, int)>[(0, line.length - 1)];
+  while (stack.isNotEmpty) {
+    final (first, last) = stack.removeLast();
+    var farthest = -1;
+    var farthestDistance = meters;
+    for (var i = first + 1; i < last; i++) {
+      final d = _distanceToSegment(line[i], line[first], line[last]);
+      if (d > farthestDistance) {
+        farthestDistance = d;
+        farthest = i;
+      }
+    }
+    if (farthest >= 0) {
+      keep[farthest] = true;
+      stack
+        ..add((first, farthest))
+        ..add((farthest, last));
+    }
+  }
+  return [
+    for (var i = 0; i < line.length; i++)
+      if (keep[i]) line[i],
+  ];
+}
+
+/// The distance in meters from [p] to the segment [a]-[b] (`[lon, lat]`).
+double _distanceToSegment(List<double> p, List<double> a, List<double> b) {
+  final metersPerLon = 111320 * math.cos(p[1] * math.pi / 180);
+  const metersPerLat = 110574.0;
+  final px = p[0] * metersPerLon, py = p[1] * metersPerLat;
+  final ax = a[0] * metersPerLon, ay = a[1] * metersPerLat;
+  final bx = b[0] * metersPerLon, by = b[1] * metersPerLat;
+  final dx = bx - ax, dy = by - ay;
+  final lengthSquared = dx * dx + dy * dy;
+  final t = lengthSquared == 0
+      ? 0.0
+      : (((px - ax) * dx + (py - ay) * dy) / lengthSquared).clamp(0.0, 1.0);
+  return math.sqrt(
+    math.pow(px - (ax + t * dx), 2) + math.pow(py - (ay + t * dy), 2),
+  );
+}
+
 /// The road network: vertices on a grid, and the edges between them.
 class _Network {
   final _longitudes = <double>[];
@@ -122,6 +221,12 @@ class _Network {
   static const _spatialDegrees = 0.002;
 
   int get count => _longitudes.length;
+
+  /// `[lon, lat]` of a vertex.
+  List<double> coordinatesOf(int vertex) => [
+    _longitudes[vertex],
+    _latitudes[vertex],
+  ];
 
   List<(int, double)> edgesOf(int vertex) => _edges[vertex];
 
