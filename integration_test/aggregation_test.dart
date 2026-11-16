@@ -5,6 +5,7 @@ import 'package:etc_meisai/userinterface/aggregation/aggregation_strings.dart';
 import 'package:etc_meisai/userinterface/app_strings.dart';
 import 'package:etc_meisai/userinterface/settings/settings_strings.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_strings.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -50,9 +51,14 @@ void main() {
     expect(find.text('テスト北ＩＣ'), findsOneWidget);
     expect(find.text('テスト東ＩＣ'), findsOneWidget);
 
-    // The graph has a bar for each row.
+    // The IC is shown as a pie, the period as bars.
     await tester.tap(
       find.text(AggregationStrings.display(AggregationDisplay.graph)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(PieChart), findsOneWidget);
+    await tester.tap(
+      find.text(AggregationStrings.kind(AggregationKind.period)),
     );
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('bar-0')), findsOneWidget);

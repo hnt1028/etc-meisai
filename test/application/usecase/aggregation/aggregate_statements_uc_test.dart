@@ -202,6 +202,43 @@ void main() {
       ]);
     });
 
+    test('totals the routes and ICs outside the top 10', () async {
+      final uc = fakeAggregateUC(
+        _lines([
+          for (var i = 0; i < 13; i++)
+            fakeStatementLine(
+              entranceIc: 'E$i',
+              exitIc: 'E$i',
+              exitAt: DateTime(2026, 1, 10, i),
+            ),
+        ]),
+        master: FakeIcMasterIF([
+          for (var i = 0; i < 13; i++)
+            fakeIcPoint(name: 'E$i', routeNames: ['R$i']),
+        ]),
+      );
+
+      final result = await uc.execute();
+
+      // Thirteen routes and ICs with one line each: three are left out.
+      expect(result.routes, hasLength(10));
+      expect(result.routesOtherCount, 3);
+      expect(result.ics, hasLength(10));
+      expect(result.icsOtherCount, 3);
+    });
+
+    test('has no rest when there are 10 routes and ICs or fewer', () async {
+      final uc = fakeAggregateUC(
+        _lines([fakeStatementLine(entranceIc: '北', exitIc: '東')]),
+        master: _master(),
+      );
+
+      final result = await uc.execute();
+
+      expect(result.routesOtherCount, 0);
+      expect(result.icsOtherCount, 0);
+    });
+
     test('counts an IC once for a line, and skips a blank entrance', () async {
       final uc = fakeAggregateUC(
         _lines([

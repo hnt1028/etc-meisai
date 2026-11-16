@@ -10,6 +10,7 @@
 |---|---|---|
 | 画面 | `lib/userinterface/aggregation/aggregation_screen.dart` | `AggregationScreen` |
 | 表とグラフ | `lib/userinterface/aggregation/aggregation_views.dart` | `AggregationTable`、`AggregationBars` |
+| 円グラフ | `lib/userinterface/aggregation/aggregation_pie.dart` | `AggregationPie`（円と凡例） |
 | 画面の状態 | `lib/userinterface/aggregation/aggregation_controller.dart` | `aggregationProvider`（集計の取得）、`aggregationViewProvider`（種類・表示・単位・値の選択） |
 | 画面の文言 | `lib/userinterface/aggregation/aggregation_strings.dart` | `AggregationStrings` |
 | 依存の受け口 | `lib/userinterface/aggregation/aggregation_providers.dart` | `aggregateStatementsUCProvider`（実体は `lib/main.dart` で渡す） |
@@ -17,7 +18,7 @@
 | 更新の通知 | `lib/userinterface/common/data_revision.dart` | `dataRevisionProvider` |
 | 画面の切り替え | `lib/userinterface/app_shell.dart` | `AppShell`（下部のナビゲーションバー。「集計」を追加） |
 
-グラフは、パッケージを使わず、標準のウィジェットで描く（横棒）。
+棒グラフは、標準のウィジェットで描く。円グラフには、パッケージ `fl_chart` を使う。色は、アプリのテーマ（Material 3 の配色）から作る。
 
 ## 呼び出し箇所
 
@@ -33,7 +34,13 @@
 
 グラフ:
 
-![SCR-006 集計（グラフ）の画面イメージ](images/SCR-006-aggregation-graph.drawio.png)
+棒グラフ（期間別・時間帯別）:
+
+![SCR-006 集計（棒グラフ）の画面イメージ](images/SCR-006-aggregation-graph.drawio.png)
+
+円グラフ（事業者別・路線別・IC別・割引種別別）:
+
+![SCR-006 集計（円グラフ）の画面イメージ](images/SCR-006-aggregation-pie.drawio.png)
 
 ### 入出力項目一覧
 
@@ -43,10 +50,11 @@
 | 合計 | 出力 | `AggregationSummaryDTO` | 「回数 12回　利用額 15,000円　割引額 1,200円」 |
 | 集計の種類 | 入力 | 選択（横に並べて選ぶ） | 「期間」「事業者」「路線」「IC」「時間帯」「割引」。初めは「期間」 |
 | 期間の単位 | 入力 | 選択 | 「週」「月」「年」。種類が「期間」のときだけ表示する。初めは「月」 |
-| 表示 | 入力 | 選択 | 「表」「グラフ」。初めは「表」 |
+| 表示 | 入力 | 選択 | 「表」「グラフ」。初めは「表」。グラフの形は、集計の種類で決まる（[aggregation.md](../../aggregation.md) の「グラフの形」） |
 | 値 | 入力 | 選択 | 「回数」「利用額」「割引額」。グラフに使う値なので、表示が「グラフ」で、出せる値が2つ以上あるときだけ表示する。表は、出せるすべての値を列にする。初めは「利用額」 |
 | 表 | 出力 | `AggregationRowDTO` の一覧 | 1行ごとに、名前と、出せる値（回数「3回」、利用額・割引額「1,200円」）。週は「2026/01/05〜」、月は「2026/01」、年は「2026年」、時間帯は「8時」 |
-| グラフ | 出力 | `AggregationRowDTO` の一覧 | 1行ごとに、名前と、値の大きさに比例する横棒と、値。棒の長さは、表示している行の最大値を1にした割合（最大が0のときは、棒なし） |
+| 棒グラフ | 出力 | `AggregationRowDTO` の一覧 | 期間別・時間帯別。1行ごとに、名前と、値の大きさに比例する横棒と、値。棒の長さは、表示している行の最大値を1にした割合（最大が0のときは、棒なし） |
+| 円グラフ | 出力 | `AggregationRowDTO` の一覧、`routesOtherCount`、`icsOtherCount` | 事業者別・路線別・IC別・割引種別別。値が0でない行を扇形にする。路線別・IC別は、残りを「その他」の扇形にする。円の下に、色・名前・値・割合（小数1桁の%）の凡例を並べる。すべて0のときは、「表示できる値がありません」 |
 | 事業者の注記 | 出力 | 文字列 | 種類が「事業者」のときだけ、「路線名からの推定です」を表示する |
 | 処理中の表示 | 出力 | 進捗の表示 | 読み込み中は、進捗バーを表示する |
 
@@ -87,6 +95,6 @@
 
 ## 関連するテスト
 
-- ウィジェット: `test/userinterface/aggregation/aggregation_screen_test.dart`（合計、種類・単位・表示・値の切り替え、表の値、グラフの棒の長さ、事業者の注記、上位10件、0件の文言、絞り込み、読み込み中、ER-1）
+- ウィジェット: `test/userinterface/aggregation/aggregation_screen_test.dart`（合計、種類・単位・表示・値の切り替え、表の値、棒グラフの棒の長さ、円グラフ（種類ごとの形、扇形と凡例の割合、その他、値が0の行、すべて0）、事業者の注記、上位10件、0件の文言、絞り込み、読み込み中、ER-1）
 - ウィジェット: `test/userinterface/app_shell_test.dart`（ナビゲーションバーに「集計」があり、切り替えられること）
 - 結合: `integration_test/aggregation_test.dart`（画面からDBまで。取り込んだ明細行が集計されること。絞り込むと変わること）

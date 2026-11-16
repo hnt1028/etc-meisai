@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
+import 'package:etc_meisai/userinterface/aggregation/aggregation_pie.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_providers.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_screen.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_strings.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_controller.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_controller.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_strings.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -69,7 +71,8 @@ Future<void> _show(
           fakeAggregateUC(store, master: _master()),
         ),
       ],
-      child: const MaterialApp(home: AggregationScreen()),
+      // ignore: prefer_const_constructors
+      child: MaterialApp(home: AggregationScreen()),
     ),
   );
   await tester.pumpAndSettle();
@@ -79,6 +82,9 @@ Future<void> _tap(WidgetTester tester, String text) async {
   await tester.tap(find.text(text));
   await tester.pumpAndSettle();
 }
+
+PieChartData _pie(WidgetTester tester) =>
+    tester.widget<PieChart>(find.byType(PieChart)).data;
 
 double _bar(WidgetTester tester, int index) => tester
     .widget<FractionallySizedBox>(find.byKey(ValueKey('bar-$index')))
@@ -202,7 +208,7 @@ void main() {
       find.text(AggregationStrings.metric(AggregationMetric.fare)),
       findsNothing,
     );
-    expect(find.byKey(const ValueKey('bar-0')), findsOneWidget);
+    expect(find.byType(PieChart), findsOneWidget);
     expect(find.text('3回'), findsOneWidget);
 
     // A discount type has a count and a discount, not a fare.
@@ -223,9 +229,147 @@ void main() {
     await _tap(tester, AggregationStrings.metric(AggregationMetric.discount));
 
     await _tap(tester, AggregationStrings.kind(AggregationKind.discount));
-    // The discount is still chosen: January's 240 yen is the longest.
-    expect(_bar(tester, 0), 1);
+    // The discount is still chosen: the pie shows the 240 yen of 深夜割引.
+    expect(_pie(tester).sections.single.value, 240);
     expect(find.text('240円'), findsOneWidget);
+  });
+
+  testWidgets('draws bars for the period and the hour, pies for the rest', (
+    tester,
+  ) async {
+    await _show(tester, lines: _lines());
+    await _tap(tester, AggregationStrings.display(AggregationDisplay.graph));
+
+    expect(find.byKey(const ValueKey('bar-0')), findsOneWidget);
+    expect(find.byType(PieChart), findsNothing);
+
+    await _tap(tester, AggregationStrings.kind(AggregationKind.hour));
+    expect(find.byKey(const ValueKey('bar-23')), findsOneWidget);
+    expect(find.byType(PieChart), findsNothing);
+
+    for (final kind in [
+      AggregationKind.operator,
+      AggregationKind.route,
+      AggregationKind.ic,
+      AggregationKind.discount,
+    ]) {
+      await _tap(tester, AggregationStrings.kind(kind));
+      expect(find.byType(PieChart), findsOneWidget, reason: '$kind');
+      expect(
+        find.byKey(const ValueKey('bar-0')),
+        findsNothing,
+        reason: '$kind',
+      );
+    }
+  });
+
+  testWidgets('shows the share of each slice in the legend', (tester) async {
+    await _show(tester, lines: _lines());
+    await _tap(tester, AggregationStrings.display(AggregationDisplay.graph));
+    await _tap(tester, AggregationStrings.kind(AggregationKind.ic));
+
+    // 北 and 東 are on all three lines: 3 and 3 of 6.
+    expect(_pie(tester).sections.map((s) => s.value), [3, 3]);
+    expect(find.text('50.0%'), findsNWidgets(2));
+    expect(find.text('3回'), findsNWidgets(2));
+    expect(find.text('北'), findsOneWidget);
+  });
+
+  testWidgets('switches the value of the pie', (tester) async {
+    await _show(tester, lines: _lines());
+    await _tap(tester, AggregationStrings.display(AggregationDisplay.graph));
+    await _tap(tester, AggregationStrings.kind(AggregationKind.operator));
+
+    // One operator (NEXCO中日本) takes everything, whatever the value is.
+    expect(_pie(tester).sections.single.value, 1750);
+    expect(find.text('100.0%'), findsOneWidget);
+    await _tap(tester, AggregationStrings.metric(AggregationMetric.count));
+    expect(_pie(tester).sections.single.value, 3);
+    await _tap(tester, AggregationStrings.metric(AggregationMetric.discount));
+    expect(_pie(tester).sections.single.value, 240);
+  });
+
+  testWidgets(
+    'leaves a row with 0 out of the pie, and says so when all are 0',
+    (tester) async {
+      await _show(tester, lines: [fakeStatementLine(fare: 100)]);
+      await _tap(tester, AggregationStrings.display(AggregationDisplay.graph));
+      await _tap(tester, AggregationStrings.kind(AggregationKind.operator));
+      expect(_pie(tester).sections, hasLength(1));
+
+      // The line has no discount.
+      await _tap(tester, AggregationStrings.metric(AggregationMetric.discount));
+      expect(find.byType(PieChart), findsNothing);
+      expect(find.text(AggregationStrings.noPieValues), findsOneWidget);
+    },
+  );
+
+  testWidgets('gathers the routes and ICs outside the top 10 into the rest', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    // Twelve ICs, each on its own route, with one line each.
+    final store = FakeStatementLineIF()
+      ..stored.addAll([
+        for (var i = 0; i < 12; i++)
+          fakeStatementLine(
+            entranceIc: 'P$i',
+            exitIc: 'P$i',
+            exitAt: DateTime(2026, 1, 10, i),
+          ),
+      ]);
+    final master = FakeIcMasterIF([
+      for (var i = 0; i < 12; i++)
+        fakeIcPoint(
+          name: 'P$i',
+          routeNames: ['R${i.toString().padLeft(2, '0')}'],
+        ),
+    ]);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          aggregateStatementsUCProvider.overrideWithValue(
+            fakeAggregateUC(store, master: master),
+          ),
+        ],
+        child: const MaterialApp(home: AggregationScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _tap(tester, AggregationStrings.display(AggregationDisplay.graph));
+
+    await _tap(tester, AggregationStrings.kind(AggregationKind.route));
+    // Ten routes and the rest (two routes, one line each).
+    expect(_pie(tester).sections, hasLength(11));
+    expect(_pie(tester).sections.last.value, 2);
+    expect(find.text(AggregationStrings.other), findsOneWidget);
+    expect(find.text('16.7%'), findsOneWidget);
+
+    await _tap(tester, AggregationStrings.kind(AggregationKind.ic));
+    expect(_pie(tester).sections, hasLength(11));
+    expect(find.text(AggregationStrings.other), findsOneWidget);
+  });
+
+  testWidgets('colors the slices from the theme, the rest in grey', (
+    tester,
+  ) async {
+    await _show(tester, lines: _lines());
+    await _tap(tester, AggregationStrings.display(AggregationDisplay.graph));
+    await _tap(tester, AggregationStrings.kind(AggregationKind.ic));
+
+    final scheme = Theme.of(tester.element(find.byType(PieChart))).colorScheme;
+    final colors = _pie(tester).sections.map((s) => s.color).toList();
+    expect(colors[0], HSLColor.fromColor(scheme.primary).toColor());
+    expect(colors[1], isNot(colors[0]));
+    expect(
+      AggregationPie.colorsOf(scheme, const [
+        PieSlice('a', 1),
+        PieSlice('b', 1, isOther: true),
+      ]).last,
+      scheme.outline,
+    );
   });
 
   testWidgets('says so when there are no statement lines', (tester) async {

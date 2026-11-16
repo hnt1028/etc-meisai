@@ -1,5 +1,6 @@
 import 'package:etc_meisai/application/dto/aggregation_dto.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_controller.dart';
+import 'package:etc_meisai/userinterface/aggregation/aggregation_pie.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_strings.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_views.dart';
 import 'package:etc_meisai/userinterface/common/message_text.dart';
@@ -169,11 +170,17 @@ class _Body extends ConsumerWidget {
         const SizedBox(height: 8),
         if (view.display == AggregationDisplay.table)
           AggregationTable(rows: rows, kind: view.kind, unit: view.unit)
-        else
+        else if (view.kind == AggregationKind.period ||
+            view.kind == AggregationKind.hour)
           AggregationBars(
             rows: rows,
             kind: view.kind,
             unit: view.unit,
+            metric: view.metric,
+          )
+        else
+          AggregationPie(
+            slices: pieSlicesOf(data, view.kind, view.metric),
             metric: view.metric,
           ),
       ],

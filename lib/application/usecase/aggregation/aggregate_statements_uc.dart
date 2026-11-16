@@ -97,6 +97,8 @@ class AggregateStatementsUC {
       operators: operators.rows(byFare: true),
       routes: routes.rows(limit: topCount),
       ics: ics.rows(limit: topCount),
+      routesOtherCount: routes.countBeyond(topCount),
+      icsOtherCount: ics.countBeyond(topCount),
       hours: [
         for (var hour = 0; hour < 24; hour++)
           hours.rowOf('$hour') ??
@@ -142,6 +144,14 @@ class _Tally {
       fare: _fares[label],
       discount: _discounts[label],
     );
+  }
+
+  /// The total count of the rows after the first [limit] ones, in the order
+  /// of [rows] by count.
+  int countBeyond(int limit) {
+    final all = rows();
+    if (all.length <= limit) return 0;
+    return all.skip(limit).fold(0, (sum, r) => sum + r.count);
   }
 
   /// The rows, the one with the most lines first (the default), the one with

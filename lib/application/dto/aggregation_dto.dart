@@ -13,6 +13,8 @@ class AggregationDTO {
     required this.ics,
     required this.hours,
     required this.discountTypes,
+    this.routesOtherCount = 0,
+    this.icsOtherCount = 0,
     required this.vehicleNumberChoices,
     required this.cardNumberChoices,
   });
@@ -35,6 +37,10 @@ class AggregationDTO {
 
   /// The 24 hours of the exit time, from 0.
   final List<AggregationRowDTO> hours;
+
+  /// The total count of the routes and ICs that are not in the top 10.
+  final int routesOtherCount;
+  final int icsOtherCount;
 
   /// By discount type, the most used first. Fare is null.
   final List<AggregationRowDTO> discountTypes;

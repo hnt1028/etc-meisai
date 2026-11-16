@@ -16,6 +16,14 @@ abstract final class AggregationStrings {
 
   static const operatorNote = '路線名からの推定です';
 
+  /// The slice of the pie for the routes and ICs outside the top 10.
+  static const other = 'その他';
+  static const noPieValues = '表示できる値がありません';
+
+  /// The share of [value] in [total], with one decimal place: 33.3%.
+  static String percent(int value, int total) =>
+      '${(value * 100 / total).toStringAsFixed(1)}%';
+
   static String kind(AggregationKind kind) => switch (kind) {
     AggregationKind.period => '期間',
     AggregationKind.operator => '事業者',

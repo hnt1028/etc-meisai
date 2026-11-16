@@ -33,7 +33,7 @@
 4. 合計（回数、利用額、割引額）を求める
 5. 期間別を求める。出口日時の日付から、週（月曜日の日付）・月・年の3通りの行を作る。新しい期間が先
 6. 明細行ごとに路線名を `IcLookup` で決め、事業者を `operatorOfRoutes` で決めて、事業者別を求める。利用額の多い順（同額は名前順）
-7. 路線別、IC別を求める。回数の多い順（同数は名前順）で、上位10件
+7. 路線別、IC別を求める。回数の多い順（同数は名前順）で、上位10件。上位10件に入らなかった行の回数の合計を、`routesOtherCount`、`icsOtherCount` として添える（円グラフの「その他」用）
 8. 時間帯別（出口の時刻の「時」。0〜23のすべて）、割引種別別（回数の多い順、同数は名前順）を求める
 
 ## シーケンス図
@@ -72,6 +72,7 @@ sequenceDiagram
 | `operators` | `List<AggregationRowDTO>` | 事業者別。`label` は事業者名、「複数の事業者」「不明」 |
 | `routes` | `List<AggregationRowDTO>` | 路線別（上位10件）。`fare`、`discount` は `null` |
 | `ics` | `List<AggregationRowDTO>` | IC別（上位10件）。`fare`、`discount` は `null` |
+| `routesOtherCount`、`icsOtherCount` | `int` | 上位10件に入らなかった路線・ICの回数の合計（なければ 0） |
 | `hours` | `List<AggregationRowDTO>` | 時間帯別。`label` は「0」〜「23」 |
 | `discountTypes` | `List<AggregationRowDTO>` | 割引種別別。`fare` は `null` |
 | `vehicleNumberChoices`、`cardNumberChoices` | `List<int>`、`List<String>` | 絞り込みで選べる値 |
