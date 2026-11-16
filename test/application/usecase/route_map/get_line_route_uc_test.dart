@@ -114,6 +114,25 @@ void main() {
       },
     );
 
+    test('cuts the line by operator', () async {
+      final uc = GetLineRouteUC(
+        icMaster: FakeIcMasterIF(
+          [
+            fakeIcPoint(name: '入口', routeNames: const ['東名高速道路']),
+            fakeIcPoint(name: '出口', routeNames: const ['東名高速道路']),
+          ],
+          links: const [
+            IcLinkEntity(fromId: 'id-入口', toId: 'id-出口', meters: 1000),
+          ],
+        ),
+        icMappings: FakeIcMappingIF(),
+        icPositions: FakeIcPositionIF(),
+      );
+      final route = await uc.execute(_line(entranceIc: '入口', exitIc: '出口'));
+
+      expect(route.segment!.runs.map((r) => r.operator), ['NEXCO中日本']);
+    });
+
     test('does not draw a line with an unknown IC, and lists it', () async {
       final route = await _uc().execute(_line(exitIc: '不明'));
 

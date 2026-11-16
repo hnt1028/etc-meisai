@@ -1,6 +1,7 @@
 import 'package:etc_meisai/application/dto/line_route_dto.dart';
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
+import 'package:etc_meisai/userinterface/route_map/operator_colors.dart';
 import 'package:etc_meisai/userinterface/common/message_text.dart';
 import 'package:etc_meisai/userinterface/route_map/route_map_providers.dart';
 import 'package:etc_meisai/userinterface/route_map/route_map_strings.dart';
@@ -94,19 +95,17 @@ class _Map extends ConsumerWidget {
         if (segment != null)
           PolylineLayer(
             polylines: [
-              Polyline(
-                // From the entrance, through the ICs between, to the exit.
-                points: [
-                  LatLng(segment.fromLatitude, segment.fromLongitude),
-                  for (final v in segment.via) LatLng(v.latitude, v.longitude),
-                  LatLng(segment.toLatitude, segment.toLongitude),
-                ],
-                strokeWidth: 4,
-                color: scheme.primary.withValues(alpha: 0.7),
-                pattern: pending
-                    ? StrokePattern.dashed(segments: const [10, 8])
-                    : const StrokePattern.solid(),
-              ),
+              for (final run in segmentRuns(segment))
+                Polyline(
+                  points: [
+                    for (final v in run.points) LatLng(v.latitude, v.longitude),
+                  ],
+                  strokeWidth: 4,
+                  color: runColor(context, run, scheme),
+                  pattern: pending
+                      ? StrokePattern.dashed(segments: const [10, 8])
+                      : const StrokePattern.solid(),
+                ),
             ],
           ),
         MarkerLayer(

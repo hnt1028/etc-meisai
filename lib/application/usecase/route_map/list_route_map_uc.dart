@@ -10,6 +10,7 @@ import 'package:etc_meisai/application/interface/statement_line_if.dart';
 import 'package:etc_meisai/application/usecase/aggregation/ic_distance.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
 import 'package:etc_meisai/application/usecase/route_map/implied_entrance.dart';
+import 'package:etc_meisai/application/usecase/route_map/route_runs.dart';
 import 'package:etc_meisai/application/usecase/statements/statement_filter.dart';
 
 /// Lists what the route map draws. Design: PRC-009.
@@ -88,6 +89,13 @@ class ListRouteMapUC {
                   longitude: point.longitude,
                 ),
             ],
+            runs: routeRunsOf(
+              entrance: drawnFrom,
+              exit: exit,
+              lineRouteNames: lookup.routeNamesOf(drawnFromName, line.exitIc),
+              lookup: lookup,
+              distance: distance,
+            ),
           ),
         );
       } else {
