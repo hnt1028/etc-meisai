@@ -222,6 +222,35 @@ void main() {
       expect(find.byType(RichAttributionWidget), findsOneWidget);
     });
 
+    testWidgets('draws the line through the ICs on the way', (tester) async {
+      final master = FakeIcMasterIF(
+        [
+          fakeIcPoint(name: 'テスト北', latitude: 35.1, longitude: 139.1),
+          fakeIcPoint(name: 'テスト中', latitude: 35.3, longitude: 139.15),
+          fakeIcPoint(name: 'テスト東', latitude: 35.2, longitude: 139.3),
+        ],
+        links: const [
+          IcLinkEntity(fromId: 'id-テスト北', toId: 'id-テスト中', meters: 1000),
+          IcLinkEntity(fromId: 'id-テスト中', toId: 'id-テスト東', meters: 1000),
+        ],
+      );
+
+      await _show(
+        tester,
+        _line(entranceIc: 'テスト北', exitIc: 'テスト東'),
+        master: master,
+      );
+
+      expect(lines(tester).single.points.map((p) => p.latitude), [
+        35.1,
+        35.3,
+        35.2,
+      ]);
+      // The markers are still the entrance and the exit only.
+      expect(find.byKey(const ValueKey('line-place-テスト北')), findsOneWidget);
+      expect(find.byKey(const ValueKey('line-place-テスト中')), findsNothing);
+    });
+
     testWidgets('draws a pending line dashed', (tester) async {
       await _show(
         tester,

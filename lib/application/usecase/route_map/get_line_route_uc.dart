@@ -1,10 +1,12 @@
 import 'package:etc_meisai/application/dto/line_route_dto.dart';
 import 'package:etc_meisai/application/dto/route_place_dto.dart';
 import 'package:etc_meisai/application/dto/route_segment_dto.dart';
+import 'package:etc_meisai/application/dto/route_vertex_dto.dart';
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/application/interface/ic_mapping_if.dart';
 import 'package:etc_meisai/application/interface/ic_master_if.dart';
 import 'package:etc_meisai/application/interface/ic_position_if.dart';
+import 'package:etc_meisai/application/usecase/aggregation/ic_distance.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
 
 /// Finds what the statement detail screen draws for one statement line.
@@ -62,6 +64,18 @@ class GetLineRouteUC {
             fromLongitude: entrance.longitude,
             toLatitude: exit.latitude,
             toLongitude: exit.longitude,
+            via: [
+              for (final point in routeVerticesOf(
+                entrance: entrance,
+                exit: exit,
+                lookup: lookup,
+                distance: IcDistance(await icMaster.findLinks()),
+              ))
+                RouteVertexDTO(
+                  latitude: point.latitude,
+                  longitude: point.longitude,
+                ),
+            ],
           )
         : null;
 
