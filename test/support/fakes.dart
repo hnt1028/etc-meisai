@@ -6,6 +6,7 @@ import 'package:etc_meisai/application/interface/ic_position_if.dart';
 import 'package:etc_meisai/application/interface/statement_if.dart';
 import 'package:etc_meisai/application/interface/statement_line_if.dart';
 import 'package:etc_meisai/application/usecase/aggregation/aggregate_statements_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/statement_line_copy.dart';
 import 'package:etc_meisai/application/usecase/route_map/list_route_map_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
@@ -127,7 +128,7 @@ class FakeStatementLineIF implements StatementLineIF {
     if (error != null) throw error!;
     final index = stored.indexWhere((s) => s.id == id);
     if (index >= 0) {
-      stored[index] = stored[index].withVehicleNumber(vehicleNumber);
+      stored[index] = copyWithVehicleNumber(stored[index], vehicleNumber);
     }
   }
 
@@ -141,7 +142,8 @@ class FakeStatementLineIF implements StatementLineIF {
     if (error != null) throw error!;
     final index = stored.indexWhere((s) => s.id == id);
     if (index >= 0) {
-      stored[index] = stored[index].withEntrance(
+      stored[index] = copyWithEntrance(
+        stored[index],
         entranceAt: entranceAt,
         entranceIc: entranceIc,
       );

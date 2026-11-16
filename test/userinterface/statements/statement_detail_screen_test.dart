@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/application/usecase/route_map/get_line_route_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/estimate_entrance_at_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_entrance_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_vehicle_number_uc.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_providers.dart';
+import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
+import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/domain/value/vehicle_type_value.dart';
@@ -98,6 +101,13 @@ Future<void> _show(
     ProviderScope(
       overrides: [
         getLineRouteUCProvider.overrideWithValue(uc),
+        estimateEntranceAtUCProvider.overrideWithValue(
+          EstimateEntranceAtUC(
+            icMaster: master ?? _master(),
+            icMappings: FakeIcMappingIF(),
+            icPositions: positions ?? FakeIcPositionIF(),
+          ),
+        ),
         saveEntranceUCProvider.overrideWithValue(
           SaveEntranceUC(statementLines: lines ?? FakeStatementLineIF()),
         ),
@@ -478,6 +488,10 @@ void main() {
       throwsA(anything),
     );
     expect(() => container.read(saveEntranceUCProvider), throwsA(anything));
+    expect(
+      () => container.read(estimateEntranceAtUCProvider),
+      throwsA(anything),
+    );
   });
 
   group('entrance', () {
@@ -630,6 +644,126 @@ void main() {
       );
       expect(lines.stored.single.entranceAt, isNull);
       expect(enterAt, findsOneWidget);
+    });
+
+    /// A line with an entrance IC but no entrance time, and a master in which
+    /// the road from テスト北 to テスト東 is 40 km: 30 minutes at 80 km/h.
+    Future<FakeStatementLineIF> showWithIc(
+      WidgetTester tester, {
+      FakeIcMasterIF? master,
+    }) async {
+      final lines = FakeStatementLineIF()
+        ..stored.add(
+          StatementLineEntity(
+            id: 'blank',
+            entranceAt: null,
+            exitAt: DateTime(2026, 1, 10, 9, 15),
+            entranceIc: 'テスト北',
+            exitIc: 'テスト東',
+            grossFare: null,
+            etcDiscount: null,
+            fare: 960,
+            fareAfterRebate: 100,
+            postpaidFare: 860,
+            vehicleType: VehicleTypeValue.standard,
+            vehicleNumber: 1234,
+            cardNumber: '0000-****-0001',
+            status: ConfirmationStatusValue.confirmed,
+            discountTypes: const [],
+          ),
+        );
+      await _show(
+        tester,
+        _line(
+          id: 'blank',
+          entranceIc: 'テスト北',
+          exitIc: 'テスト東',
+          blankEntranceAt: true,
+        ),
+        lines: lines,
+        master:
+            master ??
+            FakeIcMasterIF(
+              [fakeIcPoint(name: 'テスト北'), fakeIcPoint(name: 'テスト東')],
+              links: const [
+                IcLinkEntity(fromId: 'id-テスト北', toId: 'id-テスト東', meters: 40000),
+              ],
+            ),
+      );
+      return lines;
+    }
+
+    testWidgets('starts the pickers with the time calculated from the exit', (
+      tester,
+    ) async {
+      final lines = await showWithIc(tester);
+
+      await tester.tap(enterAt);
+      await tester.pumpAndSettle();
+      // The date picker says the start is an estimate.
+      expect(
+        find.text(StatementDetailStrings.entranceAtPickDateEstimated),
+        findsOneWidget,
+      );
+      await tapOk(tester);
+      expect(
+        find.text(StatementDetailStrings.entranceAtPickTimeEstimated),
+        findsOneWidget,
+      );
+      await tapOk(tester);
+      // 40 km at 80 km/h is 30 minutes before the exit at 09:15.
+      expect(find.text('2026/01/10 08:45'), findsOneWidget);
+      await tester.tap(find.text(StatementDetailStrings.save));
+      await tester.pumpAndSettle();
+
+      expect(lines.stored.single.entranceAt, DateTime(2026, 1, 10, 8, 45));
+    });
+
+    testWidgets('starts with the exit when the entrance IC is blank', (
+      tester,
+    ) async {
+      await showBlank(tester);
+
+      await tester.tap(enterAt);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(StatementDetailStrings.entranceAtPickDate),
+        findsOneWidget,
+      );
+      expect(
+        find.text(StatementDetailStrings.entranceAtPickDateEstimated),
+        findsNothing,
+      );
+      await tapOk(tester);
+      expect(
+        find.text(StatementDetailStrings.entranceAtPickTime),
+        findsOneWidget,
+      );
+      await tapOk(tester);
+      // The exit on the screen, and the time in the confirmation.
+      expect(find.text('2026/01/10 09:15'), findsNWidgets(2));
+    });
+
+    testWidgets('starts with the exit when the estimate fails', (tester) async {
+      // The IC master cannot be read, so there is no estimate. The user can
+      // still enter the time.
+      await showWithIc(
+        tester,
+        master: FakeIcMasterIF([])..error = StateError('x'),
+      );
+
+      await tester.tap(enterAt);
+      await tester.pumpAndSettle();
+      expect(
+        find.text(StatementDetailStrings.entranceAtPickDate),
+        findsOneWidget,
+      );
+      await tapOk(tester);
+      await tapOk(tester);
+
+      // The exit on the screen, and the time in the confirmation.
+      expect(find.text('2026/01/10 09:15'), findsNWidgets(2));
     });
 
     testWidgets('saves the entrance IC once, and shows it', (tester) async {

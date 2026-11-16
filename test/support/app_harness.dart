@@ -10,6 +10,7 @@ import 'package:etc_meisai/application/usecase/route_map/save_ic_position_uc.dar
 import 'package:etc_meisai/application/usecase/settings/delete_all_statement_lines_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/import_statement_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/estimate_entrance_at_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_entrance_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_vehicle_number_uc.dart';
 import 'package:etc_meisai/infrastructure/repository/database/app_database.dart';
@@ -82,6 +83,13 @@ Future<void> pumpApp(
         aggregateStatementsUCProvider.overrideWithValue(
           AggregateStatementsUC(
             statementLines: statementLines,
+            icMaster: icMaster,
+            icMappings: icMappings,
+            icPositions: icPositions,
+          ),
+        ),
+        estimateEntranceAtUCProvider.overrideWithValue(
+          EstimateEntranceAtUC(
             icMaster: icMaster,
             icMappings: icMappings,
             icPositions: icPositions,

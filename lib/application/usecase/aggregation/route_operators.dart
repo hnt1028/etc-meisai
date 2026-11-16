@@ -105,3 +105,17 @@ String operatorOfRoutes(Iterable<String> routeNames) {
   if (known.length == 1) return known.single;
   return multipleOperators;
 }
+
+/// The operators of urban expressways (都市高速), where the cars are slower.
+/// The table is in docs/systems/processes/PRC-016-estimate-entrance-at.md.
+const _urbanOperators = {
+  '首都高速道路',
+  '阪神高速道路',
+  '名古屋高速道路公社',
+  '福岡北九州高速道路公社',
+  '広島高速道路公社',
+};
+
+/// True for the operator of an urban expressway. [multipleOperators] and
+/// [unknownOperator] are not.
+bool isUrbanOperator(String operator) => _urbanOperators.contains(operator);

@@ -62,47 +62,4 @@ class StatementLineEntity {
 
   /// Discount names from the CSV note, such as 深夜割引. Not part of [status].
   final List<String> discountTypes;
-
-  /// The same line with the vehicle number [vehicleNumber].
-  StatementLineEntity withVehicleNumber(int vehicleNumber) =>
-      StatementLineEntity(
-        id: id,
-        entranceAt: entranceAt,
-        exitAt: exitAt,
-        entranceIc: entranceIc,
-        exitIc: exitIc,
-        grossFare: grossFare,
-        etcDiscount: etcDiscount,
-        fare: fare,
-        fareAfterRebate: fareAfterRebate,
-        postpaidFare: postpaidFare,
-        vehicleType: vehicleType,
-        vehicleNumber: vehicleNumber,
-        cardNumber: cardNumber,
-        status: status,
-        discountTypes: discountTypes,
-      );
-
-  /// The same line with the entrance the user entered. A null argument keeps
-  /// what the line has.
-  StatementLineEntity withEntrance({
-    DateTime? entranceAt,
-    String? entranceIc,
-  }) => StatementLineEntity(
-    id: id,
-    entranceAt: entranceAt ?? this.entranceAt,
-    exitAt: exitAt,
-    entranceIc: entranceIc ?? this.entranceIc,
-    exitIc: exitIc,
-    grossFare: grossFare,
-    etcDiscount: etcDiscount,
-    fare: fare,
-    fareAfterRebate: fareAfterRebate,
-    postpaidFare: postpaidFare,
-    vehicleType: vehicleType,
-    vehicleNumber: vehicleNumber,
-    cardNumber: cardNumber,
-    status: status,
-    discountTypes: discountTypes,
-  );
 }

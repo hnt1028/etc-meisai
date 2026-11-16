@@ -5,24 +5,41 @@ import 'package:flutter/material.dart';
 /// OP-4 of SCR-003: asks for the entrance date and time (a date, then a time),
 /// and then for the user's confirmation, because it can be saved once. Returns
 /// the date and time, or null when the user cancelled at any step.
+///
+/// [estimate] is the estimated entrance (PRC-016): the pickers start with it,
+/// and say so. Without one, they start with the exit.
 Future<DateTime?> showEntranceAtDialog(
   BuildContext context, {
   required DateTime exitAt,
+  DateTime? estimate,
 }) async {
   final exitDay = DateTime(exitAt.year, exitAt.month, exitAt.day);
+  final start = estimate ?? exitAt;
   final day = await showDatePicker(
     context: context,
-    initialDate: exitDay,
+    initialDate: DateTime(start.year, start.month, start.day),
     firstDate: DateTime(2000),
     // The entrance is not after the exit.
     lastDate: exitDay,
-    helpText: StatementDetailStrings.entranceAtPickDate,
+    helpText: estimate == null
+        ? StatementDetailStrings.entranceAtPickDate
+        : StatementDetailStrings.entranceAtPickDateEstimated,
   );
   if (day == null || !context.mounted) return null;
   final time = await showTimePicker(
     context: context,
-    initialTime: TimeOfDay.fromDateTime(exitAt),
-    helpText: StatementDetailStrings.entranceAtPickTime,
+    // The estimate is for its own date: on another date, the time of the exit.
+    initialTime: TimeOfDay.fromDateTime(
+      estimate != null &&
+              day.year == estimate.year &&
+              day.month == estimate.month &&
+              day.day == estimate.day
+          ? estimate
+          : exitAt,
+    ),
+    helpText: estimate == null
+        ? StatementDetailStrings.entranceAtPickTime
+        : StatementDetailStrings.entranceAtPickTimeEstimated,
   );
   if (time == null || !context.mounted) return null;
   final entranceAt = DateTime(

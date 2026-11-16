@@ -4,6 +4,7 @@ import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/application/dto/import_result_dto.dart';
 import 'package:etc_meisai/application/interface/statement_if.dart';
 import 'package:etc_meisai/application/interface/statement_line_if.dart';
+import 'package:etc_meisai/application/usecase/statements/statement_line_copy.dart';
 
 /// Imports a usage statement CSV into the stored statement lines.
 class ImportStatementUC {
@@ -39,7 +40,9 @@ class ImportStatementUC {
             ? stored.vehicleNumber
             : null;
         await statementLines.save(
-          keep == null ? statementLine : statementLine.withVehicleNumber(keep),
+          keep == null
+              ? statementLine
+              : copyWithVehicleNumber(statementLine, keep),
         );
         overwritten++;
       }

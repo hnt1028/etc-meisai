@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'dart:math' as math;
 
+import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
 import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
 
@@ -75,4 +76,31 @@ class IcDistance {
             math.pow(math.sin(dLon / 2), 2);
     return (2 * radius * math.asin(math.sqrt(h))).round();
   }
+}
+
+/// The distance of a statement line in meters, or null when it is not known
+/// (docs/aggregation.md, "距離の求め方"). The aggregation and the estimate of
+/// the entrance time use it.
+int? lineMeters({
+  required String? entranceIc,
+  required String exitIc,
+  required IcLookup lookup,
+  required IcDistance distance,
+}) {
+  if (entranceIc == null) return null;
+  final entrance = lookup.placeOf(entranceIc);
+  final exit = lookup.placeOf(exitIc);
+  if (entrance == null || exit == null) return null;
+  // Two master points: the way over the roads. A position the user chose has
+  // no point, and is measured straight.
+  final entrancePoint = entrance.point, exitPoint = exit.point;
+  if (entrancePoint != null && exitPoint != null) {
+    return distance.metersBetween(entrancePoint, exitPoint);
+  }
+  return IcDistance.straightMeters(
+    entrance.latitude,
+    entrance.longitude,
+    exit.latitude,
+    exit.longitude,
+  );
 }

@@ -37,6 +37,8 @@ abstract final class StatementDetailStrings {
 
   static const entranceAtPickDate = '入口の日付';
   static const entranceAtPickTime = '入口の時刻';
+  static const entranceAtPickDateEstimated = '入口の日付（出口日時から計算した目安）';
+  static const entranceAtPickTimeEstimated = '入口の時刻（出口日時から計算した目安）';
   static const entranceAtDialogTitle = '入口日時を保存';
   static const entranceIcDialogTitle = '入口ICを入力';
   static const entranceIcInputLabel = '入口IC';

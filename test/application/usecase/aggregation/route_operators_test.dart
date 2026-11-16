@@ -43,6 +43,28 @@ void main() {
     });
   });
 
+  test('knows the operators of urban expressways', () {
+    for (final operator in [
+      '首都高速道路',
+      '阪神高速道路',
+      '名古屋高速道路公社',
+      '福岡北九州高速道路公社',
+      '広島高速道路公社',
+    ]) {
+      expect(isUrbanOperator(operator), isTrue, reason: operator);
+    }
+    for (final operator in [
+      'NEXCO東日本',
+      'NEXCO中日本',
+      'NEXCO西日本',
+      '本州四国連絡高速道路',
+      multipleOperators,
+      unknownOperator,
+    ]) {
+      expect(isUrbanOperator(operator), isFalse, reason: operator);
+    }
+  });
+
   group('operatorOfRoutes', () {
     test('is the operator when every known route has the same one', () {
       expect(operatorOfRoutes(['東名高速道路', '新東名高速道路']), 'NEXCO中日本');

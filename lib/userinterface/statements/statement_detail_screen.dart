@@ -50,7 +50,7 @@ class _StatementDetailScreenState extends ConsumerState<StatementDetailScreen> {
     }
     // The list, the map and the aggregation read the lines again.
     ref.read(dataRevisionProvider.notifier).changed();
-    if (mounted) setState(() => _line = line.withVehicleNumber(number));
+    // The screen shows the line again when the lines have been read again.
   }
 
   /// OP-4: asks for the entrance date and time, saves it, and shows it.
@@ -58,14 +58,25 @@ class _StatementDetailScreenState extends ConsumerState<StatementDetailScreen> {
     final line = _line;
     final id = line?.id;
     if (line == null || id == null) return;
-    final entranceAt = await showEntranceAtDialog(context, exitAt: line.exitAt);
+    // The pickers start with the estimate. A failure to estimate must not stop
+    // the user: they start with the exit then.
+    DateTime? estimate;
+    try {
+      estimate = await ref.read(estimateEntranceAtUCProvider).execute(line);
+    } catch (_) {
+      estimate = null;
+    }
+    if (!mounted) return;
+    final entranceAt = await showEntranceAtDialog(
+      context,
+      exitAt: line.exitAt,
+      estimate: estimate,
+    );
     if (entranceAt == null || !mounted) return;
     await _saveEntrance(
-      line,
       () => ref
           .read(saveEntranceUCProvider)
           .execute(id: id, entranceAt: entranceAt),
-      line.withEntrance(entranceAt: entranceAt),
     );
   }
 
@@ -77,21 +88,15 @@ class _StatementDetailScreenState extends ConsumerState<StatementDetailScreen> {
     final entranceIc = await showEntranceIcDialog(context);
     if (entranceIc == null || !mounted) return;
     await _saveEntrance(
-      line,
       () => ref
           .read(saveEntranceUCProvider)
           .execute(id: id, entranceIc: entranceIc),
-      line.withEntrance(entranceIc: entranceIc.trim()),
     );
   }
 
-  /// Runs [save], and then shows [saved] and makes the other screens read the
+  /// Runs [save], and then makes the other screens, and this one, read the
   /// lines again. A failure is shown as a message, without details.
-  Future<void> _saveEntrance(
-    StatementLineDTO line,
-    Future<void> Function() save,
-    StatementLineDTO saved,
-  ) async {
+  Future<void> _saveEntrance(Future<void> Function() save) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await save();
@@ -111,7 +116,6 @@ class _StatementDetailScreenState extends ConsumerState<StatementDetailScreen> {
       return;
     }
     ref.read(dataRevisionProvider.notifier).changed();
-    if (mounted) setState(() => _line = saved);
   }
 
   /// A field the CSV left blank: a dash, and a button to enter it when the

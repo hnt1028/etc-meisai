@@ -12,6 +12,7 @@
 | 結果の受け渡し | `lib/application/dto/import_result_dto.dart` | `ImportResultDTO` |
 | 使う窓口（CSVの読み取り） | `lib/application/interface/statement_if.dart` | `StatementIF` |
 | 使う窓口（明細行の保存・取得） | `lib/application/interface/statement_line_if.dart` | `StatementLineIF` |
+| 使う部品（明細行の写し） | `lib/application/usecase/statements/statement_line_copy.dart` | `copyWithVehicleNumber`（Entity は値を持つだけでメソッドを持たないため、写しは Usecase で作る。[architecture.md](../../architecture.md)） |
 
 ## 呼び出し箇所
 

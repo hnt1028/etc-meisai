@@ -59,7 +59,12 @@ class AggregateStatementsUC {
 
     for (final line in lines) {
       final discount = _discountOf(line);
-      final meters = _metersOf(line, lookup, distance);
+      final meters = lineMeters(
+        entranceIc: line.entranceIc,
+        exitIc: line.exitIc,
+        lookup: lookup,
+        distance: distance,
+      );
       fareTotal += line.fare;
       discountTotal += discount;
       distanceTotal += meters ?? 0;
@@ -122,32 +127,6 @@ class AggregateStatementsUC {
       discountTypes: discountTypes.rows(),
       vehicleNumberChoices: vehicleNumberChoicesOf(all),
       cardNumberChoices: cardNumberChoicesOf(all),
-    );
-  }
-
-  /// The distance of a line in meters, or null when it is not known
-  /// (docs/aggregation.md, "距離の求め方").
-  static int? _metersOf(
-    StatementLineEntity line,
-    IcLookup lookup,
-    IcDistance distance,
-  ) {
-    final entranceName = line.entranceIc;
-    if (entranceName == null) return null;
-    final entrance = lookup.placeOf(entranceName);
-    final exit = lookup.placeOf(line.exitIc);
-    if (entrance == null || exit == null) return null;
-    // Two master points: the way over the roads. A position the user chose
-    // has no point, and is measured straight.
-    final entrancePoint = entrance.point, exitPoint = exit.point;
-    if (entrancePoint != null && exitPoint != null) {
-      return distance.metersBetween(entrancePoint, exitPoint);
-    }
-    return IcDistance.straightMeters(
-      entrance.latitude,
-      entrance.longitude,
-      exit.latitude,
-      exit.longitude,
     );
   }
 
