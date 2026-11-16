@@ -1,5 +1,7 @@
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/application/usecase/route_map/get_line_route_uc.dart';
+import 'package:etc_meisai/domain/entity/geo_point_entity.dart';
+import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
@@ -148,6 +150,82 @@ void main() {
       final positions = FakeIcPositionIF()..error = StateError('x');
 
       expect(_uc(positions: positions).execute(_line()), throwsStateError);
+    });
+    test('goes through the points on the way, in order', () async {
+      final master = FakeIcMasterIF(
+        [
+          fakeIcPoint(name: '北', latitude: 35.1, longitude: 139.1),
+          fakeIcPoint(name: '中', latitude: 35.5, longitude: 139.2),
+          fakeIcPoint(name: '東', latitude: 35.2, longitude: 139.2),
+        ],
+        links: const [
+          IcLinkEntity(fromId: 'id-北', toId: 'id-中', meters: 1000),
+          IcLinkEntity(fromId: 'id-中', toId: 'id-東', meters: 1000),
+        ],
+      );
+
+      final route = await _uc(master: master).execute(_line());
+
+      final via = route.segment!.via;
+      expect(via, hasLength(1));
+      expect(via.single.latitude, 35.5);
+      // The markers are the entrance and the exit only.
+      expect(route.places.map((p) => p.icName), ['北', '東']);
+    });
+
+    test('follows the shape of the road', () async {
+      final master = FakeIcMasterIF(
+        [
+          fakeIcPoint(name: '北', latitude: 35.1, longitude: 139.1),
+          fakeIcPoint(name: '東', latitude: 35.2, longitude: 139.2),
+        ],
+        links: const [
+          IcLinkEntity(
+            fromId: 'id-北',
+            toId: 'id-東',
+            meters: 1000,
+            shape: [
+              GeoPointEntity(latitude: 35.3, longitude: 139.15),
+              GeoPointEntity(latitude: 35.0, longitude: 139.18),
+            ],
+          ),
+        ],
+      );
+
+      final route = await _uc(master: master).execute(_line());
+
+      expect(route.segment!.via.map((v) => v.latitude), [35.3, 35.0]);
+    });
+
+    test('is straight when the user chose a position', () async {
+      final master = FakeIcMasterIF(
+        [
+          fakeIcPoint(name: '北', latitude: 35.1, longitude: 139.1),
+          fakeIcPoint(name: '中', latitude: 35.5, longitude: 139.2),
+          fakeIcPoint(name: '東', latitude: 35.2, longitude: 139.2),
+        ],
+        links: const [
+          IcLinkEntity(fromId: 'id-北', toId: 'id-中', meters: 1000),
+          IcLinkEntity(fromId: 'id-中', toId: 'id-東', meters: 1000),
+        ],
+      );
+      final positions = FakeIcPositionIF()
+        ..stored.add(
+          const IcPositionEntity(icName: '東', latitude: 36, longitude: 140),
+        );
+
+      final route = await _uc(
+        master: master,
+        positions: positions,
+      ).execute(_line());
+
+      expect(route.segment!.via, isEmpty);
+    });
+
+    test('is straight when the points are not linked', () async {
+      final route = await _uc().execute(_line());
+
+      expect(route.segment!.via, isEmpty);
     });
   });
 }
