@@ -5,6 +5,7 @@ import 'package:etc_meisai/application/interface/ic_master_if.dart';
 import 'package:etc_meisai/application/interface/ic_position_if.dart';
 import 'package:etc_meisai/application/interface/statement_if.dart';
 import 'package:etc_meisai/application/interface/statement_line_if.dart';
+import 'package:etc_meisai/application/usecase/aggregation/aggregate_statements_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/list_route_map_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
@@ -238,6 +239,21 @@ ListRouteMapUC fakeRouteMapUC(
   FakeIcPositionIF? positions,
 }) {
   return ListRouteMapUC(
+    statementLines: lines,
+    icMaster: master ?? FakeIcMasterIF([]),
+    icMappings: mappings ?? FakeIcMappingIF(),
+    icPositions: positions ?? FakeIcPositionIF(),
+  );
+}
+
+/// The aggregation use case on in-memory fakes.
+AggregateStatementsUC fakeAggregateUC(
+  FakeStatementLineIF lines, {
+  FakeIcMasterIF? master,
+  FakeIcMappingIF? mappings,
+  FakeIcPositionIF? positions,
+}) {
+  return AggregateStatementsUC(
     statementLines: lines,
     icMaster: master ?? FakeIcMasterIF([]),
     icMappings: mappings ?? FakeIcMappingIF(),

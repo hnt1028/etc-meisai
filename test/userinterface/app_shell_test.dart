@@ -1,5 +1,7 @@
 import 'package:etc_meisai/application/usecase/settings/delete_all_statement_lines_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/import_statement_uc.dart';
+import 'package:etc_meisai/userinterface/aggregation/aggregation_providers.dart';
+import 'package:etc_meisai/userinterface/aggregation/aggregation_strings.dart';
 import 'package:etc_meisai/userinterface/app.dart';
 import 'package:etc_meisai/userinterface/app_strings.dart';
 import 'package:etc_meisai/userinterface/route_map/route_map_providers.dart';
@@ -28,6 +30,7 @@ Widget _app() {
         DeleteAllStatementLinesUC(statementLines: lines),
       ),
       listRouteMapUCProvider.overrideWithValue(fakeRouteMapUC(lines)),
+      aggregateStatementsUCProvider.overrideWithValue(fakeAggregateUC(lines)),
       tileLayerProvider.overrideWithValue(const SizedBox.shrink()),
       listStatementLinesUCProvider.overrideWithValue(fakeListUC(lines)),
     ],
@@ -45,6 +48,7 @@ void main() {
     expect(find.text(SettingsStrings.importButton), findsNothing);
     expect(find.text(AppStrings.statementsTab), findsOneWidget);
     expect(find.text(AppStrings.routeMapTab), findsOneWidget);
+    expect(find.text(AppStrings.aggregationTab), findsOneWidget);
     expect(find.text(AppStrings.settingsTab), findsOneWidget);
   });
 
@@ -64,6 +68,16 @@ void main() {
       findsOneWidget,
     );
     expect(find.text(StatementListStrings.title), findsNothing);
+
+    await tester.tap(find.text(AppStrings.aggregationTab));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text(AggregationStrings.title),
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text(AppStrings.settingsTab));
     await tester.pumpAndSettle();

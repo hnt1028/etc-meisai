@@ -1,4 +1,5 @@
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
+import 'package:etc_meisai/userinterface/aggregation/aggregation_screen.dart';
 import 'package:etc_meisai/userinterface/app_shell.dart';
 import 'package:etc_meisai/userinterface/ic_mapping/ic_mapping_screen.dart';
 import 'package:etc_meisai/userinterface/route_map/route_map_screen.dart';
@@ -51,6 +52,14 @@ GoRouter createRouter() {
                     },
                   ),
                 ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/aggregation',
+                builder: (context, state) => const AggregationScreen(),
               ),
             ],
           ),
