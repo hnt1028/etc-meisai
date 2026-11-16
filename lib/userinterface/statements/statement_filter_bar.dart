@@ -27,7 +27,9 @@ class StatementFilterBar extends ConsumerWidget {
         : StatementListStrings.periodNone;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      // The bottom padding keeps the controls apart from what is under them
+      // (the map, the aggregation).
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

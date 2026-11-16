@@ -76,6 +76,8 @@ class RouteMapScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+              // A line between the controls and the map.
+              const Divider(height: 1),
               Expanded(
                 child: Stack(
                   children: [
