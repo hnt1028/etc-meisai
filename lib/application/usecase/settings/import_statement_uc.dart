@@ -4,6 +4,7 @@ import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/application/dto/import_result_dto.dart';
 import 'package:etc_meisai/application/interface/statement_if.dart';
 import 'package:etc_meisai/application/interface/statement_line_if.dart';
+import 'package:etc_meisai/application/usecase/statements/statement_line_copy.dart';
 
 /// Imports a usage statement CSV into the stored statement lines.
 class ImportStatementUC {
@@ -34,7 +35,15 @@ class ImportStatementUC {
       } else if (stored.status == ConfirmationStatusValue.confirmed) {
         ignored++;
       } else {
-        await statementLines.save(statementLine);
+        // A vehicle number the user entered is not blanked by the CSV.
+        final keep = statementLine.vehicleNumber == null
+            ? stored.vehicleNumber
+            : null;
+        await statementLines.save(
+          keep == null
+              ? statementLine
+              : copyWithVehicleNumber(statementLine, keep),
+        );
         overwritten++;
       }
     }

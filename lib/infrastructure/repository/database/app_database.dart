@@ -15,7 +15,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -25,6 +25,19 @@ class AppDatabase extends _$AppDatabase {
       if (from < 2) await m.createTable(icMappings);
       // Version 3 added the positions the user chose (TBL-003).
       if (from < 3) await m.createTable(icPositions);
+      // Version 4 lets the vehicle number be null (a blank in the CSV), and
+      // keeps the entrance the user entered apart from the CSV's.
+      if (from < 4) {
+        await m.alterTable(
+          TableMigration(
+            statementLines,
+            newColumns: [
+              statementLines.enteredEntranceAt,
+              statementLines.enteredEntranceIc,
+            ],
+          ),
+        );
+      }
     },
   );
 }

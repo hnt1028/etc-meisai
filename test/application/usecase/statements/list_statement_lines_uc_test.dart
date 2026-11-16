@@ -124,6 +124,51 @@ void main() {
     },
   );
 
+  group('a line without a vehicle number', () {
+    test('is listed, but is not a choice of the filter', () async {
+      final lines = await _stored([
+        fakeStatementLine(id: 'a', vehicleNumber: 10),
+        fakeStatementLine(
+          id: 'b',
+          withoutVehicleNumber: true,
+          exitAt: DateTime(2026, 1, 11),
+        ),
+      ]);
+
+      final result = await _uc(lines).execute();
+
+      expect(result.lines, hasLength(2));
+      expect(result.lines.map((l) => l.vehicleNumber), [null, 10]);
+      expect(result.vehicleNumberChoices, [10]);
+    });
+
+    test('is left out when the filter names a vehicle number', () async {
+      final lines = await _stored([
+        fakeStatementLine(id: 'a', vehicleNumber: 10),
+        fakeStatementLine(
+          id: 'b',
+          withoutVehicleNumber: true,
+          exitAt: DateTime(2026, 1, 11),
+        ),
+      ]);
+
+      final result = await _uc(lines).execute(vehicleNumber: 10);
+
+      expect(result.lines.map((l) => l.id), ['a']);
+    });
+
+    test('carries the id of the stored line, to enter the number', () async {
+      final lines = await _stored([
+        fakeStatementLine(id: 'abc', withoutVehicleNumber: true),
+      ]);
+
+      final result = await _uc(lines).execute();
+
+      expect(result.lines.single.id, 'abc');
+      expect(result.lines.single.vehicleNumber, isNull);
+    });
+  });
+
   test('shows only the last 4 characters of a card number', () async {
     final lines = await _stored([
       fakeStatementLine(cardNumber: '1234-5678-9012-3456'),

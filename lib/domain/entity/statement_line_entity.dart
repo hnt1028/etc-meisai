@@ -7,6 +7,7 @@ import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 /// [etcDiscount] can be null, because the CSV leaves them blank in some rows.
 class StatementLineEntity {
   const StatementLineEntity({
+    this.id,
     required this.entranceAt,
     required this.exitAt,
     required this.entranceIc,
@@ -23,11 +24,17 @@ class StatementLineEntity {
     required this.discountTypes,
   });
 
-  /// May be null when the CSV leaves the entrance blank.
+  /// The id the repository gave when the line was first stored. Null for a
+  /// line that was only read from a CSV.
+  final String? id;
+
+  /// The entrance date and time. The CSV's, or else the one the user entered
+  /// (docs/csv-format.md). Null while both are blank.
   final DateTime? entranceAt;
   final DateTime exitAt;
 
-  /// May be null when the CSV leaves the entrance blank.
+  /// The entrance IC. The CSV's, or else the one the user entered. Null while
+  /// both are blank.
   final String? entranceIc;
   final String exitIc;
 
@@ -43,8 +50,10 @@ class StatementLineEntity {
 
   final VehicleTypeValue vehicleType;
 
-  /// Personal information. Never log it.
-  final int vehicleNumber;
+  /// Personal information. Never log it. Null when the CSV leaves it blank (a
+  /// use that was paid at a toll gate with an ETC card, for instance) and the
+  /// user has not entered one (docs/csv-format.md).
+  final int? vehicleNumber;
 
   /// Personal information. Partly masked with `*` in the CSV. Never log it.
   final String cardNumber;

@@ -39,25 +39,39 @@ class StatementListScreen extends ConsumerWidget {
             ],
           ),
         ),
-        data: (data) => Column(
-          children: [
-            if (list.isLoading) const LinearProgressIndicator(),
-            _ModeSwitch(mode: mode),
-            StatementFilterBar(
-              filter: filter,
-              vehicleNumberChoices: data.vehicleNumberChoices,
-              cardNumberChoices: data.cardNumberChoices,
-            ),
-            _Totals(data: data),
-            const Divider(height: 1),
-            Expanded(
-              child: data.lines.isEmpty
-                  ? _Empty(filtered: filter.isActive)
-                  : mode == StatementListMode.list
-                  ? _Lines(data: data)
-                  : StatementTimeline(lines: data.lines),
-            ),
-          ],
+        data: (data) => LayoutBuilder(
+          builder: (context, box) => Column(
+            children: [
+              if (list.isLoading) const LinearProgressIndicator(),
+              // On a short screen (a phone held sideways), the header takes at
+              // most half of the height and scrolls, so that it does not
+              // overflow and the lines still have room.
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: box.maxHeight * 0.5),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      _ModeSwitch(mode: mode),
+                      StatementFilterBar(
+                        filter: filter,
+                        vehicleNumberChoices: data.vehicleNumberChoices,
+                        cardNumberChoices: data.cardNumberChoices,
+                      ),
+                      _Totals(data: data),
+                    ],
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: data.lines.isEmpty
+                    ? _Empty(filtered: filter.isActive)
+                    : mode == StatementListMode.list
+                    ? _Lines(data: data)
+                    : StatementTimeline(lines: data.lines),
+              ),
+            ],
+          ),
         ),
       ),
     );

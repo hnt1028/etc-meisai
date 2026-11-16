@@ -2,6 +2,7 @@ import 'package:etc_meisai/application/usecase/ic_mapping/delete_ic_mapping_uc.d
 import 'package:etc_meisai/application/usecase/ic_mapping/list_ic_matches_uc.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/save_ic_mapping_uc.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/search_ic_points_uc.dart';
+import 'package:etc_meisai/application/usecase/aggregation/aggregate_statements_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/delete_ic_position_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/get_line_route_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/list_route_map_uc.dart';
@@ -9,6 +10,9 @@ import 'package:etc_meisai/application/usecase/route_map/save_ic_position_uc.dar
 import 'package:etc_meisai/application/usecase/settings/delete_all_statement_lines_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/import_statement_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/estimate_entrance_at_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/save_entrance_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/save_vehicle_number_uc.dart';
 import 'package:etc_meisai/infrastructure/repository/database/app_database.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_mapping_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_master_repo.dart';
@@ -18,6 +22,7 @@ import 'package:etc_meisai/infrastructure/repository/statements/statement_line_r
 import 'package:etc_meisai/userinterface/app.dart';
 import 'package:etc_meisai/userinterface/app_strings.dart';
 import 'package:etc_meisai/userinterface/ic_mapping/ic_mapping_providers.dart';
+import 'package:etc_meisai/userinterface/aggregation/aggregation_providers.dart';
 import 'package:etc_meisai/userinterface/route_map/route_map_providers.dart';
 import 'package:etc_meisai/userinterface/statements/statement_detail_providers.dart';
 import 'package:etc_meisai/userinterface/settings/csv_picker.dart';
@@ -74,6 +79,27 @@ Future<void> pumpApp(
         ),
         deleteIcPositionUCProvider.overrideWithValue(
           DeleteIcPositionUC(icPositions: icPositions),
+        ),
+        aggregateStatementsUCProvider.overrideWithValue(
+          AggregateStatementsUC(
+            statementLines: statementLines,
+            icMaster: icMaster,
+            icMappings: icMappings,
+            icPositions: icPositions,
+          ),
+        ),
+        estimateEntranceAtUCProvider.overrideWithValue(
+          EstimateEntranceAtUC(
+            icMaster: icMaster,
+            icMappings: icMappings,
+            icPositions: icPositions,
+          ),
+        ),
+        saveEntranceUCProvider.overrideWithValue(
+          SaveEntranceUC(statementLines: statementLines),
+        ),
+        saveVehicleNumberUCProvider.overrideWithValue(
+          SaveVehicleNumberUC(statementLines: statementLines),
         ),
         getLineRouteUCProvider.overrideWithValue(
           GetLineRouteUC(

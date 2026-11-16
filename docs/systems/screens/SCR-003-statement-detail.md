@@ -12,6 +12,8 @@
 | 画面の文言 | `lib/userinterface/statements/statement_detail_strings.dart` | `StatementDetailStrings` |
 | 金額・日時の表示形式 | `lib/userinterface/common/format.dart` | `formatYen`、`formatDateTime` |
 | ルートの地図 | `lib/userinterface/statements/line_route_map.dart` | `LineRouteMap` |
+| 車両番号の入力 | `lib/userinterface/statements/vehicle_number_dialog.dart` | `showVehicleNumberDialog` |
+| 入口日時・入口ICの入力 | `lib/userinterface/statements/entrance_dialogs.dart` | `showEntranceAtDialog`（初めの値を引数に取る）、`showEntranceIcDialog` |
 | 使う処理の受け口 | `lib/userinterface/statements/statement_detail_providers.dart` | `getLineRouteUCProvider`、`lineRouteProvider` |
 
 ## 呼び出し箇所
@@ -31,9 +33,9 @@
 | 項目 | 型 | 表示形式 |
 |---|---|---|
 | ルートの地図 | `LineRouteDTO` | 項目の上に、高さ約240の地図。入口ICから出口ICまでの線（確定は実線、確認中は破線）と、入口・出口のマーカー（IC名。近似のときは「IC名（近似）」）を描き、2つのマーカーが収まるように表示する。地図の動かし方は、ピンチで拡大・縮小、ドラッグで移動。位置が分からないICがあるときは、地図の上に「位置が分からないICがあります: IC名」を示す。マーカーが1つも無いときは、地図を表示しない |
-| 入口日時 | `entranceAt` | 「2026/01/10 08:30」。空欄のときは「-」 |
+| 入口日時 | `entranceAt` | 「2026/01/10 08:30」。空欄のときは「-」と、「入力」ボタン |
 | 出口日時 | `exitAt` | 「2026/01/10 09:15」 |
-| 入口IC | `entranceIc` | 空欄のときは「-」 |
+| 入口IC | `entranceIc` | 空欄のときは「-」と、「入力」ボタン |
 | 出口IC | `exitIc` | IC名 |
 | 通行した高速道路 | `routeNames` | 「東名高速道路・首都高速道路」のように「・」でつなぐ。無いときは「-」 |
 | 割引前料金 | `grossFare` | 「1,200円」。`null`（割引なし）のときは「-」 |
@@ -42,7 +44,10 @@
 | 還元額適用料金 | `fareAfterRebate` | 「0円」 |
 | 後納料金 | `postpaidFare` | 「960円」 |
 | 車種 | `vehicleType` | 名前（普通車など） |
-| 車両番号 | `vehicleNumber` | 数字（個人情報） |
+| 車両番号 | `vehicleNumber` | 数字（個人情報）。`null`（CSVで空欄）のときは「-」と、「入力」ボタン |
+| 入口日時の入力 | 入力 | 日付の選択、時分の選択 | 「入力」で、日付の選択、続けて時分の選択を開く。初めの値は、入口日時の目安（[PRC-016](../processes/PRC-016-estimate-entrance-at.md)）。目安が無いときは、出口日時。目安を使うときは、選択の見出しに「（出口日時から計算した目安）」と出す。続けて、確認のダイアログ（下の「確認」）。出口日時より後のときは、ER-4 |
+| 入口ICの入力 | 入力 | ダイアログ | 「入力」で開く。IC名の入力欄、「保存すると、あとから変更できません」の注意、「キャンセル」「保存」。空のときは、「保存」を押せない |
+| 車両番号の入力 | 入力 | ダイアログ | 「入力」で開く。数字の入力欄（1〜4桁）、「保存すると、あとから変更できません」の注意、「キャンセル」「保存」。入力が1〜4桁の数字でないときは、「保存」を押せない |
 | ETCカード番号 | `cardNumberSuffix` | 「**** 0001」（下4桁のみ） |
 | 状態 | `status` | 「確定」または「確認中」 |
 | 割引種別 | `discountTypes` | 「深夜割引・休日割引」のように「・」でつなぐ。無いときは「なし」 |
@@ -54,6 +59,9 @@
 | 操作ID | 操作 | きっかけ | 動作 | 遷移先 |
 |---|---|---|---|---|
 | OP-1 | 戻る | 戻るボタン（画面上部、または端末の戻る操作） | 元の表示（一覧またはタイムライン）に戻る。絞り込みなどの状態は保たれる | [SCR-002](SCR-002-statement-list.md) |
+| OP-3 | 車両番号を入力する | 「入力」のタップ（車両番号が空欄のときだけ） | 入力のダイアログを開く。「保存」で、車両番号を保存して、この画面の車両番号を更新する。一覧・ルートマップ・集計も、読み込み直させる（`dataRevisionProvider`）。「入力」は、保存したあとは出ない（再編集はできない） | なし |
+| OP-4 | 入口日時を入力する | 入口日時の「入力」のタップ（入口日時が空欄のときだけ） | 入口日時の目安を求め（失敗したときは、目安なし）、日付と時分を選び、確認して、入口日時を保存し、この画面を更新する。保存したあと、ルートの地図、路線名、一覧・タイムライン・ルートマップ・集計も、読み込み直させる。「入力」は、保存したあとは出ない | なし |
+| OP-5 | 入口ICを入力する | 入口ICの「入力」のタップ（入口ICが空欄のときだけ） | IC名を入力して保存し、OP-4 と同じように更新する | なし |
 | OP-2 | ルートの地図を表示する | 画面を開く | 渡された明細行のルート（区間、マーカー、位置が分からないIC）を取得し、地図に描く。取得中は、地図の場所に読み込み中の表示を出す。ほかの項目は、取得を待たずに表示する | なし |
 
 ### エラー一覧
@@ -61,11 +69,16 @@
 | ID | 発生する場面 | 表示する文言（文字列定数） | 操作の続け方 |
 |---|---|---|---|
 | ER-1 | 明細行が渡されずに開かれた（アプリの再起動後に、この画面の位置が復元されたときなど） | `StatementDetailStrings.notFound` | OP-1 で戻る |
+| ER-4 | OP-4 で、選んだ入口日時が出口日時より後 | `StatementDetailStrings.entranceAfterExit`（画面下のメッセージで表示する） | 保存しない。もう一度「入力」から選ぶ |
+| ER-3 | OP-3、OP-4、OP-5 の保存に失敗（ほかの操作で既に車両番号が入っていた場合を含む） | `StatementDetailStrings.saveVehicleNumberFailed`（画面下のメッセージで表示する。失敗の詳細は出さない） | ダイアログは閉じる。もう一度「入力」から入力する（既に入っていれば、「入力」は出ない） |
 | ER-2 | OP-2 で、ルートの取得に失敗 | `StatementDetailStrings.routeLoadFailed`（地図の場所に表示する。失敗の詳細は出さない） | ほかの項目は、そのまま見られる。画面を開き直すと、もう一度取得する |
 
 ## 詳細設計
 
-- 項目の値は、SCR-002 または [SCR-005](SCR-005-route-map.md) から渡された `StatementLineDTO` を使う
+- 項目の値は、SCR-002 または [SCR-005](SCR-005-route-map.md) から渡された `StatementLineDTO` を使う。OP-3 で車両番号を保存したときは、保存した値で、この画面の `StatementLineDTO` を作り直す
+- OP-4 の初めの値は、`EstimateEntranceAtUC`（[PRC-016](../processes/PRC-016-estimate-entrance-at.md)）で求める
+- OP-4・OP-5 は、`SaveEntranceUC`（[PRC-015](../processes/PRC-015-save-entrance.md)）を呼ぶ。入力できるのは、`StatementLineDTO.entranceAt`・`entranceIc` が `null` のときだけ（保存すると `null` でなくなるので、再編集はできない）。確認のダイアログは、車両番号と同じ「保存すると、あとから変更できません」
+- OP-3 は、`SaveVehicleNumberUC`（[PRC-014](../processes/PRC-014-save-vehicle-number.md)）を呼ぶ。車両番号を入力できるのは、`StatementLineDTO.vehicleNumber` が `null` のときだけ（保存すると `null` でなくなるので、再編集はできない）
 - ルートの地図は、`GetLineRouteUC`（[PRC-012](../processes/PRC-012-get-line-route.md)）で取得する。地図の描き方（OpenStreetMapの地図、線の太さと色、マーカー、出典の表示）は、SCR-005 と同じ。SCR-005 と違い、線やマーカーのタップ、位置の指定はできない（位置の指定は SCR-005 で行う）
 - 地図の取得は、ほかの項目の表示を止めない。ER-2 のときも、ほかの項目は表示する
 - 車両番号とETCカード番号は個人情報。画面には出すが、ログには出さない（[privacy.md](../../privacy.md)）
@@ -74,4 +87,6 @@
 
 - 単体: `test/application/usecase/route_map/get_line_route_uc_test.dart`（PRC-012）
 - ウィジェット: `test/userinterface/statements/statement_detail_screen_test.dart`（ルートの地図（線・マーカー、確認中の破線、位置が分からないICの表示、入口が空欄、マーカーが無いとき地図が出ないこと、読み込み中、ER-2）、すべての項目（路線名を含む）の表示、空欄・`null`・路線名なしの項目が「-」になること、割引種別が無いとき「なし」、確認中、明細行が渡されないときのER-1、戻るボタン）
+- ウィジェット: 入口日時・入口ICの入力（入口日時の初めの値が目安になること、目安が無いとき出口日時になること、「入力」が出る条件、日付と時分の選択、確認、保存で画面が更新されること、出口より後のER-4、キャンセル、保存の失敗）、車両番号の入力（「入力」が出る条件、数字の検証、保存で画面が更新されること、キャンセル、保存の失敗ER-3）は、同じファイル
 - 結合: `integration_test/statement_list_test.dart`（一覧から詳細を開け、ルートの地図が出ること）
+- 結合: `integration_test/vehicle_number_test.dart`（車両番号が空欄のCSVを取り込み、詳細で入力して、保存されること。入口日時・入口ICが空欄の行に入力しても、CSVの値と重複判定のキーが変わらないこと。再取り込みで、別の行として増えず、入力した値が消えないこと）

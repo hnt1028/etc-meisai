@@ -70,6 +70,49 @@ void main() {
     });
   });
 
+  group('links', () {
+    String json({String? links}) =>
+        '{"points": [{"id": "a", "name": "A", "kind": 1, "lat": 35.0, '
+        '"lon": 139.0, "routes": ["R"]}]${links ?? ''}}';
+
+    test('are read with the points', () async {
+      final repo = IcMasterRepo(
+        loadJson: () async =>
+            json(links: ', "links": [["a", "b", 1234], ["b", "c", 5]]'),
+      );
+
+      final links = await repo.findLinks();
+
+      expect(links.map((l) => '${l.fromId}-${l.toId}:${l.meters}'), [
+        'a-b:1234',
+        'b-c:5',
+      ]);
+      expect(await repo.findAll(), hasLength(1));
+    });
+
+    test('are empty when the master has none', () async {
+      final repo = IcMasterRepo(loadJson: () async => json());
+
+      expect(await repo.findLinks(), isEmpty);
+    });
+
+    test('are read from the file once, with the points', () async {
+      var loaded = 0;
+      final repo = IcMasterRepo(
+        loadJson: () async {
+          loaded++;
+          return json(links: ', "links": []');
+        },
+      );
+
+      await repo.findAll();
+      await repo.findLinks();
+      await repo.findLinks();
+
+      expect(loaded, 1);
+    });
+  });
+
   test('the bundled IC master (assets/ic_master.json) is consistent', () async {
     final text = File('assets/ic_master.json').readAsStringSync();
     final points = await IcMasterRepo(loadJson: () async => text).findAll();
@@ -89,6 +132,19 @@ void main() {
     expect((jsonDecode(text) as Map)['source'], contains('国土数値情報'));
     expect((jsonDecode(text) as Map)['source'], contains('OpenStreetMap'));
     expect(points.where((p) => p.id.startsWith('osm:')), isNotEmpty);
+
+    // The links join points of the master, and have a length.
+    final links = await IcMasterRepo(loadJson: () async => text).findLinks();
+    final ids = {for (final p in points) p.id};
+    expect(links.length, greaterThan(2000));
+    for (final l in links) {
+      expect(ids, contains(l.fromId));
+      expect(ids, contains(l.toId));
+      expect(l.fromId.compareTo(l.toId), lessThanOrEqualTo(0));
+      expect(l.meters, greaterThanOrEqualTo(0));
+      // No road between two neighbors is longer than the whole of Japan.
+      expect(l.meters, lessThan(500000));
+    }
   });
 
   group('IcMappingRepo', () {

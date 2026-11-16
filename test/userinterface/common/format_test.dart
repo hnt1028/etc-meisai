@@ -16,6 +16,26 @@ void main() {
     });
   });
 
+  group('formatKm', () {
+    test('shows kilometers with one decimal place', () {
+      expect(formatKm(0), '0.0km');
+      expect(formatKm(3000), '3.0km');
+      expect(formatKm(12345), '12.3km');
+    });
+
+    test('rounds to the nearest tenth, half up', () {
+      expect(formatKm(49), '0.0km');
+      expect(formatKm(50), '0.1km');
+      expect(formatKm(149), '0.1km');
+      expect(formatKm(9950), '10.0km');
+    });
+
+    test('adds a thousands separator', () {
+      expect(formatKm(999900), '999.9km');
+      expect(formatKm(1234500), '1,234.5km');
+    });
+  });
+
   test('formatDate pads the month and the day', () {
     expect(formatDate(DateTime(2026, 1, 5)), '2026/01/05');
   });

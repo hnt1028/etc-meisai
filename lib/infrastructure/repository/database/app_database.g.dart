@@ -140,10 +140,34 @@ class $StatementLinesTable extends StatementLines
   late final GeneratedColumn<int> vehicleNumber = GeneratedColumn<int>(
     'vehicle_number',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.int,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
+  static const VerificationMeta _enteredEntranceAtMeta = const VerificationMeta(
+    'enteredEntranceAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> enteredEntranceAt =
+      GeneratedColumn<DateTime>(
+        'entered_entrance_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _enteredEntranceIcMeta = const VerificationMeta(
+    'enteredEntranceIc',
+  );
+  @override
+  late final GeneratedColumn<String> enteredEntranceIc =
+      GeneratedColumn<String>(
+        'entered_entrance_ic',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _cardNumberMeta = const VerificationMeta(
     'cardNumber',
   );
@@ -193,6 +217,8 @@ class $StatementLinesTable extends StatementLines
     postpaidFare,
     vehicleType,
     vehicleNumber,
+    enteredEntranceAt,
+    enteredEntranceIc,
     cardNumber,
     status,
     discountTypes,
@@ -304,8 +330,24 @@ class $StatementLinesTable extends StatementLines
           _vehicleNumberMeta,
         ),
       );
-    } else if (isInserting) {
-      context.missing(_vehicleNumberMeta);
+    }
+    if (data.containsKey('entered_entrance_at')) {
+      context.handle(
+        _enteredEntranceAtMeta,
+        enteredEntranceAt.isAcceptableOrUnknown(
+          data['entered_entrance_at']!,
+          _enteredEntranceAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('entered_entrance_ic')) {
+      context.handle(
+        _enteredEntranceIcMeta,
+        enteredEntranceIc.isAcceptableOrUnknown(
+          data['entered_entrance_ic']!,
+          _enteredEntranceIcMeta,
+        ),
+      );
     }
     if (data.containsKey('card_number')) {
       context.handle(
@@ -388,7 +430,15 @@ class $StatementLinesTable extends StatementLines
       vehicleNumber: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}vehicle_number'],
-      )!,
+      ),
+      enteredEntranceAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}entered_entrance_at'],
+      ),
+      enteredEntranceIc: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entered_entrance_ic'],
+      ),
       cardNumber: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}card_number'],
@@ -438,7 +488,15 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
 
   /// The CSV number of the vehicle type (see [VehicleTypeValue]).
   final VehicleTypeValue vehicleType;
-  final int vehicleNumber;
+
+  /// Null when the CSV leaves it blank and the user has not entered one.
+  final int? vehicleNumber;
+
+  /// What the user entered when the CSV left the entrance blank. They are kept
+  /// apart from [entranceAt] and [entranceIc], which the duplicate key uses,
+  /// so that entering them does not change the key (docs/csv-format.md).
+  final DateTime? enteredEntranceAt;
+  final String? enteredEntranceIc;
   final String cardNumber;
 
   /// Stored as the position in [ConfirmationStatusValue] (0 confirmed, 1 pending).
@@ -460,7 +518,9 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
     required this.fareAfterRebate,
     required this.postpaidFare,
     required this.vehicleType,
-    required this.vehicleNumber,
+    this.vehicleNumber,
+    this.enteredEntranceAt,
+    this.enteredEntranceIc,
     required this.cardNumber,
     required this.status,
     required this.discountTypes,
@@ -492,7 +552,15 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
         $StatementLinesTable.$convertervehicleType.toSql(vehicleType),
       );
     }
-    map['vehicle_number'] = Variable<int>(vehicleNumber);
+    if (!nullToAbsent || vehicleNumber != null) {
+      map['vehicle_number'] = Variable<int>(vehicleNumber);
+    }
+    if (!nullToAbsent || enteredEntranceAt != null) {
+      map['entered_entrance_at'] = Variable<DateTime>(enteredEntranceAt);
+    }
+    if (!nullToAbsent || enteredEntranceIc != null) {
+      map['entered_entrance_ic'] = Variable<String>(enteredEntranceIc);
+    }
     map['card_number'] = Variable<String>(cardNumber);
     {
       map['status'] = Variable<int>(
@@ -525,7 +593,15 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
       fareAfterRebate: Value(fareAfterRebate),
       postpaidFare: Value(postpaidFare),
       vehicleType: Value(vehicleType),
-      vehicleNumber: Value(vehicleNumber),
+      vehicleNumber: vehicleNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(vehicleNumber),
+      enteredEntranceAt: enteredEntranceAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(enteredEntranceAt),
+      enteredEntranceIc: enteredEntranceIc == null && nullToAbsent
+          ? const Value.absent()
+          : Value(enteredEntranceIc),
       cardNumber: Value(cardNumber),
       status: Value(status),
       discountTypes: Value(discountTypes),
@@ -550,7 +626,13 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
       fareAfterRebate: serializer.fromJson<int>(json['fareAfterRebate']),
       postpaidFare: serializer.fromJson<int>(json['postpaidFare']),
       vehicleType: serializer.fromJson<VehicleTypeValue>(json['vehicleType']),
-      vehicleNumber: serializer.fromJson<int>(json['vehicleNumber']),
+      vehicleNumber: serializer.fromJson<int?>(json['vehicleNumber']),
+      enteredEntranceAt: serializer.fromJson<DateTime?>(
+        json['enteredEntranceAt'],
+      ),
+      enteredEntranceIc: serializer.fromJson<String?>(
+        json['enteredEntranceIc'],
+      ),
       cardNumber: serializer.fromJson<String>(json['cardNumber']),
       status: $StatementLinesTable.$converterstatus.fromJson(
         serializer.fromJson<int>(json['status']),
@@ -574,7 +656,9 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
       'fareAfterRebate': serializer.toJson<int>(fareAfterRebate),
       'postpaidFare': serializer.toJson<int>(postpaidFare),
       'vehicleType': serializer.toJson<VehicleTypeValue>(vehicleType),
-      'vehicleNumber': serializer.toJson<int>(vehicleNumber),
+      'vehicleNumber': serializer.toJson<int?>(vehicleNumber),
+      'enteredEntranceAt': serializer.toJson<DateTime?>(enteredEntranceAt),
+      'enteredEntranceIc': serializer.toJson<String?>(enteredEntranceIc),
       'cardNumber': serializer.toJson<String>(cardNumber),
       'status': serializer.toJson<int>(
         $StatementLinesTable.$converterstatus.toJson(status),
@@ -596,7 +680,9 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
     int? fareAfterRebate,
     int? postpaidFare,
     VehicleTypeValue? vehicleType,
-    int? vehicleNumber,
+    Value<int?> vehicleNumber = const Value.absent(),
+    Value<DateTime?> enteredEntranceAt = const Value.absent(),
+    Value<String?> enteredEntranceIc = const Value.absent(),
     String? cardNumber,
     ConfirmationStatusValue? status,
     String? discountTypes,
@@ -613,7 +699,15 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
     fareAfterRebate: fareAfterRebate ?? this.fareAfterRebate,
     postpaidFare: postpaidFare ?? this.postpaidFare,
     vehicleType: vehicleType ?? this.vehicleType,
-    vehicleNumber: vehicleNumber ?? this.vehicleNumber,
+    vehicleNumber: vehicleNumber.present
+        ? vehicleNumber.value
+        : this.vehicleNumber,
+    enteredEntranceAt: enteredEntranceAt.present
+        ? enteredEntranceAt.value
+        : this.enteredEntranceAt,
+    enteredEntranceIc: enteredEntranceIc.present
+        ? enteredEntranceIc.value
+        : this.enteredEntranceIc,
     cardNumber: cardNumber ?? this.cardNumber,
     status: status ?? this.status,
     discountTypes: discountTypes ?? this.discountTypes,
@@ -649,6 +743,12 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
       vehicleNumber: data.vehicleNumber.present
           ? data.vehicleNumber.value
           : this.vehicleNumber,
+      enteredEntranceAt: data.enteredEntranceAt.present
+          ? data.enteredEntranceAt.value
+          : this.enteredEntranceAt,
+      enteredEntranceIc: data.enteredEntranceIc.present
+          ? data.enteredEntranceIc.value
+          : this.enteredEntranceIc,
       cardNumber: data.cardNumber.present
           ? data.cardNumber.value
           : this.cardNumber,
@@ -675,6 +775,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
           ..write('postpaidFare: $postpaidFare, ')
           ..write('vehicleType: $vehicleType, ')
           ..write('vehicleNumber: $vehicleNumber, ')
+          ..write('enteredEntranceAt: $enteredEntranceAt, ')
+          ..write('enteredEntranceIc: $enteredEntranceIc, ')
           ..write('cardNumber: $cardNumber, ')
           ..write('status: $status, ')
           ..write('discountTypes: $discountTypes')
@@ -697,6 +799,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
     postpaidFare,
     vehicleType,
     vehicleNumber,
+    enteredEntranceAt,
+    enteredEntranceIc,
     cardNumber,
     status,
     discountTypes,
@@ -718,6 +822,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
           other.postpaidFare == this.postpaidFare &&
           other.vehicleType == this.vehicleType &&
           other.vehicleNumber == this.vehicleNumber &&
+          other.enteredEntranceAt == this.enteredEntranceAt &&
+          other.enteredEntranceIc == this.enteredEntranceIc &&
           other.cardNumber == this.cardNumber &&
           other.status == this.status &&
           other.discountTypes == this.discountTypes);
@@ -736,7 +842,9 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
   final Value<int> fareAfterRebate;
   final Value<int> postpaidFare;
   final Value<VehicleTypeValue> vehicleType;
-  final Value<int> vehicleNumber;
+  final Value<int?> vehicleNumber;
+  final Value<DateTime?> enteredEntranceAt;
+  final Value<String?> enteredEntranceIc;
   final Value<String> cardNumber;
   final Value<ConfirmationStatusValue> status;
   final Value<String> discountTypes;
@@ -755,6 +863,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
     this.postpaidFare = const Value.absent(),
     this.vehicleType = const Value.absent(),
     this.vehicleNumber = const Value.absent(),
+    this.enteredEntranceAt = const Value.absent(),
+    this.enteredEntranceIc = const Value.absent(),
     this.cardNumber = const Value.absent(),
     this.status = const Value.absent(),
     this.discountTypes = const Value.absent(),
@@ -773,7 +883,9 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
     required int fareAfterRebate,
     required int postpaidFare,
     required VehicleTypeValue vehicleType,
-    required int vehicleNumber,
+    this.vehicleNumber = const Value.absent(),
+    this.enteredEntranceAt = const Value.absent(),
+    this.enteredEntranceIc = const Value.absent(),
     required String cardNumber,
     required ConfirmationStatusValue status,
     required String discountTypes,
@@ -785,7 +897,6 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
        fareAfterRebate = Value(fareAfterRebate),
        postpaidFare = Value(postpaidFare),
        vehicleType = Value(vehicleType),
-       vehicleNumber = Value(vehicleNumber),
        cardNumber = Value(cardNumber),
        status = Value(status),
        discountTypes = Value(discountTypes);
@@ -803,6 +914,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
     Expression<int>? postpaidFare,
     Expression<int>? vehicleType,
     Expression<int>? vehicleNumber,
+    Expression<DateTime>? enteredEntranceAt,
+    Expression<String>? enteredEntranceIc,
     Expression<String>? cardNumber,
     Expression<int>? status,
     Expression<String>? discountTypes,
@@ -822,6 +935,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
       if (postpaidFare != null) 'postpaid_fare': postpaidFare,
       if (vehicleType != null) 'vehicle_type': vehicleType,
       if (vehicleNumber != null) 'vehicle_number': vehicleNumber,
+      if (enteredEntranceAt != null) 'entered_entrance_at': enteredEntranceAt,
+      if (enteredEntranceIc != null) 'entered_entrance_ic': enteredEntranceIc,
       if (cardNumber != null) 'card_number': cardNumber,
       if (status != null) 'status': status,
       if (discountTypes != null) 'discount_types': discountTypes,
@@ -842,7 +957,9 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
     Value<int>? fareAfterRebate,
     Value<int>? postpaidFare,
     Value<VehicleTypeValue>? vehicleType,
-    Value<int>? vehicleNumber,
+    Value<int?>? vehicleNumber,
+    Value<DateTime?>? enteredEntranceAt,
+    Value<String?>? enteredEntranceIc,
     Value<String>? cardNumber,
     Value<ConfirmationStatusValue>? status,
     Value<String>? discountTypes,
@@ -862,6 +979,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
       postpaidFare: postpaidFare ?? this.postpaidFare,
       vehicleType: vehicleType ?? this.vehicleType,
       vehicleNumber: vehicleNumber ?? this.vehicleNumber,
+      enteredEntranceAt: enteredEntranceAt ?? this.enteredEntranceAt,
+      enteredEntranceIc: enteredEntranceIc ?? this.enteredEntranceIc,
       cardNumber: cardNumber ?? this.cardNumber,
       status: status ?? this.status,
       discountTypes: discountTypes ?? this.discountTypes,
@@ -913,6 +1032,12 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
     if (vehicleNumber.present) {
       map['vehicle_number'] = Variable<int>(vehicleNumber.value);
     }
+    if (enteredEntranceAt.present) {
+      map['entered_entrance_at'] = Variable<DateTime>(enteredEntranceAt.value);
+    }
+    if (enteredEntranceIc.present) {
+      map['entered_entrance_ic'] = Variable<String>(enteredEntranceIc.value);
+    }
     if (cardNumber.present) {
       map['card_number'] = Variable<String>(cardNumber.value);
     }
@@ -946,6 +1071,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
           ..write('postpaidFare: $postpaidFare, ')
           ..write('vehicleType: $vehicleType, ')
           ..write('vehicleNumber: $vehicleNumber, ')
+          ..write('enteredEntranceAt: $enteredEntranceAt, ')
+          ..write('enteredEntranceIc: $enteredEntranceIc, ')
           ..write('cardNumber: $cardNumber, ')
           ..write('status: $status, ')
           ..write('discountTypes: $discountTypes, ')
@@ -1473,7 +1600,9 @@ typedef $$StatementLinesTableCreateCompanionBuilder =
       required int fareAfterRebate,
       required int postpaidFare,
       required VehicleTypeValue vehicleType,
-      required int vehicleNumber,
+      Value<int?> vehicleNumber,
+      Value<DateTime?> enteredEntranceAt,
+      Value<String?> enteredEntranceIc,
       required String cardNumber,
       required ConfirmationStatusValue status,
       required String discountTypes,
@@ -1493,7 +1622,9 @@ typedef $$StatementLinesTableUpdateCompanionBuilder =
       Value<int> fareAfterRebate,
       Value<int> postpaidFare,
       Value<VehicleTypeValue> vehicleType,
-      Value<int> vehicleNumber,
+      Value<int?> vehicleNumber,
+      Value<DateTime?> enteredEntranceAt,
+      Value<String?> enteredEntranceIc,
       Value<String> cardNumber,
       Value<ConfirmationStatusValue> status,
       Value<String> discountTypes,
@@ -1572,6 +1703,16 @@ class $$StatementLinesTableFilterComposer
 
   ColumnFilters<int> get vehicleNumber => $composableBuilder(
     column: $table.vehicleNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get enteredEntranceAt => $composableBuilder(
+    column: $table.enteredEntranceAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get enteredEntranceIc => $composableBuilder(
+    column: $table.enteredEntranceIc,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1670,6 +1811,16 @@ class $$StatementLinesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get enteredEntranceAt => $composableBuilder(
+    column: $table.enteredEntranceAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get enteredEntranceIc => $composableBuilder(
+    column: $table.enteredEntranceIc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get cardNumber => $composableBuilder(
     column: $table.cardNumber,
     builder: (column) => ColumnOrderings(column),
@@ -1751,6 +1902,16 @@ class $$StatementLinesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<DateTime> get enteredEntranceAt => $composableBuilder(
+    column: $table.enteredEntranceAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get enteredEntranceIc => $composableBuilder(
+    column: $table.enteredEntranceIc,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get cardNumber => $composableBuilder(
     column: $table.cardNumber,
     builder: (column) => column,
@@ -1810,7 +1971,9 @@ class $$StatementLinesTableTableManager
                 Value<int> fareAfterRebate = const Value.absent(),
                 Value<int> postpaidFare = const Value.absent(),
                 Value<VehicleTypeValue> vehicleType = const Value.absent(),
-                Value<int> vehicleNumber = const Value.absent(),
+                Value<int?> vehicleNumber = const Value.absent(),
+                Value<DateTime?> enteredEntranceAt = const Value.absent(),
+                Value<String?> enteredEntranceIc = const Value.absent(),
                 Value<String> cardNumber = const Value.absent(),
                 Value<ConfirmationStatusValue> status = const Value.absent(),
                 Value<String> discountTypes = const Value.absent(),
@@ -1829,6 +1992,8 @@ class $$StatementLinesTableTableManager
                 postpaidFare: postpaidFare,
                 vehicleType: vehicleType,
                 vehicleNumber: vehicleNumber,
+                enteredEntranceAt: enteredEntranceAt,
+                enteredEntranceIc: enteredEntranceIc,
                 cardNumber: cardNumber,
                 status: status,
                 discountTypes: discountTypes,
@@ -1848,7 +2013,9 @@ class $$StatementLinesTableTableManager
                 required int fareAfterRebate,
                 required int postpaidFare,
                 required VehicleTypeValue vehicleType,
-                required int vehicleNumber,
+                Value<int?> vehicleNumber = const Value.absent(),
+                Value<DateTime?> enteredEntranceAt = const Value.absent(),
+                Value<String?> enteredEntranceIc = const Value.absent(),
                 required String cardNumber,
                 required ConfirmationStatusValue status,
                 required String discountTypes,
@@ -1867,6 +2034,8 @@ class $$StatementLinesTableTableManager
                 postpaidFare: postpaidFare,
                 vehicleType: vehicleType,
                 vehicleNumber: vehicleNumber,
+                enteredEntranceAt: enteredEntranceAt,
+                enteredEntranceIc: enteredEntranceIc,
                 cardNumber: cardNumber,
                 status: status,
                 discountTypes: discountTypes,

@@ -40,7 +40,7 @@
 3. 次の条件をすべて満たす明細行に絞る（`null` の条件は使わない）
    - 出口日時の日付が、`from` 以後（`from` を含む）
    - 出口日時の日付が、`to` 以前（`to` を含む）
-   - 車両番号が `vehicleNumber` と等しい
+   - 車両番号が `vehicleNumber` と等しい（車両番号が `null` の明細行は、`vehicleNumber` を指定すると除く）
    - ETCカード番号の下4桁が `cardNumberSuffix` と等しい
 4. 出口日時の新しい順に並べる（同じ日時は、保存済みの順のまま）
 5. 絞った明細行の、通行料金・還元額適用料金・後納料金を、それぞれ合計する（確認中の明細行も含める）
@@ -84,7 +84,7 @@ sequenceDiagram
 | `totalFare` | `int` | 通行料金の合計（円） |
 | `totalFareAfterRebate` | `int` | 還元額適用料金の合計（円） |
 | `totalPostpaidFare` | `int` | 後納料金の合計（円） |
-| `vehicleNumberChoices` | `List<int>` | 絞り込みで選べる車両番号 |
+| `vehicleNumberChoices` | `List<int>` | 絞り込みで選べる車両番号（`null` は含めない） |
 | `cardNumberChoices` | `List<String>` | 絞り込みで選べるETCカード番号（下4桁） |
 
 `StatementLineDTO`（一覧・タイムラインの表示と、[SCR-003](../screens/SCR-003-statement-detail.md) の詳細に使う）
@@ -101,7 +101,7 @@ sequenceDiagram
 | `fareAfterRebate` | `int` | 還元額適用料金 |
 | `postpaidFare` | `int` | 後納料金 |
 | `vehicleType` | `VehicleTypeValue` | 車種 |
-| `vehicleNumber` | `int` | 車両番号（個人情報） |
+| `vehicleNumber` | `int?` | 車両番号（個人情報）。CSVで空欄で、利用者がまだ入力していないときは `null` |
 | `cardNumberSuffix` | `String` | ETCカード番号の下4桁 |
 | `status` | `ConfirmationStatusValue` | 状態 |
 | `discountTypes` | `List<String>` | 割引種別（無いときは空） |

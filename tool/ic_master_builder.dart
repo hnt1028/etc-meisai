@@ -3,6 +3,8 @@ import 'dart:math' as math;
 
 import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
 
+import 'ic_link_builder.dart';
+
 /// Makes the IC master from the GeoJSON of N06 (国土数値情報 高速道路時系列データ).
 /// See docs/route-map.md.
 ///
@@ -50,7 +52,18 @@ Map<String, Object?> buildIcMaster({
   }
   if (osmJson != null) points.addAll(_osmPoints(osmJson, points, sections));
   points.sort((a, b) => (a['id'] as String).compareTo(b['id'] as String));
-  return {'source': source, 'points': points};
+  final links = buildIcLinks(
+    lines: sections.expand((s) => s.lines),
+    points: [
+      for (final p in points)
+        LinkPoint(
+          p['id'] as String,
+          (p['lat'] as num).toDouble(),
+          (p['lon'] as num).toDouble(),
+        ),
+    ],
+  );
+  return {'source': source, 'points': points, 'links': links};
 }
 
 /// Points of OpenStreetMap (toll booths and junctions, `out tags center` of

@@ -7,6 +7,7 @@ import 'package:etc_meisai/domain/value/vehicle_type_value.dart';
 /// It holds the card number only as its last 4 characters.
 class StatementLineDTO {
   const StatementLineDTO({
+    this.id,
     required this.entranceAt,
     required this.exitAt,
     required this.entranceIc,
@@ -23,6 +24,10 @@ class StatementLineDTO {
     required this.discountTypes,
     this.routeNames = const [],
   });
+
+  /// The id of the stored line, used to enter its vehicle number. Null for a
+  /// line that is not stored.
+  final String? id;
 
   /// Null when the CSV leaves the entrance blank.
   final DateTime? entranceAt;
@@ -44,8 +49,9 @@ class StatementLineDTO {
 
   final VehicleTypeValue vehicleType;
 
-  /// Personal information. Never log it.
-  final int vehicleNumber;
+  /// Personal information. Never log it. Null when the CSV leaves it blank and
+  /// the user has not entered one.
+  final int? vehicleNumber;
 
   /// The last 4 characters of the card number.
   final String cardNumberSuffix;

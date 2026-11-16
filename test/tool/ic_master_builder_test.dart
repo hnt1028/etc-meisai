@@ -270,4 +270,187 @@ void main() {
       expect(points(master), isEmpty);
     });
   });
+
+  group('links', () {
+    // The lines are the ones above: east runs along latitude 35.0 and north
+    // along longitude 140.0, and they cross at (140.0, 35.0).
+    Map<String, Object?> buildWith(
+      List<Map<String, Object?>> joints,
+      List<Map<String, Object?>> sections,
+    ) => build(joints, sections);
+
+    List<List<Object?>> linksOf(Map<String, Object?> master) =>
+        (master['links'] as List).cast<List<Object?>>();
+
+    test('join the points that are next to each other on a route', () {
+      final master = buildWith(
+        [
+          _joint('EA03_1', '甲', '1', 139.0, 35.0),
+          _joint('EA03_2', '乙', '1', 139.5, 35.0),
+          _joint('EA03_3', '丙', '1', 140.0, 35.0),
+        ],
+        [east],
+      );
+
+      final links = linksOf(master);
+
+      // 甲 - 乙 and 乙 - 丙, and no link from 甲 to 丙, which is on the way.
+      expect(links.map((l) => '${l[0]}-${l[1]}'), [
+        'EA03_1:甲-EA03_2:乙',
+        'EA03_2:乙-EA03_3:丙',
+      ]);
+      // 0.5 degrees of longitude at latitude 35.0 are about 45.6 km.
+      expect(links[0][2] as int, closeTo(45600, 600));
+      expect(links[1][2] as int, closeTo(45600, 600));
+    });
+
+    test('go from one route to another at a junction', () {
+      final master = buildWith(
+        [
+          _joint('EA03_1', '西', '1', 139.5, 35.0),
+          _joint('EA03_2', '分岐', '3', 140.0, 35.0),
+          _joint('EA03_3', '北', '1', 140.0, 35.5),
+        ],
+        [east, north],
+      );
+
+      final links = linksOf(master);
+
+      expect(links.map((l) => '${l[0]}-${l[1]}').toSet(), {
+        'EA03_1:西-EA03_2:分岐',
+        'EA03_2:分岐-EA03_3:北',
+      });
+      // 0.5 degrees of latitude are about 55.3 km.
+      final toNorth = links.singleWhere((l) => (l[1] as String).endsWith('北'));
+      expect(toNorth[2] as int, closeTo(55300, 600));
+    });
+
+    test('have a point in the order of the ids, and one link for a pair', () {
+      final master = buildWith(
+        [
+          _joint('EA03_2', 'b', '1', 139.5, 35.0),
+          _joint('EA03_1', 'a', '1', 139.0, 35.0),
+        ],
+        [east],
+      );
+
+      final links = linksOf(master);
+
+      expect(links, hasLength(1));
+      expect(
+        (links.single[0] as String).compareTo(links.single[1] as String),
+        lessThan(0),
+      );
+    });
+
+    test('leave out a point that is far from every route', () {
+      // 0.01 degrees of latitude is about 1.1 km from the east line.
+      final master = buildWith(
+        [
+          _joint('EA03_1', '甲', '1', 139.0, 35.0),
+          _joint('EA03_2', '乙', '1', 139.5, 35.0),
+          _joint('EA03_3', '遠い', '1', 139.7, 35.01),
+        ],
+        [east],
+      );
+
+      final ids = linksOf(master).expand((l) => [l[0], l[1]]).toSet();
+
+      expect(ids, {'EA03_1:甲', 'EA03_2:乙'});
+    });
+
+    test('do not join two routes that do not meet', () {
+      final apart = _section('別の線', [
+        [
+          [139.0, 36.0],
+          [140.0, 36.0],
+        ],
+      ]);
+      final master = buildWith(
+        [
+          _joint('EA03_1', '甲', '1', 139.0, 35.0),
+          _joint('EA03_2', '乙', '1', 139.5, 35.0),
+          _joint('EA03_3', '丙', '1', 139.0, 36.0),
+          _joint('EA03_4', '丁', '1', 139.5, 36.0),
+        ],
+        [east, apart],
+      );
+
+      final links = linksOf(master).map((l) => '${l[0]}-${l[1]}').toSet();
+
+      expect(links, {'EA03_1:甲-EA03_2:乙', 'EA03_3:丙-EA03_4:丁'});
+    });
+
+    test('join two points at one place with a link of 0 meters', () {
+      final master = buildWith(
+        [
+          _joint('EA03_1', '甲', '1', 139.5, 35.0),
+          _joint('EA03_2', '乙', '3', 139.5, 35.00001),
+          _joint('EA03_3', '丙', '1', 140.0, 35.0),
+        ],
+        [east],
+      );
+
+      final links = linksOf(master);
+
+      final same = links.singleWhere((l) => l[2] == 0);
+      expect({same[0], same[1]}, {'EA03_1:甲', 'EA03_2:乙'});
+      // 丙 is next to the first of the two.
+      expect(links.where((l) => l[2] != 0), hasLength(1));
+    });
+
+    test('keep the shorter of two ways between the same two points', () {
+      // A ring: the east line out and a longer way back through the north.
+      final ring = _section('環状', [
+        [
+          [139.5, 35.0],
+          [139.5, 35.2],
+          [140.0, 35.2],
+          [140.0, 35.0],
+        ],
+      ]);
+      final master = buildWith(
+        [
+          _joint('EA03_1', '甲', '1', 139.5, 35.0),
+          _joint('EA03_2', '乙', '1', 140.0, 35.0),
+        ],
+        [east, ring],
+      );
+
+      final links = linksOf(master);
+
+      expect(links, hasLength(1));
+      // The straight 45.6 km along the east line, not the 100 km ring.
+      expect(links.single[2] as int, closeTo(45600, 600));
+    });
+
+    test('are empty without any route', () {
+      final master = buildWith([_joint('EA03_1', '甲', '1', 139.0, 35.0)], []);
+
+      expect(linksOf(master), isEmpty);
+    });
+
+    test('also join a point of OpenStreetMap that is on a route', () {
+      final master = buildIcMaster(
+        jointJson: _collection([_joint('EA03_1', '甲甲', '1', 139.0, 35.0)]),
+        sectionJson: _collection([east]),
+        osmJson: jsonEncode({
+          'elements': [
+            {
+              'type': 'node',
+              'id': 7,
+              'lat': 35.0,
+              'lon': 139.5,
+              'tags': {'name': '乙乙料金所'},
+            },
+          ],
+        }),
+        source: 'test',
+      );
+
+      expect(linksOf(master).map((l) => '${l[0]}-${l[1]}'), [
+        'EA03_1:甲甲-osm:7',
+      ]);
+    });
+  });
 }

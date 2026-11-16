@@ -39,6 +39,19 @@ class _FakeStatementLineIF implements StatementLineIF {
       stored[_key(statementLine)] = statementLine;
 
   @override
+  Future<StatementLineEntity?> findById(String id) async => null;
+
+  @override
+  Future<void> updateVehicleNumber(String id, int vehicleNumber) async {}
+
+  @override
+  Future<void> updateEntrance(
+    String id, {
+    DateTime? entranceAt,
+    String? entranceIc,
+  }) async {}
+
+  @override
   Future<List<StatementLineEntity>> findAll() async => stored.values.toList();
 
   @override
@@ -49,6 +62,7 @@ StatementLineEntity _statementLine({
   required ConfirmationStatusValue status,
   int fare = 1000,
   String exitIc = 'B-IC',
+  int? vehicleNumber = 1234,
 }) {
   return StatementLineEntity(
     entranceAt: DateTime(2026, 1, 10, 8, 30),
@@ -61,7 +75,7 @@ StatementLineEntity _statementLine({
     fareAfterRebate: 0,
     postpaidFare: fare,
     vehicleType: VehicleTypeValue.standard,
-    vehicleNumber: 1234,
+    vehicleNumber: vehicleNumber,
     cardNumber: '0000-****-0001',
     status: status,
     discountTypes: const [],
@@ -179,5 +193,103 @@ void main() {
 
     await expectLater(failing.execute(bytes), throwsFormatException);
     expect(await statementLines.findAll(), isEmpty);
+  });
+
+  group('vehicle number the user entered', () {
+    test('is kept when a pending line is overwritten by a blank one', () async {
+      statementLines = _FakeStatementLineIF();
+      final stored = _statementLine(
+        status: ConfirmationStatusValue.pending,
+        vehicleNumber: 4321,
+      );
+      await statementLines.save(stored);
+
+      final result = await usecase([
+        _statementLine(
+          status: ConfirmationStatusValue.pending,
+          fare: 2000,
+          vehicleNumber: null,
+        ),
+      ]).execute(bytes);
+
+      expect(result.overwrittenCount, 1);
+      final now = statementLines.stored.values.single;
+      // The new fare, and the number the user entered.
+      expect(now.fare, 2000);
+      expect(now.vehicleNumber, 4321);
+    });
+
+    test('is replaced when the CSV has a vehicle number', () async {
+      statementLines = _FakeStatementLineIF();
+      await statementLines.save(
+        _statementLine(
+          status: ConfirmationStatusValue.pending,
+          vehicleNumber: 4321,
+        ),
+      );
+
+      await usecase([
+        _statementLine(
+          status: ConfirmationStatusValue.confirmed,
+          vehicleNumber: 1111,
+        ),
+      ]).execute(bytes);
+
+      expect(statementLines.stored.values.single.vehicleNumber, 1111);
+    });
+
+    test('stays blank when nothing was entered', () async {
+      statementLines = _FakeStatementLineIF();
+      await statementLines.save(
+        _statementLine(
+          status: ConfirmationStatusValue.pending,
+          vehicleNumber: null,
+        ),
+      );
+
+      await usecase([
+        _statementLine(
+          status: ConfirmationStatusValue.confirmed,
+          vehicleNumber: null,
+        ),
+      ]).execute(bytes);
+
+      expect(statementLines.stored.values.single.vehicleNumber, isNull);
+    });
+
+    test('is kept when a confirmed line is imported again', () async {
+      statementLines = _FakeStatementLineIF();
+      await statementLines.save(
+        _statementLine(
+          status: ConfirmationStatusValue.confirmed,
+          vehicleNumber: 4321,
+        ),
+      );
+
+      final result = await usecase([
+        _statementLine(
+          status: ConfirmationStatusValue.confirmed,
+          vehicleNumber: null,
+        ),
+      ]).execute(bytes);
+
+      // A confirmed line is ignored, so nothing changes.
+      expect(result.ignoredCount, 1);
+      expect(statementLines.stored.values.single.vehicleNumber, 4321);
+    });
+
+    test('adds a line without a vehicle number', () async {
+      statementLines = _FakeStatementLineIF();
+
+      final result = await usecase([
+        _statementLine(
+          status: ConfirmationStatusValue.confirmed,
+          vehicleNumber: null,
+        ),
+      ]).execute(bytes);
+
+      expect(result.addedCount, 1);
+      expect(statementLines.stored.values.single.vehicleNumber, isNull);
+    });
   });
 }

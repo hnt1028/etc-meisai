@@ -12,6 +12,7 @@
 | 結果の受け渡し | `lib/application/dto/import_result_dto.dart` | `ImportResultDTO` |
 | 使う窓口（CSVの読み取り） | `lib/application/interface/statement_if.dart` | `StatementIF` |
 | 使う窓口（明細行の保存・取得） | `lib/application/interface/statement_line_if.dart` | `StatementLineIF` |
+| 使う部品（明細行の写し） | `lib/application/usecase/statements/statement_line_copy.dart` | `copyWithVehicleNumber`（Entity は値を持つだけでメソッドを持たないため、写しは Usecase で作る。[architecture.md](../../architecture.md)） |
 
 ## 呼び出し箇所
 
@@ -31,7 +32,7 @@
 |---|---|---|
 | なし | 新規に保存する | 追加 |
 | 確定 | 保存せず、保存済みの値を残す | 無視 |
-| 確認中 | 取り込む明細行で置き換える | 上書き |
+| 確認中 | 取り込む明細行で置き換える。ただし、取り込む明細行の車両番号が空欄で、保存済みの明細行に車両番号があるとき（利用者が入力したもの）は、保存済みの車両番号を残す | 上書き |
 
 ## シーケンス図
 

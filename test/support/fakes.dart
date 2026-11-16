@@ -5,9 +5,12 @@ import 'package:etc_meisai/application/interface/ic_master_if.dart';
 import 'package:etc_meisai/application/interface/ic_position_if.dart';
 import 'package:etc_meisai/application/interface/statement_if.dart';
 import 'package:etc_meisai/application/interface/statement_line_if.dart';
+import 'package:etc_meisai/application/usecase/aggregation/aggregate_statements_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/statement_line_copy.dart';
 import 'package:etc_meisai/application/usecase/route_map/list_route_map_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
+import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
@@ -16,7 +19,11 @@ import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/domain/value/vehicle_type_value.dart';
 
 /// A fictional statement line.
+int _fakeIdCounter = 0;
+
 StatementLineEntity fakeStatementLine({
+  String? id,
+  bool withoutVehicleNumber = false,
   String exitIc = 'B-IC',
   ConfirmationStatusValue status = ConfirmationStatusValue.confirmed,
   DateTime? exitAt,
@@ -34,6 +41,7 @@ StatementLineEntity fakeStatementLine({
   List<String> discountTypes = const [],
 }) {
   return StatementLineEntity(
+    id: id ?? 'line-${_fakeIdCounter++}',
     entranceAt: withoutEntrance
         ? null
         : (entranceAt ?? DateTime(2026, 1, 10, 8, 30)),
@@ -46,7 +54,7 @@ StatementLineEntity fakeStatementLine({
     fareAfterRebate: fareAfterRebate,
     postpaidFare: postpaidFare ?? fare - fareAfterRebate,
     vehicleType: vehicleType,
-    vehicleNumber: vehicleNumber,
+    vehicleNumber: withoutVehicleNumber ? null : vehicleNumber,
     cardNumber: cardNumber,
     status: status,
     discountTypes: discountTypes,
@@ -106,6 +114,43 @@ class FakeStatementLineIF implements StatementLineIF {
   }
 
   @override
+  Future<StatementLineEntity?> findById(String id) async {
+    if (readError != null) throw readError!;
+    for (final s in stored) {
+      if (s.id == id) return s;
+    }
+    return null;
+  }
+
+  @override
+  Future<void> updateVehicleNumber(String id, int vehicleNumber) async {
+    await gate;
+    if (error != null) throw error!;
+    final index = stored.indexWhere((s) => s.id == id);
+    if (index >= 0) {
+      stored[index] = copyWithVehicleNumber(stored[index], vehicleNumber);
+    }
+  }
+
+  @override
+  Future<void> updateEntrance(
+    String id, {
+    DateTime? entranceAt,
+    String? entranceIc,
+  }) async {
+    await gate;
+    if (error != null) throw error!;
+    final index = stored.indexWhere((s) => s.id == id);
+    if (index >= 0) {
+      stored[index] = copyWithEntrance(
+        stored[index],
+        entranceAt: entranceAt,
+        entranceIc: entranceIc,
+      );
+    }
+  }
+
+  @override
   Future<List<StatementLineEntity>> findAll() async {
     readCount++;
     await readGate;
@@ -142,10 +187,17 @@ IcPointEntity fakeIcPoint({
 
 /// Returns the given IC points, or throws [error].
 class FakeIcMasterIF implements IcMasterIF {
-  FakeIcMasterIF(this.points, {this.error});
+  FakeIcMasterIF(this.points, {this.links = const [], this.error});
 
   final List<IcPointEntity> points;
+  final List<IcLinkEntity> links;
   Object? error;
+
+  @override
+  Future<List<IcLinkEntity>> findLinks() async {
+    if (error != null) throw error!;
+    return links;
+  }
 
   @override
   Future<List<IcPointEntity>> findAll() async {
@@ -238,6 +290,21 @@ ListRouteMapUC fakeRouteMapUC(
   FakeIcPositionIF? positions,
 }) {
   return ListRouteMapUC(
+    statementLines: lines,
+    icMaster: master ?? FakeIcMasterIF([]),
+    icMappings: mappings ?? FakeIcMappingIF(),
+    icPositions: positions ?? FakeIcPositionIF(),
+  );
+}
+
+/// The aggregation use case on in-memory fakes.
+AggregateStatementsUC fakeAggregateUC(
+  FakeStatementLineIF lines, {
+  FakeIcMasterIF? master,
+  FakeIcMappingIF? mappings,
+  FakeIcPositionIF? positions,
+}) {
+  return AggregateStatementsUC(
     statementLines: lines,
     icMaster: master ?? FakeIcMasterIF([]),
     icMappings: mappings ?? FakeIcMappingIF(),

@@ -28,6 +28,10 @@ class AppShell extends StatelessWidget {
             label: AppStrings.routeMapTab,
           ),
           NavigationDestination(
+            icon: Icon(Icons.bar_chart),
+            label: AppStrings.aggregationTab,
+          ),
+          NavigationDestination(
             icon: Icon(Icons.settings),
             label: AppStrings.settingsTab,
           ),

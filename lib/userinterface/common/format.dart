@@ -18,3 +18,17 @@ String formatDate(DateTime value) =>
 /// Shows a date and time as 2026/01/10 08:30.
 String formatDateTime(DateTime value) =>
     '${formatDate(value)} ${_two(value.hour)}:${_two(value.minute)}';
+
+/// Shows [meters] in kilometers with one decimal place, such as 1,234.5km.
+String formatKm(int meters) {
+  // Tenths of a kilometer, rounded half up.
+  final tenths = (meters + 50) ~/ 100;
+  final whole = tenths ~/ 10;
+  final digits = whole.toString();
+  final buffer = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) buffer.write(',');
+    buffer.write(digits[i]);
+  }
+  return '$buffer.${tenths % 10}km';
+}

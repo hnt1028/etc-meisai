@@ -15,6 +15,23 @@ abstract interface class StatementLineIF {
   /// it is replaced.
   Future<void> save(StatementLineEntity statementLine);
 
+  /// Returns the stored statement line with the id [id], or null.
+  Future<StatementLineEntity?> findById(String id);
+
+  /// Sets the vehicle number of the stored line with the id [id]. The rule
+  /// that only a line without one may be changed belongs to the usecase.
+  Future<void> updateVehicleNumber(String id, int vehicleNumber);
+
+  /// Stores the entrance date and time and the entrance IC the user entered
+  /// for the line with the id [id]. A null argument is left as it is. They are
+  /// kept apart from the CSV's values, and the duplicate key does not change.
+  /// The rule that only blank ones may be entered belongs to the usecase.
+  Future<void> updateEntrance(
+    String id, {
+    DateTime? entranceAt,
+    String? entranceIc,
+  });
+
   /// Returns every stored statement line.
   Future<List<StatementLineEntity>> findAll();
 

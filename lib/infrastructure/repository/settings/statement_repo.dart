@@ -116,8 +116,10 @@ class StatementRepo implements StatementIF {
     return vehicleType;
   }
 
-  /// The error never includes the value: a vehicle number is personal data.
-  int _parseVehicleNumber(String value, int line) {
+  /// A blank is a use without a vehicle number (docs/csv-format.md). The error
+  /// never includes the value: a vehicle number is personal data.
+  int? _parseVehicleNumber(String value, int line) {
+    if (value.isEmpty) return null;
     final number = int.tryParse(value);
     if (number == null) {
       throw FormatException(_Messages.vehicleNumber(line));
