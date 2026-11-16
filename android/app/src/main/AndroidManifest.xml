@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Only for the map tiles of OpenStreetMap (docs/privacy.md). The debug and
+         profile builds have it already; the release build needs it here. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="etc_meisai"
         android:name="${applicationName}"
