@@ -100,6 +100,35 @@ void main() {
       },
     );
 
+    test('draws a blank entrance of 新保土ヶ谷 from 狩場, one way only', () async {
+      FakeIcMasterIF master() => FakeIcMasterIF([
+        fakeIcPoint(
+          name: '新保土ヶ谷',
+          routeNames: const [],
+          latitude: 35.45,
+          longitude: 139.57,
+        ),
+        fakeIcPoint(
+          name: '狩場',
+          routeNames: const ['首都高速神奈川3号狩場線'],
+          latitude: 35.44,
+          longitude: 139.58,
+        ),
+      ]);
+      final lines = FakeStatementLineIF()
+        ..stored.add(fakeStatementLine(exitIc: '新保土ヶ谷', withoutEntrance: true));
+      final result = await fakeRouteMapUC(lines, master: master()).execute();
+      expect(result.segments.single.fromIcName, '狩場');
+      expect(result.segments.single.toIcName, '新保土ヶ谷');
+
+      // 狩場 may be reached from many roads, so it is not completed.
+      final back = FakeStatementLineIF()
+        ..stored.add(fakeStatementLine(exitIc: '狩場', withoutEntrance: true));
+      final other = await fakeRouteMapUC(back, master: master()).execute();
+      expect(other.segments, isEmpty);
+      expect(other.undrawnLineCount, 1);
+    });
+
     test('makes one marker for an IC name, with the number of lines', () async {
       final lines = FakeStatementLineIF()
         ..stored.addAll([

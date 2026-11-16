@@ -1,28 +1,50 @@
 import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
 
-/// A road that has only two ICs, so a blank entrance is the other end.
-/// The table is in docs/route-map.md ("入口が空欄の明細行の線"): change both
-/// together.
-class _EndToEndRoad {
-  const _EndToEndRoad(this.routeName, this.endA, this.endB);
+/// A short road whose blank entrance is known from the exit. The table is in
+/// docs/route-map.md ("入口が空欄の明細行の線"): change both together.
+class _ImpliedEntrance {
+  const _ImpliedEntrance({
+    required this.exit,
+    required this.entrance,
+    this.routeName,
+    this.bothWays = false,
+  });
 
-  final String routeName;
-  final String endA;
-  final String endB;
+  /// The exit IC (the name of the point of the master).
+  final String exit;
+
+  /// The IC that is the entrance when the entrance is blank.
+  final String entrance;
+
+  /// The route the exit must be on, when the master knows it.
+  final String? routeName;
+
+  /// True when the same holds with exit and entrance swapped.
+  final bool bothWays;
 }
 
-const _roads = [_EndToEndRoad('安房峠道路', '中ノ湯', '平湯')];
+const _rules = [
+  _ImpliedEntrance(
+    exit: '平湯',
+    entrance: '中ノ湯',
+    routeName: '安房峠道路',
+    bothWays: true,
+  ),
+  _ImpliedEntrance(exit: '新保土ヶ谷', entrance: '狩場'),
+];
 
 /// The IC name that is the entrance of a line with a blank entrance and the
-/// exit [exitIc], or null when the exit is not an end of such a road. The
-/// exit must be a point of the master that is on the road.
+/// exit [exitIc], or null when the exit is not in the table. The exit must be
+/// a point of the master.
 String? impliedEntranceNameOf(String exitIc, IcLookup lookup) {
   final point = lookup.resolve(exitIc).point;
   if (point == null) return null;
-  for (final road in _roads) {
-    if (!point.routeNames.contains(road.routeName)) continue;
-    if (point.name == road.endA) return road.endB;
-    if (point.name == road.endB) return road.endA;
+  for (final rule in _rules) {
+    final onRoute =
+        rule.routeName == null || point.routeNames.contains(rule.routeName);
+    if (!onRoute) continue;
+    if (point.name == rule.exit) return rule.entrance;
+    if (rule.bothWays && point.name == rule.entrance) return rule.exit;
   }
   return null;
 }
