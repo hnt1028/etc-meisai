@@ -142,7 +142,8 @@ class _Chart extends StatelessWidget {
     return ListView(
       children: [
         SizedBox(
-          height: 20,
+          // As tall as the text, which can be made larger in the settings.
+          height: MediaQuery.textScalerOf(context).scale(20),
           child: Stack(
             children: [
               for (final hour in const [0, 6, 12, 18, 24])

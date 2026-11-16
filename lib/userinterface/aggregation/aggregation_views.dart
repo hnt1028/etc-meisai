@@ -16,7 +16,9 @@ class AggregationTable extends StatelessWidget {
   final AggregationKind kind;
   final AggregationUnit unit;
 
-  static const _valueWidth = 88.0;
+  /// The name and each value share the width in these proportions.
+  static const _nameFlex = 4;
+  static const _valueFlex = 3;
 
   @override
   Widget build(BuildContext context) {
@@ -29,11 +31,19 @@ class AggregationTable extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
-            Expanded(child: Text(name, style: textStyle)),
+            Expanded(
+              flex: _nameFlex,
+              child: Text(name, style: textStyle),
+            ),
             for (final value in values)
-              SizedBox(
-                width: _valueWidth,
-                child: Text(value, textAlign: TextAlign.end, style: textStyle),
+              Expanded(
+                flex: _valueFlex,
+                // A long value shrinks, so that the columns fit any width.
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(value, style: textStyle),
+                ),
               ),
           ],
         ),

@@ -111,11 +111,11 @@ class _Map extends ConsumerWidget {
           markers: [
             for (final place in route.places)
               Marker(
-                key: ValueKey('line-place-${place.icName}'),
                 point: LatLng(place.latitude, place.longitude),
                 width: 40,
                 height: 40,
                 child: Stack(
+                  key: ValueKey('line-place-${place.icName}'),
                   clipBehavior: Clip.none,
                   alignment: Alignment.center,
                   children: [
