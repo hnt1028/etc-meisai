@@ -51,7 +51,7 @@
 
 ## 手順
 
-- `release`: `develop` から切り、バージョン表記（`pubspec.yaml` など）を変更してコミット（`Change: バージョンを x.y.z に変更`）。`master` にマージし、`develop` へ取り込む
+- `release`: `develop` から切り、バージョン表記（`pubspec.yaml` など）を変更してコミット（`Change: バージョンを x.y.z に変更`）。`master` にマージし、`develop` へ取り込む。`release/*` を push すると、タグとドラフトの Release が自動で作られる（[release.md](release.md)）
 - `rule`: `master` から切り、ルールを変更してコミット。`master` にマージし、`develop` へ取り込む
 
 ## .gitignore
