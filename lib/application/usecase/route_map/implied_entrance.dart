@@ -30,7 +30,6 @@ const _rules = [
     routeName: '安房峠道路',
     bothWays: true,
   ),
-  _ImpliedEntrance(exit: '新保土ヶ谷', entrance: '狩場'),
 ];
 
 /// The IC name that is the entrance of a line with a blank entrance and the
