@@ -37,7 +37,12 @@ void main() {
       await pumpApp(
         tester,
         database: database,
-        picker: () async => StatementFixture.threeRows(),
+        // One line has no vehicle number, so its detail has the enter button.
+        picker: () async => StatementFixture.csv([
+          StatementFixture.header,
+          StatementFixture.row(exitIc: 'テスト東ＩＣ'),
+          [...StatementFixture.row(exitIc: 'テスト西ＩＣ', note: '確認中')]..[12] = '',
+        ]),
       );
 
       // Every step must leave the screen without an exception (an overflow).
@@ -75,12 +80,19 @@ void main() {
       await openStatements(tester);
       expectFits();
 
-      step = 'the statement detail';
-      await tester.tap(find.byType(ListTile).first);
-      await tester.pumpAndSettle();
-      expectFits();
-      await tester.tap(find.byType(BackButton));
-      await tester.pumpAndSettle();
+      // The first and the last line: one of them has no vehicle number.
+      for (final which in [0, 1]) {
+        step = 'the statement detail of line $which';
+        final tiles = find.byType(ListTile);
+        final tile = which == 0 ? tiles.first : tiles.last;
+        await tester.ensureVisible(tile);
+        await tester.pumpAndSettle();
+        await tester.tap(tile);
+        await tester.pumpAndSettle();
+        expectFits();
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+      }
 
       step = 'the timeline';
       await tapText(StatementListStrings.modeTimeline);

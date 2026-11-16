@@ -14,6 +14,7 @@ import 'package:etc_meisai/application/usecase/route_map/save_ic_position_uc.dar
 import 'package:etc_meisai/application/usecase/settings/delete_all_statement_lines_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/import_statement_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/save_vehicle_number_uc.dart';
 import 'package:etc_meisai/infrastructure/repository/database/app_database.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_mapping_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_master_repo.dart';
@@ -81,6 +82,9 @@ void main() {
             icMappings: icMappings,
             icPositions: icPositions,
           ),
+        ),
+        saveVehicleNumberUCProvider.overrideWithValue(
+          SaveVehicleNumberUC(statementLines: statementLines),
         ),
         getLineRouteUCProvider.overrideWithValue(
           GetLineRouteUC(

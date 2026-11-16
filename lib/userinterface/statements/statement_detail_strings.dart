@@ -29,6 +29,14 @@ abstract final class StatementDetailStrings {
 
   static const notFound = '明細行が見つかりません';
 
+  static const vehicleNumberEnter = '入力';
+  static const vehicleNumberDialogTitle = '車両番号を入力';
+  static const vehicleNumberInputLabel = '車両番号（1〜4桁の数字）';
+  static const vehicleNumberOnceNotice = '保存すると、あとから変更できません';
+  static const cancel = 'キャンセル';
+  static const save = '保存';
+  static const saveVehicleNumberFailed = '保存できませんでした';
+
   /// Above the map, when a position is not known.
   static String unlocatedNotice(List<String> icNames) =>
       '位置が分からないICがあります: ${icNames.join('、')}';

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/application/usecase/route_map/get_line_route_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/save_vehicle_number_uc.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
@@ -26,8 +27,11 @@ StatementLineDTO _line({
   ConfirmationStatusValue status = ConfirmationStatusValue.confirmed,
   List<String> discountTypes = const ['深夜割引', '休日割引'],
   List<String> routeNames = const ['テスト自動車道', 'テスト都市高速'],
+  String? id,
+  bool withoutVehicleNumber = false,
 }) {
   return StatementLineDTO(
+    id: id,
     entranceAt: entranceAt ?? DateTime(2026, 1, 10, 8, 30),
     exitAt: DateTime(2026, 1, 10, 9, 15),
     entranceIc: entranceIc,
@@ -38,7 +42,7 @@ StatementLineDTO _line({
     fareAfterRebate: 100,
     postpaidFare: 860,
     vehicleType: VehicleTypeValue.standard,
-    vehicleNumber: 1234,
+    vehicleNumber: withoutVehicleNumber ? null : 1234,
     cardNumberSuffix: '0001',
     status: status,
     discountTypes: discountTypes,
@@ -73,6 +77,7 @@ Future<void> _show(
   StatementLineDTO? line, {
   FakeIcMasterIF? master,
   FakeIcPositionIF? positions,
+  FakeStatementLineIF? lines,
   bool settle = true,
 }) async {
   tester.view.physicalSize = const Size(800, 1600);
@@ -87,6 +92,9 @@ Future<void> _show(
     ProviderScope(
       overrides: [
         getLineRouteUCProvider.overrideWithValue(uc),
+        saveVehicleNumberUCProvider.overrideWithValue(
+          SaveVehicleNumberUC(statementLines: lines ?? FakeStatementLineIF()),
+        ),
         tileLayerProvider.overrideWithValue(const SizedBox.shrink()),
       ],
       child: MaterialApp(home: StatementDetailScreen(line: line)),
@@ -287,5 +295,179 @@ void main() {
       expect(find.byType(FlutterMap), findsNothing);
       expect(find.text('960円'), findsOneWidget);
     });
+  });
+
+  group('vehicle number', () {
+    final enter = find.byKey(const ValueKey('enter-vehicle-number'));
+
+    /// A stored line without a vehicle number, and the screen for it.
+    Future<FakeStatementLineIF> showBlank(WidgetTester tester) async {
+      final lines = FakeStatementLineIF()
+        ..stored.add(
+          fakeStatementLine(id: 'blank', withoutVehicleNumber: true),
+        );
+      await _show(
+        tester,
+        _line(id: 'blank', withoutVehicleNumber: true),
+        lines: lines,
+      );
+      return lines;
+    }
+
+    Future<void> typeNumber(WidgetTester tester, String text) async {
+      await tester.enterText(find.byType(TextField), text);
+      await tester.pumpAndSettle();
+    }
+
+    FilledButton saveButton(WidgetTester tester) => tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, StatementDetailStrings.save),
+    );
+
+    testWidgets('shows - and an enter button when there is none', (
+      tester,
+    ) async {
+      await showBlank(tester);
+
+      expect(enter, findsOneWidget);
+      expect(find.text('1234'), findsNothing);
+    });
+
+    testWidgets('shows no button when the line has a number', (tester) async {
+      await _show(tester, _line(id: 'x'));
+
+      expect(find.text('1234'), findsOneWidget);
+      expect(enter, findsNothing);
+    });
+
+    testWidgets('shows no button for a line that is not stored', (
+      tester,
+    ) async {
+      await _show(tester, _line(withoutVehicleNumber: true));
+
+      expect(enter, findsNothing);
+    });
+
+    testWidgets('saves the number once, and shows it', (tester) async {
+      final lines = await showBlank(tester);
+
+      await tester.tap(enter);
+      await tester.pumpAndSettle();
+      expect(
+        find.text(StatementDetailStrings.vehicleNumberOnceNotice),
+        findsOneWidget,
+      );
+      await typeNumber(tester, '4321');
+      await tester.tap(find.text(StatementDetailStrings.save));
+      await tester.pumpAndSettle();
+
+      // Saved, shown, and the button is gone: it cannot be entered again.
+      expect(lines.stored.single.vehicleNumber, 4321);
+      expect(find.text('4321'), findsOneWidget);
+      expect(enter, findsNothing);
+      expect(
+        find.text(StatementDetailStrings.saveVehicleNumberFailed),
+        findsNothing,
+      );
+    });
+
+    testWidgets('cannot save until the number has one to four digits', (
+      tester,
+    ) async {
+      await showBlank(tester);
+      await tester.tap(enter);
+      await tester.pumpAndSettle();
+
+      expect(saveButton(tester).onPressed, isNull);
+      await typeNumber(tester, '0');
+      expect(saveButton(tester).onPressed, isNull);
+      await typeNumber(tester, '00');
+      expect(saveButton(tester).onPressed, isNull);
+      await typeNumber(tester, '1');
+      expect(saveButton(tester).onPressed, isNotNull);
+      await typeNumber(tester, '9999');
+      expect(saveButton(tester).onPressed, isNotNull);
+    });
+
+    testWidgets('accepts only digits, and at most four', (tester) async {
+      await showBlank(tester);
+      await tester.tap(enter);
+      await tester.pumpAndSettle();
+
+      await typeNumber(tester, '12ab-34567');
+
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        '1234',
+      );
+    });
+
+    testWidgets('saves nothing when the dialog is cancelled', (tester) async {
+      final lines = await showBlank(tester);
+      await tester.tap(enter);
+      await tester.pumpAndSettle();
+      await typeNumber(tester, '4321');
+
+      await tester.tap(find.text(StatementDetailStrings.cancel));
+      await tester.pumpAndSettle();
+
+      expect(lines.stored.single.vehicleNumber, isNull);
+      expect(enter, findsOneWidget);
+      expect(find.byType(TextField), findsNothing);
+    });
+
+    testWidgets('says so when saving fails, without details', (tester) async {
+      final lines = await showBlank(tester);
+      lines.error = StateError('secret 4321');
+      await tester.tap(enter);
+      await tester.pumpAndSettle();
+      await typeNumber(tester, '4321');
+
+      await tester.tap(find.text(StatementDetailStrings.save));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(StatementDetailStrings.saveVehicleNumberFailed),
+        findsOneWidget,
+      );
+      expect(find.textContaining('secret'), findsNothing);
+      // The number is not shown, and can be entered again.
+      expect(find.text('4321'), findsNothing);
+      expect(enter, findsOneWidget);
+    });
+
+    testWidgets('says so when the line already has a number elsewhere', (
+      tester,
+    ) async {
+      // The screen has a line without a number, but the stored one has one.
+      final lines = FakeStatementLineIF()
+        ..stored.add(fakeStatementLine(id: 'blank', vehicleNumber: 1));
+      await _show(
+        tester,
+        _line(id: 'blank', withoutVehicleNumber: true),
+        lines: lines,
+      );
+      await tester.tap(enter);
+      await tester.pumpAndSettle();
+      await typeNumber(tester, '4321');
+
+      await tester.tap(find.text(StatementDetailStrings.save));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(StatementDetailStrings.saveVehicleNumberFailed),
+        findsOneWidget,
+      );
+      expect(lines.stored.single.vehicleNumber, 1);
+    });
+  });
+
+  test('the use cases must be overridden', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    expect(
+      () => container.read(saveVehicleNumberUCProvider),
+      throwsA(anything),
+    );
   });
 }

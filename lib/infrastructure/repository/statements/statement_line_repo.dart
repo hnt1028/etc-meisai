@@ -46,6 +46,21 @@ class StatementLineRepo implements StatementLineIF {
   }
 
   @override
+  Future<StatementLineEntity?> findById(String id) async {
+    final row = await (_db.select(
+      _db.statementLines,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+    return row == null ? null : _toEntity(row);
+  }
+
+  @override
+  Future<void> updateVehicleNumber(String id, int vehicleNumber) async {
+    await (_db.update(_db.statementLines)..where((t) => t.id.equals(id))).write(
+      StatementLinesCompanion(vehicleNumber: Value(vehicleNumber)),
+    );
+  }
+
+  @override
   Future<List<StatementLineEntity>> findAll() async {
     final rows = await (_db.select(
       _db.statementLines,
@@ -71,7 +86,7 @@ class StatementLineRepo implements StatementLineIF {
       fareAfterRebate: statementLine.fareAfterRebate,
       postpaidFare: statementLine.postpaidFare,
       vehicleType: statementLine.vehicleType,
-      vehicleNumber: statementLine.vehicleNumber,
+      vehicleNumber: Value(statementLine.vehicleNumber),
       cardNumber: statementLine.cardNumber,
       status: statementLine.status,
       discountTypes: statementLine.discountTypes.join(';'),
@@ -80,6 +95,7 @@ class StatementLineRepo implements StatementLineIF {
 
   StatementLineEntity _toEntity(StatementLine row) {
     return StatementLineEntity(
+      id: row.id,
       entranceAt: row.entranceAt,
       exitAt: row.exitAt,
       entranceIc: row.entranceIc,

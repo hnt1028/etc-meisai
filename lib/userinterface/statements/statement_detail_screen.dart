@@ -3,18 +3,57 @@ import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/userinterface/common/format.dart';
 import 'package:etc_meisai/userinterface/statements/line_route_map.dart';
 import 'package:etc_meisai/userinterface/statements/statement_detail_strings.dart';
+import 'package:etc_meisai/userinterface/common/data_revision.dart';
+import 'package:etc_meisai/userinterface/statements/statement_detail_providers.dart';
+import 'package:etc_meisai/userinterface/statements/vehicle_number_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// SCR-003: shows every field of one statement line. [line] is null when the
 /// screen was opened without a statement line (ER-1).
-class StatementDetailScreen extends StatelessWidget {
+class StatementDetailScreen extends ConsumerStatefulWidget {
   const StatementDetailScreen({super.key, required this.line});
 
   final StatementLineDTO? line;
 
   @override
+  ConsumerState<StatementDetailScreen> createState() =>
+      _StatementDetailScreenState();
+}
+
+class _StatementDetailScreenState extends ConsumerState<StatementDetailScreen> {
+  /// The line shown. It changes when the user saves a vehicle number (OP-3).
+  late StatementLineDTO? _line = widget.line;
+
+  /// OP-3: asks for the vehicle number, saves it, and shows it.
+  Future<void> _enterVehicleNumber() async {
+    final line = _line;
+    final id = line?.id;
+    if (line == null || id == null) return;
+    final number = await showVehicleNumberDialog(context);
+    if (number == null || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref
+          .read(saveVehicleNumberUCProvider)
+          .execute(id: id, vehicleNumber: number);
+    } catch (_) {
+      // The details are not shown: they could contain personal data.
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(StatementDetailStrings.saveVehicleNumberFailed),
+        ),
+      );
+      return;
+    }
+    // The list, the map and the aggregation read the lines again.
+    ref.read(dataRevisionProvider.notifier).changed();
+    if (mounted) setState(() => _line = line.withVehicleNumber(number));
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final line = this.line;
+    final line = _line;
     return Scaffold(
       appBar: AppBar(title: const Text(StatementDetailStrings.title)),
       body: line == null
@@ -61,10 +100,30 @@ class StatementDetailScreen extends StatelessWidget {
                   StatementDetailStrings.vehicleType,
                   line.vehicleType.label,
                 ),
-                _item(
-                  StatementDetailStrings.vehicleNumber,
-                  '${line.vehicleNumber}',
-                ),
+                if (line.vehicleNumber == null)
+                  ListTile(
+                    dense: true,
+                    title: const Text(StatementDetailStrings.vehicleNumber),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(StatementDetailStrings.blank),
+                        if (line.id != null)
+                          TextButton(
+                            key: const ValueKey('enter-vehicle-number'),
+                            onPressed: _enterVehicleNumber,
+                            child: const Text(
+                              StatementDetailStrings.vehicleNumberEnter,
+                            ),
+                          ),
+                      ],
+                    ),
+                  )
+                else
+                  _item(
+                    StatementDetailStrings.vehicleNumber,
+                    '${line.vehicleNumber}',
+                  ),
                 _item(
                   StatementDetailStrings.cardNumber,
                   StatementDetailStrings.cardNumberValue(line.cardNumberSuffix),

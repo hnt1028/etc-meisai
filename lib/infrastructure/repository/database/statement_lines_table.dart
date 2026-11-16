@@ -28,7 +28,9 @@ class StatementLines extends Table {
 
   /// The CSV number of the vehicle type (see [VehicleTypeValue]).
   IntColumn get vehicleType => integer().map(const VehicleTypeConverter())();
-  IntColumn get vehicleNumber => integer()();
+
+  /// Null when the CSV leaves it blank and the user has not entered one.
+  IntColumn get vehicleNumber => integer().nullable()();
   TextColumn get cardNumber => text()();
 
   /// Stored as the position in [ConfirmationStatusValue] (0 confirmed, 1 pending).

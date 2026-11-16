@@ -15,3 +15,4 @@
 | PRC-011 | ICの位置の解除（DeleteIcPositionUC） | [PRC-011-delete-ic-position.md](../processes/PRC-011-delete-ic-position.md) | 草案 |
 | PRC-012 | 明細行のルートの取得（GetLineRouteUC） | [PRC-012-get-line-route.md](../processes/PRC-012-get-line-route.md) | 草案 |
 | PRC-013 | 明細行の集計（AggregateStatementsUC） | [PRC-013-aggregate-statements.md](../processes/PRC-013-aggregate-statements.md) | 草案 |
+| PRC-014 | 車両番号の保存（SaveVehicleNumberUC） | [PRC-014-save-vehicle-number.md](../processes/PRC-014-save-vehicle-number.md) | 草案 |

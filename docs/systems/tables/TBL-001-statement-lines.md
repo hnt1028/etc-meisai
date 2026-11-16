@@ -35,7 +35,7 @@
 | 還元額適用料金 | `fare_after_rebate` | INTEGER | - | ◯ |
 | 後納料金 | `postpaid_fare` | INTEGER | - | ◯ |
 | 車種 | `vehicle_type` | INTEGER（1〜5。下の「車種の値」） | - | ◯ |
-| 車両番号 | `vehicle_number` | INTEGER | - | ◯ |
+| 車両番号 | `vehicle_number` | INTEGER | - | |
 | ETCカード番号 | `card_number` | TEXT | - | ◯ |
 | 状態 | `status` | INTEGER（0: 確定、1: 確認中） | - | ◯ |
 | 割引種別 | `discount_types` | TEXT（`;` 区切り。無いときは空文字） | - | ◯ |
@@ -45,6 +45,7 @@
 - IDは、保存するときにアプリが UUIDv7 を作って入れる。同じ重複判定キーの行を上書きしても、IDは変わらない
 - 金額はすべて円の整数で保存する（小数は使わない）
 - 状態は `ConfirmationStatusValue` の並び順の番号で保存する。並び順を変えない
+- 車両番号は、CSVで空欄のとき NULL（スキーマ版4から、NULL を許す。版3までは NotNull だった）。利用者が入力すると、数字が入る（[PRC-014](../processes/PRC-014-save-vehicle-number.md)）。NULL の行だけ、更新できる
 - 車両番号とETCカード番号は個人情報。端末内にだけ保存する（[privacy.md](../../privacy.md)）
 
 ### 車種の値

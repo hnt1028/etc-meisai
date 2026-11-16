@@ -15,6 +15,13 @@ abstract interface class StatementLineIF {
   /// it is replaced.
   Future<void> save(StatementLineEntity statementLine);
 
+  /// Returns the stored statement line with the id [id], or null.
+  Future<StatementLineEntity?> findById(String id);
+
+  /// Sets the vehicle number of the stored line with the id [id]. The rule
+  /// that only a line without one may be changed belongs to the usecase.
+  Future<void> updateVehicleNumber(String id, int vehicleNumber);
+
   /// Returns every stored statement line.
   Future<List<StatementLineEntity>> findAll();
 

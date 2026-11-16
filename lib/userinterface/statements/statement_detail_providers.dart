@@ -1,6 +1,7 @@
 import 'package:etc_meisai/application/dto/line_route_dto.dart';
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/application/usecase/route_map/get_line_route_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/save_vehicle_number_uc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// The use case is built in lib/main.dart (the only place that wires the
@@ -16,3 +17,8 @@ final lineRouteProvider = FutureProvider.autoDispose
       (ref, line) => ref.watch(getLineRouteUCProvider).execute(line),
       retry: (_, _) => null,
     );
+
+/// OP-3 of SCR-003 (PRC-014). Also built in lib/main.dart.
+final saveVehicleNumberUCProvider = Provider<SaveVehicleNumberUC>(
+  (ref) => throw UnimplementedError('Override saveVehicleNumberUCProvider'),
+);

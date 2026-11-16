@@ -18,7 +18,11 @@ import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/domain/value/vehicle_type_value.dart';
 
 /// A fictional statement line.
+int _fakeIdCounter = 0;
+
 StatementLineEntity fakeStatementLine({
+  String? id,
+  bool withoutVehicleNumber = false,
   String exitIc = 'B-IC',
   ConfirmationStatusValue status = ConfirmationStatusValue.confirmed,
   DateTime? exitAt,
@@ -36,6 +40,7 @@ StatementLineEntity fakeStatementLine({
   List<String> discountTypes = const [],
 }) {
   return StatementLineEntity(
+    id: id ?? 'line-${_fakeIdCounter++}',
     entranceAt: withoutEntrance
         ? null
         : (entranceAt ?? DateTime(2026, 1, 10, 8, 30)),
@@ -48,7 +53,7 @@ StatementLineEntity fakeStatementLine({
     fareAfterRebate: fareAfterRebate,
     postpaidFare: postpaidFare ?? fare - fareAfterRebate,
     vehicleType: vehicleType,
-    vehicleNumber: vehicleNumber,
+    vehicleNumber: withoutVehicleNumber ? null : vehicleNumber,
     cardNumber: cardNumber,
     status: status,
     discountTypes: discountTypes,
@@ -105,6 +110,25 @@ class FakeStatementLineIF implements StatementLineIF {
     if (error != null) throw error!;
     stored.removeWhere((s) => _key(s) == _key(line));
     stored.add(line);
+  }
+
+  @override
+  Future<StatementLineEntity?> findById(String id) async {
+    if (readError != null) throw readError!;
+    for (final s in stored) {
+      if (s.id == id) return s;
+    }
+    return null;
+  }
+
+  @override
+  Future<void> updateVehicleNumber(String id, int vehicleNumber) async {
+    await gate;
+    if (error != null) throw error!;
+    final index = stored.indexWhere((s) => s.id == id);
+    if (index >= 0) {
+      stored[index] = stored[index].withVehicleNumber(vehicleNumber);
+    }
   }
 
   @override

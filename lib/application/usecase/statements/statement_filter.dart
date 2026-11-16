@@ -14,7 +14,7 @@ DateTime _day(DateTime value) => DateTime(value.year, value.month, value.day);
 
 /// The vehicle numbers of [all], the smallest first, without duplicates.
 List<int> vehicleNumberChoicesOf(List<StatementLineEntity> all) =>
-    {for (final line in all) line.vehicleNumber}.toList()..sort();
+    {for (final line in all) ?line.vehicleNumber}.toList()..sort();
 
 /// The last 4 characters of the card numbers of [all], without duplicates.
 List<String> cardNumberChoicesOf(List<StatementLineEntity> all) =>
@@ -60,6 +60,7 @@ StatementLineDTO toStatementLineDTO(
   StatementLineEntity line,
   IcLookup lookup,
 ) => StatementLineDTO(
+  id: line.id,
   entranceAt: line.entranceAt,
   exitAt: line.exitAt,
   entranceIc: line.entranceIc,

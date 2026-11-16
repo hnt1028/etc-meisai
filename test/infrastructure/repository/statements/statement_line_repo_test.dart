@@ -13,6 +13,7 @@ StatementLineEntity _statementLine({
   String? entranceIc = 'A-IC',
   String cardNumber = '0000-****-0001',
   VehicleTypeValue vehicleType = VehicleTypeValue.standard,
+  int? vehicleNumber = 1234,
 }) {
   return StatementLineEntity(
     entranceAt: entranceAt ?? DateTime(2026, 1, 10, 8, 30),
@@ -25,7 +26,7 @@ StatementLineEntity _statementLine({
     fareAfterRebate: 0,
     postpaidFare: fare,
     vehicleType: vehicleType,
-    vehicleNumber: 1234,
+    vehicleNumber: vehicleNumber,
     cardNumber: cardNumber,
     status: ConfirmationStatusValue.pending,
     discountTypes: const [],
@@ -191,5 +192,101 @@ void main() {
     await repo.save(_statementLine(exitIc: 'C-IC'));
     await repo.deleteAll();
     expect(await repo.findAll(), isEmpty);
+  });
+
+  group('vehicle number', () {
+    test('stores a line without a vehicle number', () async {
+      await repo.save(_statementLine(vehicleNumber: null));
+
+      final lines = await repo.findAll();
+
+      expect(lines.single.vehicleNumber, isNull);
+    });
+
+    test('gives every stored line an id, and finds the line by it', () async {
+      await repo.save(_statementLine(vehicleNumber: null));
+      await repo.save(_statementLine(exitIc: 'C-IC'));
+
+      final lines = await repo.findAll();
+
+      expect(lines.every((l) => l.id != null && l.id!.isNotEmpty), isTrue);
+      expect(lines[0].id, isNot(lines[1].id));
+      final found = await repo.findById(lines[1].id!);
+      expect(found!.exitIc, lines[1].exitIc);
+      expect(await repo.findById('no-such-id'), isNull);
+    });
+
+    test('updates the vehicle number of one line only', () async {
+      await repo.save(_statementLine(vehicleNumber: null));
+      await repo.save(_statementLine(exitIc: 'C-IC', vehicleNumber: null));
+      final first = (await repo.findAll()).firstWhere(
+        (l) => l.exitIc == 'B-IC',
+      );
+
+      await repo.updateVehicleNumber(first.id!, 4321);
+
+      final lines = await repo.findAll();
+      expect(lines.firstWhere((l) => l.exitIc == 'B-IC').vehicleNumber, 4321);
+      expect(lines.firstWhere((l) => l.exitIc == 'C-IC').vehicleNumber, isNull);
+      // Nothing else of the line changed, and the id stayed.
+      final updated = lines.firstWhere((l) => l.exitIc == 'B-IC');
+      expect(updated.id, first.id);
+      expect(updated.fare, first.fare);
+    });
+
+    test('does nothing for an id that is not stored', () async {
+      await repo.save(_statementLine(vehicleNumber: null));
+
+      await repo.updateVehicleNumber('no-such-id', 1);
+
+      expect((await repo.findAll()).single.vehicleNumber, isNull);
+    });
+
+    test('keeps the id when an overwrite replaces the line', () async {
+      await repo.save(_statementLine(vehicleNumber: null));
+      final id = (await repo.findAll()).single.id;
+
+      await repo.save(_statementLine(vehicleNumber: null, fare: 2000));
+
+      final lines = await repo.findAll();
+      expect(lines.single.id, id);
+      expect(lines.single.fare, 2000);
+    });
+
+    test('is made nullable when a version 3 database is upgraded', () async {
+      // A version 3 database has a vehicle number that cannot be null.
+      await db.customStatement('DROP TABLE statement_lines');
+      await db.customStatement('''
+        CREATE TABLE statement_lines (
+          id TEXT NOT NULL PRIMARY KEY,
+          duplicate_key TEXT NOT NULL UNIQUE,
+          entrance_at INTEGER NULL,
+          exit_at INTEGER NOT NULL,
+          entrance_ic TEXT NULL,
+          exit_ic TEXT NOT NULL,
+          gross_fare INTEGER NULL,
+          etc_discount INTEGER NULL,
+          fare INTEGER NOT NULL,
+          fare_after_rebate INTEGER NOT NULL,
+          postpaid_fare INTEGER NOT NULL,
+          vehicle_type INTEGER NOT NULL,
+          vehicle_number INTEGER NOT NULL,
+          card_number TEXT NOT NULL,
+          status INTEGER NOT NULL,
+          discount_types TEXT NOT NULL
+        )
+      ''');
+      await db.customStatement(
+        "INSERT INTO statement_lines VALUES ('old', 'k', NULL, 1, NULL, 'X', "
+        "NULL, NULL, 100, 0, 100, 1, 1234, 'c', 0, '')",
+      );
+
+      await db.migration.onUpgrade(db.createMigrator(), 3, 4);
+
+      // The line stays, and a line without a vehicle number can be stored.
+      expect((await repo.findAll()).single.vehicleNumber, 1234);
+      await repo.save(_statementLine(vehicleNumber: null));
+      expect(await repo.findAll(), hasLength(2));
+    });
   });
 }

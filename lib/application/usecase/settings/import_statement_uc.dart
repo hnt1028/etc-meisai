@@ -34,7 +34,13 @@ class ImportStatementUC {
       } else if (stored.status == ConfirmationStatusValue.confirmed) {
         ignored++;
       } else {
-        await statementLines.save(statementLine);
+        // A vehicle number the user entered is not blanked by the CSV.
+        final keep = statementLine.vehicleNumber == null
+            ? stored.vehicleNumber
+            : null;
+        await statementLines.save(
+          keep == null ? statementLine : statementLine.withVehicleNumber(keep),
+        );
         overwritten++;
       }
     }
