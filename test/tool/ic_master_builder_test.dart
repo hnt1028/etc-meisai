@@ -424,6 +424,119 @@ void main() {
       expect(links.single[2] as int, closeTo(45600, 600));
     });
 
+    /// A road that bends: west at (139.0, 35.0), up to (139.1, 35.3), across
+    /// to (139.4, 35.3) and down to the east at (139.5, 35.0).
+    final bent = _section('曲がった線', [
+      [
+        [139.0, 35.0],
+        [139.1, 35.3],
+        [139.4, 35.3],
+        [139.5, 35.0],
+      ],
+    ]);
+
+    List<double> shapeOf(Map<String, Object?> master, String from, String to) {
+      final link = linksOf(master).singleWhere(
+        (l) => (l[0] as String).endsWith(from) && (l[1] as String).endsWith(to),
+      );
+      return (link[3] as List).cast<double>();
+    }
+
+    test('hold the shape of the road between two points', () {
+      final master = buildWith(
+        [
+          _joint('EA03_1', '甲', '1', 139.0, 35.0),
+          _joint('EA03_2', '乙', '1', 139.5, 35.0),
+        ],
+        [bent],
+      );
+
+      final shape = shapeOf(master, '甲', '乙');
+
+      // The two bends, from 甲 to 乙, as lat, lon, lat, lon.
+      expect(shape, hasLength(4));
+      expect(shape[0], closeTo(35.3, 0.001));
+      expect(shape[1], closeTo(139.1, 0.001));
+      expect(shape[2], closeTo(35.3, 0.001));
+      expect(shape[3], closeTo(139.4, 0.001));
+    });
+
+    test('hold the shape from the point with the smaller id', () {
+      // The east point has the smaller id, so the shape starts at the east.
+      final master = buildWith(
+        [
+          _joint('EA03_2', '甲', '1', 139.0, 35.0),
+          _joint('EA03_1', '乙', '1', 139.5, 35.0),
+        ],
+        [bent],
+      );
+
+      final link = linksOf(master).single;
+      final shape = (link[3] as List).cast<double>();
+
+      expect(link[0], 'EA03_1:乙');
+      expect(shape[1], closeTo(139.4, 0.001));
+      expect(shape[3], closeTo(139.1, 0.001));
+    });
+
+    test('leave out the points of a straight road', () {
+      final master = buildWith(
+        [
+          _joint('EA03_1', '甲', '1', 139.0, 35.0),
+          _joint('EA03_2', '乙', '1', 139.5, 35.0),
+        ],
+        [east],
+      );
+
+      expect(shapeOf(master, '甲', '乙'), isEmpty);
+    });
+
+    test('leave out a bend of less than 15 meters', () {
+      // 0.00003 degrees of latitude are about 3 meters.
+      final wavy = _section('細かく曲がった線', [
+        [
+          [139.0, 35.0],
+          [139.25, 35.00003],
+          [139.5, 35.0],
+        ],
+      ]);
+      final master = buildWith(
+        [
+          _joint('EA03_1', '甲', '1', 139.0, 35.0),
+          _joint('EA03_2', '乙', '1', 139.5, 35.0),
+        ],
+        [wavy],
+      );
+
+      expect(shapeOf(master, '甲', '乙'), isEmpty);
+    });
+
+    test('round the shape to 5 decimals', () {
+      final master = buildWith(
+        [
+          _joint('EA03_1', '甲', '1', 139.0, 35.0),
+          _joint('EA03_2', '乙', '1', 139.5, 35.0),
+        ],
+        [bent],
+      );
+
+      for (final value in shapeOf(master, '甲', '乙')) {
+        expect((value * 1e5).roundToDouble() / 1e5, value);
+      }
+    });
+
+    test('have an empty shape for two points at one place', () {
+      final master = buildWith(
+        [
+          _joint('EA03_1', '甲', '1', 139.5, 35.0),
+          _joint('EA03_2', '乙', '3', 139.5, 35.00001),
+        ],
+        [east],
+      );
+
+      expect(linksOf(master).single[3], isEmpty);
+    });
+
     test('are empty without any route', () {
       final master = buildWith([_joint('EA03_1', '甲', '1', 139.0, 35.0)], []);
 

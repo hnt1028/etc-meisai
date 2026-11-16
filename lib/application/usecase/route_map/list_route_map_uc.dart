@@ -1,11 +1,13 @@
 import 'package:etc_meisai/application/dto/route_map_dto.dart';
 import 'package:etc_meisai/application/dto/route_place_dto.dart';
+import 'package:etc_meisai/application/dto/route_vertex_dto.dart';
 import 'package:etc_meisai/application/dto/route_segment_dto.dart';
 import 'package:etc_meisai/application/dto/unlocated_ic_dto.dart';
 import 'package:etc_meisai/application/interface/ic_mapping_if.dart';
 import 'package:etc_meisai/application/interface/ic_master_if.dart';
 import 'package:etc_meisai/application/interface/ic_position_if.dart';
 import 'package:etc_meisai/application/interface/statement_line_if.dart';
+import 'package:etc_meisai/application/usecase/aggregation/ic_distance.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
 import 'package:etc_meisai/application/usecase/statements/statement_filter.dart';
 
@@ -37,6 +39,7 @@ class ListRouteMapUC {
       mappings: await icMappings.findAll(),
       positions: await icPositions.findAll(),
     );
+    final distance = IcDistance(await icMaster.findLinks());
     final lines = filterStatementLines(
       all,
       from: from,
@@ -64,6 +67,18 @@ class ListRouteMapUC {
             fromLongitude: entrance.longitude,
             toLatitude: exit.latitude,
             toLongitude: exit.longitude,
+            via: [
+              for (final point in routeVerticesOf(
+                entrance: entrance,
+                exit: exit,
+                lookup: lookup,
+                distance: distance,
+              ))
+                RouteVertexDTO(
+                  latitude: point.latitude,
+                  longitude: point.longitude,
+                ),
+            ],
           ),
         );
       } else {

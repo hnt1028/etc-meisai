@@ -264,8 +264,11 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
             polylines: [
               for (final segment in data.segments)
                 Polyline<RouteSegmentDTO>(
+                  // From the entrance, through the ICs between, to the exit.
                   points: [
                     LatLng(segment.fromLatitude, segment.fromLongitude),
+                    for (final v in segment.via)
+                      LatLng(v.latitude, v.longitude),
                     LatLng(segment.toLatitude, segment.toLongitude),
                   ],
                   strokeWidth: 4,
