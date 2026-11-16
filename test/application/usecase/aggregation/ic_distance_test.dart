@@ -117,4 +117,94 @@ void main() {
     expect(IcDistance.straightMeters(35, 139, 36, 139), closeTo(111195, 50));
     expect(IcDistance.straightMeters(0, 0, 0, 0), 0);
   });
+
+  group('roadRouteBetween', () {
+    test('lists the points of the way, the ends included, in order', () {
+      final route = distance.roadRouteBetween(
+        fakeIcPoint(name: 'A'),
+        fakeIcPoint(name: 'C'),
+      )!;
+
+      expect(route.meters, 3000);
+      expect(route.pointIds, ['id-A', 'id-B', 'id-C']);
+    });
+
+    test('gives the same way backwards', () {
+      final route = distance.roadRouteBetween(
+        fakeIcPoint(name: 'C'),
+        fakeIcPoint(name: 'A'),
+      )!;
+
+      expect(route.meters, 3000);
+      expect(route.pointIds, ['id-C', 'id-B', 'id-A']);
+      // Asking again (the other way first) gives the same answers.
+      final forward = distance.roadRouteBetween(
+        fakeIcPoint(name: 'A'),
+        fakeIcPoint(name: 'C'),
+      )!;
+      expect(forward.pointIds, ['id-A', 'id-B', 'id-C']);
+    });
+
+    test('goes through a junction', () {
+      final route = distance.roadRouteBetween(
+        fakeIcPoint(name: 'A'),
+        fakeIcPoint(name: 'D'),
+      )!;
+
+      expect(route.pointIds, ['id-A', 'id-B', 'id-D']);
+    });
+
+    test('is the point alone for the same point', () {
+      final route = distance.roadRouteBetween(
+        fakeIcPoint(name: 'X'),
+        fakeIcPoint(name: 'X'),
+      )!;
+
+      expect(route.meters, 0);
+      expect(route.pointIds, ['id-X']);
+    });
+
+    test('is null when there is no way', () {
+      // Not connected, and a point that is not on the network.
+      expect(
+        distance.roadRouteBetween(
+          fakeIcPoint(name: 'A'),
+          fakeIcPoint(name: 'E'),
+        ),
+        isNull,
+      );
+      expect(
+        distance.roadRouteBetween(
+          fakeIcPoint(name: 'A'),
+          fakeIcPoint(name: 'X'),
+        ),
+        isNull,
+      );
+      // Asking again gives null again (it is remembered).
+      expect(
+        distance.roadRouteBetween(
+          fakeIcPoint(name: 'A'),
+          fakeIcPoint(name: 'E'),
+        ),
+        isNull,
+      );
+    });
+
+    test('takes the shortest of two ways, with its points', () {
+      final loop = IcDistance([
+        _link('A', 'B', 1000),
+        _link('B', 'C', 1000),
+        _link('A', 'C', 5000),
+        _link('A', 'D', 100),
+        _link('D', 'C', 100),
+      ]);
+
+      final route = loop.roadRouteBetween(
+        fakeIcPoint(name: 'A'),
+        fakeIcPoint(name: 'C'),
+      )!;
+
+      expect(route.pointIds, ['id-A', 'id-D', 'id-C']);
+    });
+  });
 }

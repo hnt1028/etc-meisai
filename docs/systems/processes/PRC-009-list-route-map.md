@@ -15,10 +15,12 @@
 | 結果の位置不明のIC | `lib/application/dto/unlocated_ic_dto.dart` | `UnlocatedIcDTO` |
 | 使う部品（絞り込み、DTOへの詰め替え） | `lib/application/usecase/statements/statement_filter.dart` | `filterStatementLines`、`toStatementLineDTO` ほか。PRC-004 と共通 |
 | 使う部品（IC名の照合、位置の決定） | `lib/application/usecase/ic_mapping/ic_lookup.dart` | `IcLookup`（`placeOf`） |
+| 使う部品（間の地点） | `lib/application/usecase/aggregation/ic_distance.dart` | `IcDistance`（`roadRouteBetween`）、`viaPointsOf` |
 | 使う窓口（明細行） | `lib/application/interface/statement_line_if.dart` | `StatementLineIF`（`findAll`） |
 | 使う窓口（ICマスタ） | `lib/application/interface/ic_master_if.dart` | `IcMasterIF`（`findAll`） |
 | 使う窓口（ICの対応づけ） | `lib/application/interface/ic_mapping_if.dart` | `IcMappingIF`（`findAll`） |
 | 使う窓口（ICの位置） | `lib/application/interface/ic_position_if.dart` | `IcPositionIF`（`findAll`） |
+| 使う窓口（ICのリンク） | `lib/application/interface/ic_master_if.dart` | `IcMasterIF`（`findLinks`） |
 | 窓口の実装 | `lib/infrastructure/repository/ic_position/ic_position_repo.dart` | `IcPositionRepo`（[TBL-003](../tables/TBL-003-ic-positions.md)） |
 
 ## 呼び出し箇所
@@ -35,7 +37,7 @@
 2. 絞り込み用の選択肢（車両番号、カード番号の下4桁）を、絞り込む前の全明細行から集める（PRC-004 と同じ）
 3. 明細行を絞る（PRC-004 と同じ）
 4. 絞った明細行ごとに、入口IC・出口ICの位置を `IcLookup` の `placeOf` で調べる
-   - 両方の位置が分かるときは、区間にする（明細行は `StatementLineDTO` にする）
+   - 両方の位置が分かるときは、区間にする（明細行は `StatementLineDTO` にする）。両方がICマスタの地点のときは、間の地点（最短経路が通るもの）の位置を、順に `via` に入れる（[route-map.md](../../route-map.md) の「地図に描く経路」）。経路が無いとき、位置を利用者が指定したICがあるときは、`via` は空（直線）
    - 入口が空欄、または、どちらかの位置が分からないときは、区間にしない（「描けない明細行」と数える）
 5. 絞った明細行に出てくるIC名（入口が空欄のときは数えない）のうち、位置が分かるものを、マーカーにする。IC名ごとに1つ。そのIC名が出る明細行の数も付ける。位置が分からないものは、位置不明のICにする（明細行の数が多い順、同じなら名前の順）
 6. マーカーは、位置の種類（指定、マスタ）と、近似か（マスタの位置で、IC名の末尾が「本線」、または、末尾の上下などを取り除いて一致したもの。`IcLookup` の `placeOf`）を付ける。路線名は、マスタの地点があるときだけ付ける
@@ -79,7 +81,7 @@ sequenceDiagram
 | `vehicleNumberChoices` | `List<int>` | 絞り込みで選べる車両番号 |
 | `cardNumberChoices` | `List<String>` | 絞り込みで選べるカード番号（下4桁） |
 
-`RouteSegmentDTO`: `line`（`StatementLineDTO`）、`fromIcName`、`toIcName`、`fromLatitude`、`fromLongitude`、`toLatitude`、`toLongitude`
+`RouteSegmentDTO`: `line`（`StatementLineDTO`）、`fromIcName`、`toIcName`、`fromLatitude`、`fromLongitude`、`toLatitude`、`toLongitude`、`via`（`List<RouteVertexDTO>`。入口から出口までの間の点を、順に。`RouteVertexDTO` は `latitude`、`longitude`）
 
 `RoutePlaceDTO`: `icName`、`latitude`、`longitude`、`source`（`IcPlaceSourceValue`: `master`、`specified`）、`approximate`（`bool`）、`routeNames`（`List<String>`）、`lineCount`
 
@@ -91,5 +93,5 @@ sequenceDiagram
 
 ## 関連するテスト
 
-- 単体: `test/application/usecase/route_map/list_route_map_uc_test.dart`（0件、絞り込み、区間・マーカー・位置不明、入口が空欄の行、位置の優先順、近似、選択肢が全体から作られること、取得の失敗）
+- 単体: `test/application/usecase/route_map/list_route_map_uc_test.dart`（間のICを通る経路（`via`）、経路が無いときと位置を指定したときの直線、0件、絞り込み、区間・マーカー・位置不明、入口が空欄の行、位置の優先順、近似、選択肢が全体から作られること、取得の失敗）
 - 単体: `test/application/usecase/statements/list_statement_lines_uc_test.dart`（絞り込みを共通の部品にしても、PRC-004 の結果が変わらないこと）

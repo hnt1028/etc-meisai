@@ -1,5 +1,6 @@
 import 'package:etc_meisai/application/usecase/route_map/delete_ic_position_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/save_ic_position_uc.dart';
+import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
@@ -244,6 +245,97 @@ void main() {
       final lines = FakeStatementLineIF()..readError = StateError('x');
 
       expect(fakeRouteMapUC(lines).execute(), throwsStateError);
+    });
+  });
+
+  group('the line through the ICs between', () {
+    // 北 - 中 - 東 along a road (中 has a position between the two).
+    FakeIcMasterIF road() => FakeIcMasterIF(
+      [
+        fakeIcPoint(name: '北', latitude: 35.1, longitude: 139.1),
+        fakeIcPoint(name: '中', latitude: 35.5, longitude: 139.2),
+        fakeIcPoint(name: '東', latitude: 35.2, longitude: 139.2),
+      ],
+      links: const [
+        IcLinkEntity(fromId: 'id-北', toId: 'id-中', meters: 1000),
+        IcLinkEntity(fromId: 'id-中', toId: 'id-東', meters: 1000),
+      ],
+    );
+
+    test('goes through the points on the way, in order', () async {
+      final lines = FakeStatementLineIF()
+        ..stored.add(fakeStatementLine(entranceIc: '北', exitIc: '東'));
+
+      final result = await fakeRouteMapUC(lines, master: road()).execute();
+
+      final segment = result.segments.single;
+      expect(segment.via, hasLength(1));
+      expect(segment.via.single.latitude, 35.5);
+      expect(segment.via.single.longitude, 139.2);
+      // The ends are as before.
+      expect(segment.fromLatitude, 35.1);
+      expect(segment.toLatitude, 35.2);
+    });
+
+    test('goes through them in the order of the way, backwards too', () async {
+      final lines = FakeStatementLineIF()
+        ..stored.add(fakeStatementLine(entranceIc: '東', exitIc: '北'));
+
+      final result = await fakeRouteMapUC(lines, master: road()).execute();
+
+      expect(result.segments.single.via.single.latitude, 35.5);
+      expect(result.segments.single.fromLatitude, 35.2);
+    });
+
+    test(
+      'has no point between two points that are next to each other',
+      () async {
+        final lines = FakeStatementLineIF()
+          ..stored.add(fakeStatementLine(entranceIc: '北', exitIc: '中'));
+
+        final result = await fakeRouteMapUC(lines, master: road()).execute();
+
+        expect(result.segments.single.via, isEmpty);
+      },
+    );
+
+    test('is straight when there is no way over the links', () async {
+      final lines = FakeStatementLineIF()
+        ..stored.add(fakeStatementLine(entranceIc: '北', exitIc: '東'));
+      final noLinks = FakeIcMasterIF([
+        fakeIcPoint(name: '北', latitude: 35.1, longitude: 139.1),
+        fakeIcPoint(name: '東', latitude: 35.2, longitude: 139.2),
+      ]);
+
+      final result = await fakeRouteMapUC(lines, master: noLinks).execute();
+
+      expect(result.segments.single.via, isEmpty);
+    });
+
+    test('is straight when the user chose a position of an end', () async {
+      final lines = FakeStatementLineIF()
+        ..stored.add(fakeStatementLine(entranceIc: '北', exitIc: '東'));
+      final positions = FakeIcPositionIF()
+        ..stored.add(
+          const IcPositionEntity(icName: '東', latitude: 36, longitude: 140),
+        );
+
+      final result = await fakeRouteMapUC(
+        lines,
+        master: road(),
+        positions: positions,
+      ).execute();
+
+      expect(result.segments.single.via, isEmpty);
+      expect(result.segments.single.toLatitude, 36);
+    });
+
+    test('passes on a failure to read the links', () {
+      final lines = FakeStatementLineIF()
+        ..stored.add(fakeStatementLine(entranceIc: '北', exitIc: '東'));
+      final master = road()..error = StateError('x');
+
+      expect(fakeRouteMapUC(lines, master: master).execute(), throwsStateError);
     });
   });
 

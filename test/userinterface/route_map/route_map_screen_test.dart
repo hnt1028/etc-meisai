@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:etc_meisai/application/dto/route_segment_dto.dart';
 import 'package:etc_meisai/application/usecase/route_map/delete_ic_position_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/save_ic_position_uc.dart';
+import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/userinterface/app.dart';
@@ -27,7 +28,11 @@ import '../../support/fakes.dart';
 class _World {
   final lines = FakeStatementLineIF();
   final positions = FakeIcPositionIF();
-  final master = FakeIcMasterIF([
+
+  /// The links of the IC master, which a test can set (a road through ICs).
+  final links = <IcLinkEntity>[];
+
+  FakeIcMasterIF get master => FakeIcMasterIF([
     fakeIcPoint(
       name: '北',
       routeNames: const ['北線'],
@@ -41,7 +46,9 @@ class _World {
       longitude: 139.3,
     ),
     fakeIcPoint(name: '南', latitude: 35.0, longitude: 139.4),
-  ]);
+    // On the road between 北 and 東.
+    fakeIcPoint(name: '中', latitude: 35.3, longitude: 139.15),
+  ], links: links);
 
   /// A line from [from] to [to], on its own day.
   void line(
@@ -512,6 +519,37 @@ void main() {
     expect(_polylines(tester), hasLength(1));
     expect(_container(tester).read(statementFilterProvider).vehicleNumber, 2);
     expect(_text(StatementListStrings.clearFilter), findsOneWidget);
+  });
+
+  testWidgets('draws a line through the ICs on the way', (tester) async {
+    final world = _World()
+      ..links.addAll(const [
+        IcLinkEntity(fromId: 'id-北', toId: 'id-中', meters: 1000),
+        IcLinkEntity(fromId: 'id-中', toId: 'id-東', meters: 1000),
+      ])
+      ..line('北', '東');
+    await _open(tester, world);
+
+    final line = _polylines(tester).single;
+
+    // From 北, through 中, to 東.
+    expect(line.points, const [
+      LatLng(35.1, 139.1),
+      LatLng(35.3, 139.15),
+      LatLng(35.2, 139.3),
+    ]);
+  });
+
+  testWidgets('draws a straight line when no way over the links is known', (
+    tester,
+  ) async {
+    final world = _World()..line('北', '東');
+    await _open(tester, world);
+
+    expect(_polylines(tester).single.points, const [
+      LatLng(35.1, 139.1),
+      LatLng(35.2, 139.3),
+    ]);
   });
 
   testWidgets('shows a progress indicator while reading', (tester) async {

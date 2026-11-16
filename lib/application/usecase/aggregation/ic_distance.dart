@@ -5,6 +5,17 @@ import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
 import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
 
+/// The shortest way over the links of the IC master: its length in meters, and
+/// the points on it. A data holder of [IcDistance].
+class IcRoute {
+  const IcRoute(this.meters, this.pointIds);
+
+  final int meters;
+
+  /// The ids of the points from the start to the end, both included.
+  final List<String> pointIds;
+}
+
 /// The distance between two IC points along the roads: the shortest way over
 /// the links of the IC master. Design: docs/route-map.md ("地点の間の距離").
 class IcDistance {
@@ -16,35 +27,55 @@ class IcDistance {
   }
 
   final _neighbors = <String, List<(String, int)>>{};
-  final _cache = <String, int>{};
+  final _routes = <String, IcRoute?>{};
 
   /// The distance in meters from [a] to [b]: the shortest way over the links,
   /// or, when there is none (a point is not on the network, or the two are not
   /// connected), the straight distance between the positions.
   int metersBetween(IcPointEntity a, IcPointEntity b) {
-    if (a.id == b.id) return 0;
-    final key = a.id.compareTo(b.id) <= 0
-        ? '${a.id}\u0000${b.id}'
-        : '${b.id}\u0000${a.id}';
-    return _cache[key] ??=
-        _shortest(a.id, b.id) ??
+    return roadRouteBetween(a, b)?.meters ??
         straightMeters(a.latitude, a.longitude, b.latitude, b.longitude);
+  }
+
+  /// The shortest way over the links from [a] to [b]: its length, and the ids
+  /// of the points on it, [a] and [b] included. Null when there is none (a
+  /// point is not on the network, or the two are not connected).
+  IcRoute? roadRouteBetween(IcPointEntity a, IcPointEntity b) {
+    if (a.id == b.id) return IcRoute(0, [a.id]);
+    // The way back is the same way, backwards.
+    final forward = a.id.compareTo(b.id) <= 0;
+    final key = forward ? '${a.id}\u0000${b.id}' : '${b.id}\u0000${a.id}';
+    if (!_routes.containsKey(key)) {
+      _routes[key] = forward ? _shortest(a.id, b.id) : _shortest(b.id, a.id);
+    }
+    final route = _routes[key];
+    if (route == null) return null;
+    return forward
+        ? route
+        : IcRoute(route.meters, route.pointIds.reversed.toList());
   }
 
   /// Dijkstra's method from [from] until [to] is reached. Null when [to]
   /// cannot be reached.
-  int? _shortest(String from, String to) {
+  IcRoute? _shortest(String from, String to) {
     if (!_neighbors.containsKey(from) || !_neighbors.containsKey(to)) {
       return null;
     }
     final best = <String, int>{from: 0};
+    final before = <String, String>{};
     final queue = SplayTreeSet<(int, String)>(
       (a, b) => a.$1 != b.$1 ? a.$1.compareTo(b.$1) : a.$2.compareTo(b.$2),
     )..add((0, from));
     while (queue.isNotEmpty) {
       final (distance, id) = queue.first;
       queue.remove(queue.first);
-      if (id == to) return distance;
+      if (id == to) {
+        final ids = [to];
+        while (ids.last != from) {
+          ids.add(before[ids.last]!);
+        }
+        return IcRoute(distance, ids.reversed.toList());
+      }
       if (distance > (best[id] ?? distance)) continue;
       for (final (next, meters) in _neighbors[id] ?? const <(String, int)>[]) {
         final candidate = distance + meters;
@@ -52,6 +83,7 @@ class IcDistance {
         if (known == null || candidate < known) {
           if (known != null) queue.remove((known, next));
           best[next] = candidate;
+          before[next] = id;
           queue.add((candidate, next));
         }
       }
@@ -103,4 +135,24 @@ int? lineMeters({
     exit.latitude,
     exit.longitude,
   );
+}
+
+/// The points between the entrance and the exit of a line, in order, for the
+/// line to be drawn through them (docs/route-map.md, "地図に描く経路"). Empty
+/// when the line is drawn straight: a position is the user's own (it is not a
+/// point of the master), or there is no way over the links.
+List<IcPointEntity> viaPointsOf({
+  required IcPlace? entrance,
+  required IcPlace? exit,
+  required IcLookup lookup,
+  required IcDistance distance,
+}) {
+  final from = entrance?.point, to = exit?.point;
+  if (from == null || to == null) return const [];
+  final route = distance.roadRouteBetween(from, to);
+  if (route == null || route.pointIds.length < 3) return const [];
+  return [
+    for (final id in route.pointIds.sublist(1, route.pointIds.length - 1))
+      ?lookup.pointOf(id),
+  ];
 }
