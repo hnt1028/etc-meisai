@@ -11,7 +11,10 @@ import 'package:etc_meisai/application/usecase/route_map/delete_ic_position_uc.d
 import 'package:etc_meisai/application/usecase/route_map/get_line_route_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/list_route_map_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/save_ic_position_uc.dart';
+import 'package:etc_meisai/application/usecase/settings/delete_all_data_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/delete_all_statement_lines_uc.dart';
+import 'package:etc_meisai/application/usecase/settings/export_data_uc.dart';
+import 'package:etc_meisai/application/usecase/settings/import_data_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/import_statement_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/estimate_entrance_at_uc.dart';
@@ -21,6 +24,8 @@ import 'package:etc_meisai/infrastructure/repository/database/app_database.dart'
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_mapping_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_master_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_position/ic_position_repo.dart';
+import 'package:etc_meisai/infrastructure/repository/settings/app_data_repo.dart';
+import 'package:etc_meisai/infrastructure/repository/settings/backup_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/statement_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/statements/statement_line_repo.dart';
 import 'package:etc_meisai/userinterface/app.dart';
@@ -42,6 +47,8 @@ void main() {
   );
   final icMappings = IcMappingRepo(database);
   final icPositions = IcPositionRepo(database);
+  final appData = AppDataRepo(database);
+  final backup = const BackupRepo();
 
   runApp(
     ProviderScope(
@@ -91,6 +98,15 @@ void main() {
             icMappings: icMappings,
             icPositions: icPositions,
           ),
+        ),
+        exportDataUCProvider.overrideWithValue(
+          ExportDataUC(appData: appData, backup: backup),
+        ),
+        importDataUCProvider.overrideWithValue(
+          ImportDataUC(appData: appData, backup: backup),
+        ),
+        deleteAllDataUCProvider.overrideWithValue(
+          DeleteAllDataUC(appData: appData),
         ),
         saveEntranceUCProvider.overrideWithValue(
           SaveEntranceUC(statementLines: statementLines),

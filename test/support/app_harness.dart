@@ -7,7 +7,10 @@ import 'package:etc_meisai/application/usecase/route_map/delete_ic_position_uc.d
 import 'package:etc_meisai/application/usecase/route_map/get_line_route_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/list_route_map_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/save_ic_position_uc.dart';
+import 'package:etc_meisai/application/usecase/settings/delete_all_data_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/delete_all_statement_lines_uc.dart';
+import 'package:etc_meisai/application/usecase/settings/export_data_uc.dart';
+import 'package:etc_meisai/application/usecase/settings/import_data_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/import_statement_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/estimate_entrance_at_uc.dart';
@@ -17,6 +20,8 @@ import 'package:etc_meisai/infrastructure/repository/database/app_database.dart'
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_mapping_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_master_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_position/ic_position_repo.dart';
+import 'package:etc_meisai/infrastructure/repository/settings/app_data_repo.dart';
+import 'package:etc_meisai/infrastructure/repository/settings/backup_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/statement_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/statements/statement_line_repo.dart';
 import 'package:etc_meisai/userinterface/app.dart';
@@ -25,6 +30,7 @@ import 'package:etc_meisai/userinterface/ic_mapping/ic_mapping_providers.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_providers.dart';
 import 'package:etc_meisai/userinterface/route_map/route_map_providers.dart';
 import 'package:etc_meisai/userinterface/statements/statement_detail_providers.dart';
+import 'package:etc_meisai/userinterface/settings/backup_files.dart';
 import 'package:etc_meisai/userinterface/settings/csv_picker.dart';
 import 'package:etc_meisai/userinterface/settings/settings_providers.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_providers.dart';
@@ -41,11 +47,15 @@ Future<void> pumpApp(
   WidgetTester tester, {
   required AppDatabase database,
   required CsvPicker picker,
+  BackupPicker? backupPicker,
+  BackupSaver? backupSaver,
 }) async {
   final statementLines = StatementLineRepo(database);
   final icMaster = IcMasterRepo(loadJson: () async => icMasterFixtureJson());
   final icMappings = IcMappingRepo(database);
   final icPositions = IcPositionRepo(database);
+  final appData = AppDataRepo(database);
+  final backup = const BackupRepo();
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -95,6 +105,15 @@ Future<void> pumpApp(
             icPositions: icPositions,
           ),
         ),
+        exportDataUCProvider.overrideWithValue(
+          ExportDataUC(appData: appData, backup: backup),
+        ),
+        importDataUCProvider.overrideWithValue(
+          ImportDataUC(appData: appData, backup: backup),
+        ),
+        deleteAllDataUCProvider.overrideWithValue(
+          DeleteAllDataUC(appData: appData),
+        ),
         saveEntranceUCProvider.overrideWithValue(
           SaveEntranceUC(statementLines: statementLines),
         ),
@@ -127,6 +146,12 @@ Future<void> pumpApp(
           DeleteIcMappingUC(icMappings: icMappings),
         ),
         csvPickerProvider.overrideWithValue(picker),
+        backupPickerProvider.overrideWithValue(
+          backupPicker ?? () async => null,
+        ),
+        backupSaverProvider.overrideWithValue(
+          backupSaver ?? (name, bytes) async => false,
+        ),
       ],
       // ignore: prefer_const_constructors
       child: EtcMeisaiApp(),

@@ -13,13 +13,43 @@ abstract final class SettingsStrings {
   static String importFailed(String message) => '取り込めませんでした: $message';
   static const importUnexpected = '取り込み中にエラーが発生しました';
 
-  static const deleteSection = '取り込んだデータの削除';
-  static const deleteButton = 'すべて削除する';
+  static const backupSection = 'データのバックアップ';
+  static const exportButton = 'データを書き出す';
+  static const exportNote = '書き出したファイルには、車両番号とETCカード番号が含まれます。保管に注意してください。';
+  static const restoreButton = 'データを読み込む（すべて置き換え）';
+  static const restoreConfirmMessage =
+      '読み込むファイルの内容で、いまのすべてのデータ（明細行・ICの対応づけ・位置の指定）を置き換えます。'
+      'いまのデータはすべて消え、元に戻せません。';
+  static const restoreConfirmOk = '置き換える';
+
+  static String _counts(int lines, int mappings, int positions) =>
+      '明細行 $lines 件 / 対応づけ $mappings 件 / 位置の指定 $positions 件';
+
+  static String exported(int lines, int mappings, int positions) =>
+      '書き出しました（${_counts(lines, mappings, positions)}）';
+  static String restored(int lines, int mappings, int positions) =>
+      '読み込みました（${_counts(lines, mappings, positions)}）';
+
+  static const exportFailed = '書き出せませんでした';
+
+  /// [message] describes the invalid part of the file (never personal data).
+  static String restoreFailed(String message) =>
+      '読み込めませんでした。データは変わっていません: $message';
+  static const restoreUnexpected = '読み込み中にエラーが発生しました。データは変わっていません';
+
+  static const deleteSection = 'データの削除';
+  static const deleteButton = '取り込んだ明細行をすべて削除する';
   static const deleteConfirmMessage = '取り込んだデータをすべて削除します。元に戻せません。';
   static const deleteConfirmCancel = 'キャンセル';
   static const deleteConfirmOk = '削除する';
   static const deleted = '削除しました';
   static const deleteFailed = '削除できませんでした';
+
+  static const deleteAllButton = 'すべてのデータを削除する';
+  static const deleteAllConfirmMessage =
+      'すべてのデータ（明細行・ICの対応づけ・位置の指定）を削除します。元に戻せません。';
+  static const deletedAll = 'すべてのデータを削除しました';
+  static const deleteAllFailed = '削除できませんでした。データは変わっていません';
 
   static const icMappingSection = 'ICの対応づけ';
   static const icMappingButton = 'ICの対応づけを開く';

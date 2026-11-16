@@ -72,11 +72,21 @@ void main() {
       await tapText(SettingsStrings.importButton);
 
       step = 'the IC mapping';
-      await tester.scrollUntilVisible(
-        find.text(SettingsStrings.icMappingButton),
-        100,
-      );
-      await tapText(SettingsStrings.icMappingButton);
+      // The settings are a long list: scroll until the button is above the
+      // navigation bar (the list is built a little beyond the screen).
+      final icMapping = find.text(SettingsStrings.icMappingButton);
+      await tester.scrollUntilVisible(icMapping, 100);
+      final navTop = tester.getTopLeft(find.byType(NavigationBar)).dy;
+      for (
+        var i = 0;
+        i < 10 && tester.getCenter(icMapping).dy > navTop - 24;
+        i++
+      ) {
+        await tester.drag(find.byType(ListView).first, const Offset(0, -120));
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(icMapping);
+      await tester.pumpAndSettle();
       expectFits();
       await tester.tap(find.byType(BackButton));
       await tester.pumpAndSettle();
