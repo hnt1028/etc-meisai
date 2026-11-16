@@ -58,6 +58,48 @@ void main() {
       expect(result.lineCount, 1);
     });
 
+    test(
+      'draws a blank entrance of a two-IC road from the other end',
+      () async {
+        FakeIcMasterIF master() => FakeIcMasterIF([
+          fakeIcPoint(
+            name: '中ノ湯',
+            routeNames: const ['安房峠道路'],
+            latitude: 36.2,
+            longitude: 137.6,
+          ),
+          fakeIcPoint(
+            name: '平湯',
+            routeNames: const ['安房峠道路'],
+            latitude: 36.18,
+            longitude: 137.55,
+          ),
+          fakeIcPoint(name: '北', routeNames: const ['R1']),
+        ]);
+        for (final (exit, from) in [('平湯', '中ノ湯'), ('中ノ湯', '平湯')]) {
+          final lines = FakeStatementLineIF()
+            ..stored.add(
+              fakeStatementLine(exitIc: exit, withoutEntrance: true),
+            );
+          final result = await fakeRouteMapUC(
+            lines,
+            master: master(),
+          ).execute();
+
+          expect(result.segments.single.fromIcName, from);
+          expect(result.segments.single.toIcName, exit);
+          expect(result.undrawnLineCount, 0);
+        }
+
+        // An IC of another road is not completed.
+        final other = FakeStatementLineIF()
+          ..stored.add(fakeStatementLine(exitIc: '北', withoutEntrance: true));
+        final result = await fakeRouteMapUC(other, master: master()).execute();
+        expect(result.segments, isEmpty);
+        expect(result.undrawnLineCount, 1);
+      },
+    );
+
     test('makes one marker for an IC name, with the number of lines', () async {
       final lines = FakeStatementLineIF()
         ..stored.addAll([

@@ -85,6 +85,35 @@ void main() {
       expect(route.unlocatedIcNames, isEmpty);
     });
 
+    test(
+      'draws a blank entrance of a two-IC road from the other end',
+      () async {
+        final uc = GetLineRouteUC(
+          icMaster: FakeIcMasterIF([
+            fakeIcPoint(
+              name: '中ノ湯',
+              routeNames: const ['安房峠道路'],
+              latitude: 36.2,
+              longitude: 137.6,
+            ),
+            fakeIcPoint(
+              name: '平湯',
+              routeNames: const ['安房峠道路'],
+              latitude: 36.18,
+              longitude: 137.55,
+            ),
+          ]),
+          icMappings: FakeIcMappingIF(),
+          icPositions: FakeIcPositionIF(),
+        );
+        final route = await uc.execute(_line(entranceIc: null, exitIc: '平湯'));
+
+        expect(route.segment!.fromIcName, '中ノ湯');
+        expect(route.segment!.fromLatitude, 36.2);
+        expect(route.segment!.toLongitude, 137.55);
+      },
+    );
+
     test('does not draw a line with an unknown IC, and lists it', () async {
       final route = await _uc().execute(_line(exitIc: '不明'));
 

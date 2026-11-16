@@ -8,6 +8,7 @@ import 'package:etc_meisai/application/interface/ic_master_if.dart';
 import 'package:etc_meisai/application/interface/ic_position_if.dart';
 import 'package:etc_meisai/application/usecase/aggregation/ic_distance.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
+import 'package:etc_meisai/application/usecase/route_map/implied_entrance.dart';
 
 /// Finds what the statement detail screen draws for one statement line.
 /// Design: PRC-012.
@@ -55,18 +56,25 @@ class GetLineRouteUC {
 
     final entrance = entranceName == null ? null : lookup.placeOf(entranceName);
     final exit = lookup.placeOf(line.exitIc);
-    final segment = entranceName != null && entrance != null && exit != null
+    // A blank entrance of a road with two ICs is the other end.
+    final impliedName = entranceName == null
+        ? impliedEntranceNameOf(line.exitIc, lookup)
+        : null;
+    final drawnFromName = entranceName ?? impliedName;
+    final drawnFrom =
+        entrance ?? (impliedName == null ? null : lookup.placeOf(impliedName));
+    final segment = drawnFromName != null && drawnFrom != null && exit != null
         ? RouteSegmentDTO(
             line: line,
-            fromIcName: entranceName,
+            fromIcName: drawnFromName,
             toIcName: line.exitIc,
-            fromLatitude: entrance.latitude,
-            fromLongitude: entrance.longitude,
+            fromLatitude: drawnFrom.latitude,
+            fromLongitude: drawnFrom.longitude,
             toLatitude: exit.latitude,
             toLongitude: exit.longitude,
             via: [
               for (final point in routeVerticesOf(
-                entrance: entrance,
+                entrance: drawnFrom,
                 exit: exit,
                 lookup: lookup,
                 distance: IcDistance(await icMaster.findLinks()),

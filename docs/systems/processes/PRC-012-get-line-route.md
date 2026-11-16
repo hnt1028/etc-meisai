@@ -14,6 +14,7 @@
 | 結果のマーカー | `lib/application/dto/route_place_dto.dart` | `RoutePlaceDTO`。PRC-009 と共通 |
 | 使う部品（IC名の照合、位置の決定） | `lib/application/usecase/ic_mapping/ic_lookup.dart` | `IcLookup`（`placeOf`） |
 | 使う窓口（ICマスタ） | `lib/application/interface/ic_master_if.dart` | `IcMasterIF`（`findAll`、`findLinks`） |
+| 使う部品（入口が空欄の道路） | `lib/application/usecase/route_map/implied_entrance.dart` | `impliedEntranceNameOf` |
 | 使う部品（間の点） | `lib/application/usecase/aggregation/ic_distance.dart` | `IcDistance`（`roadRouteBetween`）、`routeVerticesOf` |
 | 使う窓口（ICの対応づけ） | `lib/application/interface/ic_mapping_if.dart` | `IcMappingIF`（`findAll`） |
 | 使う窓口（ICの位置） | `lib/application/interface/ic_position_if.dart` | `IcPositionIF`（`findAll`） |
@@ -33,7 +34,7 @@
 1. `IcMasterIF`、`IcMappingIF`、`IcPositionIF` の `findAll` で、ICマスタ、対応づけ、位置の指定を取得し、`IcLookup` を作る
 2. 入口IC（空欄でなければ）と出口ICの位置を、`IcLookup` の `placeOf` で調べる
 3. 位置が分かるICを、マーカーにする（`lineCount` は 1）。位置の種類（指定、マスタ）と近似か、路線名は、PRC-009 と同じ規則で付ける。入口と出口が同じIC名のときは、マーカーは1つ
-4. 入口が空欄でなく、入口・出口の両方の位置が分かるときは、区間にする。両方がICマスタの地点のときは、間の地点の位置と、道路の形の点を、順に `via` に入れる（PRC-009 と同じ）。そうでなければ区間にしない
+4. 入口・出口の両方の位置が分かるときは、区間にする（入口が空欄のときは、PRC-009 と同じく、IC2つの道路の端なら、もう一方の端を入口にする）。両方がICマスタの地点のときは、間の地点の位置と、道路の形の点を、順に `via` に入れる（PRC-009 と同じ）。そうでなければ区間にしない
 5. 位置が分からないIC名を、`unlocatedIcNames` に入れる（入口、出口の順。同じ名前は1つ）
 
 ## シーケンス図

@@ -9,6 +9,7 @@ import 'package:etc_meisai/application/interface/ic_position_if.dart';
 import 'package:etc_meisai/application/interface/statement_line_if.dart';
 import 'package:etc_meisai/application/usecase/aggregation/ic_distance.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
+import 'package:etc_meisai/application/usecase/route_map/implied_entrance.dart';
 import 'package:etc_meisai/application/usecase/statements/statement_filter.dart';
 
 /// Lists what the route map draws. Design: PRC-009.
@@ -57,19 +58,27 @@ class ListRouteMapUC {
           ? null
           : lookup.placeOf(entranceName);
       final exit = lookup.placeOf(line.exitIc);
-      if (entranceName != null && entrance != null && exit != null) {
+      // A blank entrance of a road with two ICs is the other end.
+      final impliedName = entranceName == null
+          ? impliedEntranceNameOf(line.exitIc, lookup)
+          : null;
+      final drawnFromName = entranceName ?? impliedName;
+      final drawnFrom =
+          entrance ??
+          (impliedName == null ? null : lookup.placeOf(impliedName));
+      if (drawnFromName != null && drawnFrom != null && exit != null) {
         segments.add(
           RouteSegmentDTO(
             line: toStatementLineDTO(line, lookup),
-            fromIcName: entranceName,
+            fromIcName: drawnFromName,
             toIcName: line.exitIc,
-            fromLatitude: entrance.latitude,
-            fromLongitude: entrance.longitude,
+            fromLatitude: drawnFrom.latitude,
+            fromLongitude: drawnFrom.longitude,
             toLatitude: exit.latitude,
             toLongitude: exit.longitude,
             via: [
               for (final point in routeVerticesOf(
-                entrance: entrance,
+                entrance: drawnFrom,
                 exit: exit,
                 lookup: lookup,
                 distance: distance,
