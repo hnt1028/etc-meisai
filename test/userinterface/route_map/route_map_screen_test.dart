@@ -514,6 +514,23 @@ void main() {
     expect(_text(StatementListStrings.clearFilter), findsOneWidget);
   });
 
+  testWidgets('keeps the open filter apart from the map', (tester) async {
+    final world = _World()..line('北', '東');
+    await _open(tester, world);
+
+    await tester.tap(_text(RouteMapStrings.filterTitle));
+    await tester.pumpAndSettle();
+
+    // The card number box is the last control of the filter. The map starts
+    // below it with room between them: the padding and a line.
+    final controlsBottom = tester
+        .getBottomLeft(find.byType(DropdownButtonFormField<String?>))
+        .dy;
+    final mapTop = tester.getTopLeft(find.byType(FlutterMap)).dy;
+    expect(mapTop - controlsBottom, greaterThanOrEqualTo(12));
+    expect(find.byType(Divider), findsOneWidget);
+  });
+
   testWidgets('shows a progress indicator while reading', (tester) async {
     final world = _World()..line('北', '東');
     await tester.pumpWidget(world.app());
