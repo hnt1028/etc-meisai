@@ -3,6 +3,7 @@ import 'package:etc_meisai/application/interface/ic_mapping_if.dart';
 import 'package:etc_meisai/application/interface/ic_master_if.dart';
 import 'package:etc_meisai/application/interface/ic_position_if.dart';
 import 'package:etc_meisai/application/interface/statement_line_if.dart';
+import 'package:etc_meisai/application/interface/vehicle_type_master_if.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
 import 'package:etc_meisai/application/usecase/statements/statement_filter.dart';
 
@@ -14,12 +15,14 @@ class ListStatementLinesUC {
     required this.icMaster,
     required this.icMappings,
     required this.icPositions,
+    required this.vehicleTypes,
   });
 
   final StatementLineIF statementLines;
   final IcMasterIF icMaster;
   final IcMappingIF icMappings;
   final IcPositionIF icPositions;
+  final VehicleTypeMasterIF vehicleTypes;
 
   /// [from] and [to] are dates (the time is ignored) and are included in the
   /// period. A null condition is not used.
@@ -30,6 +33,7 @@ class ListStatementLinesUC {
     String? cardNumberSuffix,
   }) async {
     final all = await statementLines.findAll();
+    final divisions = await vehicleTypes.findAll();
     final lookup = IcLookup(
       points: await icMaster.findAll(),
       mappings: await icMappings.findAll(),
@@ -45,7 +49,9 @@ class ListStatementLinesUC {
     );
 
     return StatementListDTO(
-      lines: [for (final line in sorted) toStatementLineDTO(line, lookup)],
+      lines: [
+        for (final line in sorted) toStatementLineDTO(line, lookup, divisions),
+      ],
       totalFare: sorted.fold(0, (sum, l) => sum + l.fare),
       totalFareAfterRebate: sorted.fold(0, (sum, l) => sum + l.fareAfterRebate),
       totalPostpaidFare: sorted.fold(0, (sum, l) => sum + l.postpaidFare),

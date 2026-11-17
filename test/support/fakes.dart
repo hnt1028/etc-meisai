@@ -7,6 +7,7 @@ import 'package:etc_meisai/application/interface/ic_master_if.dart';
 import 'package:etc_meisai/application/interface/ic_position_if.dart';
 import 'package:etc_meisai/application/interface/statement_if.dart';
 import 'package:etc_meisai/application/interface/statement_line_if.dart';
+import 'package:etc_meisai/application/interface/vehicle_type_master_if.dart';
 import 'package:etc_meisai/application/usecase/aggregation/aggregate_statements_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/statement_line_copy.dart';
 import 'package:etc_meisai/application/usecase/route_map/list_route_map_uc.dart';
@@ -18,6 +19,7 @@ import 'package:etc_meisai/domain/entity/statement_line_record_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
+import 'package:etc_meisai/domain/entity/vehicle_type_division_entity.dart';
 import 'package:etc_meisai/domain/value/ic_kind_value.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/domain/value/vehicle_type_value.dart';
@@ -189,6 +191,16 @@ IcPointEntity fakeIcPoint({
   );
 }
 
+/// Returns the given vehicle type divisions.
+class FakeVehicleTypeMasterIF implements VehicleTypeMasterIF {
+  FakeVehicleTypeMasterIF([this.divisions = const []]);
+
+  final List<VehicleTypeDivisionEntity> divisions;
+
+  @override
+  Future<List<VehicleTypeDivisionEntity>> findAll() async => divisions;
+}
+
 /// Returns the given IC points, or throws [error].
 class FakeIcMasterIF implements IcMasterIF {
   FakeIcMasterIF(this.points, {this.links = const [], this.error});
@@ -277,12 +289,14 @@ ListStatementLinesUC fakeListUC(
   List<IcPointEntity> points = const [],
   FakeIcMappingIF? mappings,
   FakeIcPositionIF? positions,
+  List<VehicleTypeDivisionEntity> divisions = const [],
 }) {
   return ListStatementLinesUC(
     statementLines: lines,
     icMaster: FakeIcMasterIF(points),
     icMappings: mappings ?? FakeIcMappingIF(),
     icPositions: positions ?? FakeIcPositionIF(),
+    vehicleTypes: FakeVehicleTypeMasterIF(divisions),
   );
 }
 
@@ -292,12 +306,14 @@ ListRouteMapUC fakeRouteMapUC(
   FakeIcMasterIF? master,
   FakeIcMappingIF? mappings,
   FakeIcPositionIF? positions,
+  List<VehicleTypeDivisionEntity> divisions = const [],
 }) {
   return ListRouteMapUC(
     statementLines: lines,
     icMaster: master ?? FakeIcMasterIF([]),
     icMappings: mappings ?? FakeIcMappingIF(),
     icPositions: positions ?? FakeIcPositionIF(),
+    vehicleTypes: FakeVehicleTypeMasterIF(divisions),
   );
 }
 

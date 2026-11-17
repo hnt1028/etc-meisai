@@ -23,6 +23,7 @@ StatementLineDTO _line({
   fareAfterRebate: 100,
   postpaidFare: 100,
   vehicleType: VehicleTypeValue.standard,
+  vehicleTypeName: '普通車',
   vehicleNumber: 1,
   cardNumberSuffix: '0001',
   status: ConfirmationStatusValue.confirmed,

@@ -1,5 +1,7 @@
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
+import 'package:etc_meisai/application/usecase/statements/vehicle_type_name.dart';
+import 'package:etc_meisai/domain/entity/vehicle_type_division_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
 
 /// The parts that the statement list (PRC-004) and the route map (PRC-009)
@@ -55,10 +57,12 @@ List<StatementLineEntity> filterStatementLines(
   return [for (final e in indexed) e.value];
 }
 
-/// Makes the DTO of a statement line, with its route names.
+/// Makes the DTO of a statement line, with its route names and the name of its
+/// vehicle type.
 StatementLineDTO toStatementLineDTO(
   StatementLineEntity line,
   IcLookup lookup,
+  List<VehicleTypeDivisionEntity> divisions,
 ) => StatementLineDTO(
   id: line.id,
   entranceAt: line.entranceAt,
@@ -71,6 +75,11 @@ StatementLineDTO toStatementLineDTO(
   fareAfterRebate: line.fareAfterRebate,
   postpaidFare: line.postpaidFare,
   vehicleType: line.vehicleType,
+  vehicleTypeName: vehicleTypeNameOf(
+    line.vehicleType,
+    lookup.routeNamesOf(line.entranceIc, line.exitIc),
+    divisions,
+  ),
   vehicleNumber: line.vehicleNumber,
   cardNumberSuffix: cardNumberSuffixOf(line.cardNumber),
   status: line.status,

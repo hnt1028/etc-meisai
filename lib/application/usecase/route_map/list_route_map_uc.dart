@@ -7,6 +7,7 @@ import 'package:etc_meisai/application/interface/ic_mapping_if.dart';
 import 'package:etc_meisai/application/interface/ic_master_if.dart';
 import 'package:etc_meisai/application/interface/ic_position_if.dart';
 import 'package:etc_meisai/application/interface/statement_line_if.dart';
+import 'package:etc_meisai/application/interface/vehicle_type_master_if.dart';
 import 'package:etc_meisai/application/usecase/aggregation/ic_distance.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
 import 'package:etc_meisai/application/usecase/route_map/implied_entrance.dart';
@@ -19,12 +20,14 @@ class ListRouteMapUC {
     required this.icMaster,
     required this.icMappings,
     required this.icPositions,
+    required this.vehicleTypes,
   });
 
   final StatementLineIF statementLines;
   final IcMasterIF icMaster;
   final IcMappingIF icMappings;
   final IcPositionIF icPositions;
+  final VehicleTypeMasterIF vehicleTypes;
 
   /// The conditions are the ones of the statement list ([from] and [to] are
   /// dates, and are included in the period).
@@ -35,6 +38,7 @@ class ListRouteMapUC {
     String? cardNumberSuffix,
   }) async {
     final all = await statementLines.findAll();
+    final divisions = await vehicleTypes.findAll();
     final lookup = IcLookup(
       points: await icMaster.findAll(),
       mappings: await icMappings.findAll(),
@@ -69,7 +73,7 @@ class ListRouteMapUC {
       if (drawnFromName != null && drawnFrom != null && exit != null) {
         segments.add(
           RouteSegmentDTO(
-            line: toStatementLineDTO(line, lookup),
+            line: toStatementLineDTO(line, lookup, divisions),
             fromIcName: drawnFromName,
             toIcName: line.exitIc,
             fromLatitude: drawnFrom.latitude,

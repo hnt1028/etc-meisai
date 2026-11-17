@@ -212,10 +212,7 @@ class _StatementDetailScreenState extends ConsumerState<StatementDetailScreen> {
                   StatementDetailStrings.postpaidFare,
                   formatYen(line.postpaidFare),
                 ),
-                _item(
-                  StatementDetailStrings.vehicleType,
-                  line.vehicleType.label,
-                ),
+                _item(StatementDetailStrings.vehicleType, line.vehicleTypeName),
                 if (line.vehicleNumber == null)
                   _blankItem(
                     StatementDetailStrings.vehicleNumber,

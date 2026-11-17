@@ -283,6 +283,7 @@ void main() {
       fareAfterRebate: 0,
       postpaidFare: 0,
       vehicleType: fakeStatementLine().vehicleType,
+      vehicleTypeName: '普通車',
       vehicleNumber: 1,
       cardNumberSuffix: '0001',
       status: ConfirmationStatusValue.confirmed,

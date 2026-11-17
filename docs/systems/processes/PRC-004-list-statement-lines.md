@@ -14,6 +14,8 @@
 | 使う窓口（明細行の保存・取得） | `lib/application/interface/statement_line_if.dart` | `StatementLineIF`（`findAll`） |
 | 使う窓口（ICマスタ） | `lib/application/interface/ic_master_if.dart` | `IcMasterIF`（`findAll`） |
 | 使う窓口（ICの対応づけ） | `lib/application/interface/ic_mapping_if.dart` | `IcMappingIF`（`findAll`） |
+| 使う窓口（車種区分のマスタ） | `lib/application/interface/vehicle_type_master_if.dart` | `VehicleTypeMasterIF`（`findAll`） |
+| 使う部品（車種の名前） | `lib/application/usecase/statements/vehicle_type_name.dart` | `vehicleTypeNameOf` |
 | 使う部品（絞り込み、DTOへの詰め替え） | `lib/application/usecase/statements/statement_filter.dart` | `filterStatementLines`、`toStatementLineDTO` ほか。[PRC-009](PRC-009-list-route-map.md) と共通 |
 | 使う部品（IC名の照合、路線名の決定） | `lib/application/usecase/ic_mapping/ic_lookup.dart` | `IcLookup` |
 | 使う部品（ICマスタに無い路線の補足） | `lib/application/usecase/ic_mapping/ic_route_supplements.dart` | `routeSupplementOf` |
@@ -44,7 +46,7 @@
    - ETCカード番号の下4桁が `cardNumberSuffix` と等しい
 4. 出口日時の新しい順に並べる（同じ日時は、保存済みの順のまま）
 5. 絞った明細行の、通行料金・還元額適用料金・後納料金を、それぞれ合計する（確認中の明細行も含める）
-6. `Entity` を `StatementLineDTO` に詰め替える。ETCカード番号は、下4桁にして入れる（元の番号は入れない）。路線名は、`IcLookup` に入口IC・出口ICを渡して決める（規則は [route-map.md](../../route-map.md) の「路線名」）
+6. `Entity` を `StatementLineDTO` に詰め替える。車種の名前は、`VehicleTypeMasterIF` の `findAll` で取得した車種区分と、路線名から決める（[vehicle-types.md](../../vehicle-types.md)）。ETCカード番号は、下4桁にして入れる（元の番号は入れない）。路線名は、`IcLookup` に入口IC・出口ICを渡して決める（規則は [route-map.md](../../route-map.md) の「路線名」）
 
 ## シーケンス図
 
@@ -100,7 +102,8 @@ sequenceDiagram
 | `fare` | `int` | 通行料金 |
 | `fareAfterRebate` | `int` | 還元額適用料金 |
 | `postpaidFare` | `int` | 後納料金 |
-| `vehicleType` | `VehicleTypeValue` | 車種 |
+| `vehicleType` | `VehicleTypeValue` | 車種（番号） |
+| `vehicleTypeName` | `String` | 車種の名前。事業者の車種区分による（[vehicle-types.md](../../vehicle-types.md)） |
 | `vehicleNumber` | `int?` | 車両番号（個人情報）。CSVで空欄で、利用者がまだ入力していないときは `null` |
 | `cardNumberSuffix` | `String` | ETCカード番号の下4桁 |
 | `status` | `ConfirmationStatusValue` | 状態 |
