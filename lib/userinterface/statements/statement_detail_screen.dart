@@ -1,4 +1,5 @@
 import 'package:etc_meisai/application/dto/entrance_candidates_dto.dart';
+import 'package:etc_meisai/application/dto/line_route_dto.dart';
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/userinterface/common/format.dart';
@@ -210,6 +211,10 @@ class _StatementDetailScreenState extends ConsumerState<StatementDetailScreen> {
                       ? StatementDetailStrings.blank
                       : line.routeNames.join('・'),
                 ),
+                _item(
+                  StatementDetailStrings.distance,
+                  _distance(ref.watch(lineRouteProvider(line))),
+                ),
                 _item(StatementDetailStrings.grossFare, _yen(line.grossFare)),
                 _item(
                   StatementDetailStrings.etcDiscount,
@@ -256,6 +261,13 @@ class _StatementDetailScreenState extends ConsumerState<StatementDetailScreen> {
               ],
             ),
     );
+  }
+
+  /// "-" while the route is read, when it failed, and when the distance is not
+  /// known.
+  static String _distance(AsyncValue<LineRouteDTO> route) {
+    final meters = route.value?.meters;
+    return meters == null ? StatementDetailStrings.blank : formatKm(meters);
   }
 
   /// A blank amount (null) means that no discount applied.

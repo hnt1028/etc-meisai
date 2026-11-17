@@ -8,6 +8,7 @@ abstract final class StatementDetailStrings {
   static const entranceIc = '入口IC';
   static const exitIc = '出口IC';
   static const routeNames = '通行した高速道路';
+  static const distance = '距離（推定）';
   static const grossFare = '割引前料金';
   static const etcDiscount = 'ETC割引額';
   static const fare = '通行料金';

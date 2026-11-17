@@ -197,6 +197,42 @@ void main() {
     expect(find.text('普通車'), findsNothing);
   });
 
+  testWidgets('shows the distance of the line, as an estimate', (tester) async {
+    await _show(
+      tester,
+      _line(entranceIc: 'テスト北', exitIc: 'テスト東'),
+      master: FakeIcMasterIF(
+        [
+          fakeIcPoint(name: 'テスト北', latitude: 35.1, longitude: 139.1),
+          fakeIcPoint(name: 'テスト東', latitude: 35.2, longitude: 139.2),
+        ],
+        links: const [
+          IcLinkEntity(fromId: 'id-テスト北', toId: 'id-テスト東', meters: 12345),
+        ],
+      ),
+    );
+
+    expect(find.text(StatementDetailStrings.distance), findsOneWidget);
+    expect(find.text('12.3km'), findsOneWidget);
+  });
+
+  testWidgets('shows - as the distance when it is not known', (tester) async {
+    // A-IC and B-IC are not in the master.
+    await _show(tester, _line());
+
+    final tile = find.ancestor(
+      of: find.text(StatementDetailStrings.distance),
+      matching: find.byType(ListTile),
+    );
+    expect(
+      find.descendant(
+        of: tile,
+        matching: find.text(StatementDetailStrings.blank),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('shows - for a blank entrance and for no discount', (
     tester,
   ) async {
@@ -219,9 +255,9 @@ void main() {
     );
     await _show(tester, line);
 
-    // Entrance date and time, entrance IC, route names, gross fare and ETC
-    // discount.
-    expect(find.text(StatementDetailStrings.blank), findsNWidgets(5));
+    // Entrance date and time, entrance IC, route names, distance, gross fare
+    // and ETC discount.
+    expect(find.text(StatementDetailStrings.blank), findsNWidgets(6));
     expect(find.text(StatementDetailStrings.none), findsOneWidget);
   });
 

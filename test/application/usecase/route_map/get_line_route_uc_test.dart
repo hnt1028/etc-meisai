@@ -222,6 +222,36 @@ void main() {
       expect(route.places.map((p) => p.icName), ['北', '東']);
     });
 
+    test('gives the distance over the links, like the aggregation', () async {
+      final master = FakeIcMasterIF(
+        [
+          fakeIcPoint(name: '北', latitude: 35.1, longitude: 139.1),
+          fakeIcPoint(name: '中', latitude: 35.5, longitude: 139.2),
+          fakeIcPoint(name: '東', latitude: 35.2, longitude: 139.2),
+        ],
+        links: const [
+          IcLinkEntity(fromId: 'id-北', toId: 'id-中', meters: 1000),
+          IcLinkEntity(fromId: 'id-中', toId: 'id-東', meters: 1500),
+        ],
+      );
+
+      final route = await _uc(master: master).execute(_line());
+
+      expect(route.meters, 2500);
+    });
+
+    test('gives the straight distance when there is no way', () async {
+      final route = await _uc().execute(_line());
+
+      // 北 (35.1, 139.1) and 東 (35.2, 139.2): about 14 km.
+      expect(route.meters, closeTo(14000, 500));
+    });
+
+    test('gives no distance for a blank entrance or an unknown IC', () async {
+      expect((await _uc().execute(_line(entranceIc: null))).meters, isNull);
+      expect((await _uc().execute(_line(exitIc: '不明'))).meters, isNull);
+    });
+
     test('follows the shape of the road', () async {
       final master = FakeIcMasterIF(
         [
