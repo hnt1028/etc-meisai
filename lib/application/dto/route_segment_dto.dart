@@ -1,3 +1,4 @@
+import 'package:etc_meisai/application/dto/route_run_dto.dart';
 import 'package:etc_meisai/application/dto/route_vertex_dto.dart';
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 
@@ -13,6 +14,7 @@ class RouteSegmentDTO {
     required this.toLatitude,
     required this.toLongitude,
     this.via = const [],
+    this.runs = const [],
   });
 
   final StatementLineDTO line;
@@ -26,4 +28,9 @@ class RouteSegmentDTO {
   /// The points between the entrance and the exit, in order. Empty when the
   /// line is straight.
   final List<RouteVertexDTO> via;
+
+  /// The same line from the entrance to the exit, cut where the operator of
+  /// the road changes. Empty only when the line is not given a color by
+  /// operator.
+  final List<RouteRunDTO> runs;
 }

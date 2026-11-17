@@ -83,6 +83,10 @@ const _operators = <(List<String>, String)>[
   ),
 ];
 
+/// The operators of the table (without [multipleOperators] and
+/// [unknownOperator]).
+List<String> get knownOperators => [for (final (_, name) in _operators) name];
+
 /// What an aggregation calls a line that runs on the roads of two or more
 /// operators, and one whose operator is not known.
 const multipleOperators = '複数の事業者';

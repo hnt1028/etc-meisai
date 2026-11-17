@@ -9,6 +9,7 @@ import 'package:etc_meisai/application/interface/ic_position_if.dart';
 import 'package:etc_meisai/application/usecase/aggregation/ic_distance.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
 import 'package:etc_meisai/application/usecase/route_map/implied_entrance.dart';
+import 'package:etc_meisai/application/usecase/route_map/route_runs.dart';
 
 /// Finds what the statement detail screen draws for one statement line.
 /// Design: PRC-012.
@@ -63,6 +64,7 @@ class GetLineRouteUC {
     final drawnFromName = entranceName ?? impliedName;
     final drawnFrom =
         entrance ?? (impliedName == null ? null : lookup.placeOf(impliedName));
+    final distance = IcDistance(await icMaster.findLinks());
     final segment = drawnFromName != null && drawnFrom != null && exit != null
         ? RouteSegmentDTO(
             line: line,
@@ -77,13 +79,20 @@ class GetLineRouteUC {
                 entrance: drawnFrom,
                 exit: exit,
                 lookup: lookup,
-                distance: IcDistance(await icMaster.findLinks()),
+                distance: distance,
               ))
                 RouteVertexDTO(
                   latitude: point.latitude,
                   longitude: point.longitude,
                 ),
             ],
+            runs: routeRunsOf(
+              entrance: drawnFrom,
+              exit: exit,
+              lineRouteNames: lookup.routeNamesOf(drawnFromName, line.exitIc),
+              lookup: lookup,
+              distance: distance,
+            ),
           )
         : null;
 
