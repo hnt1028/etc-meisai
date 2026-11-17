@@ -34,6 +34,7 @@ import 'package:etc_meisai/userinterface/settings/backup_files.dart';
 import 'package:etc_meisai/userinterface/settings/csv_picker.dart';
 import 'package:etc_meisai/userinterface/settings/settings_providers.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_providers.dart';
+import 'fakes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -74,6 +75,7 @@ Future<void> pumpApp(
             icMaster: icMaster,
             icMappings: icMappings,
             icPositions: icPositions,
+            vehicleTypes: FakeVehicleTypeMasterIF(),
           ),
         ),
         listRouteMapUCProvider.overrideWithValue(
@@ -82,6 +84,7 @@ Future<void> pumpApp(
             icMaster: icMaster,
             icMappings: icMappings,
             icPositions: icPositions,
+            vehicleTypes: FakeVehicleTypeMasterIF(),
           ),
         ),
         saveIcPositionUCProvider.overrideWithValue(

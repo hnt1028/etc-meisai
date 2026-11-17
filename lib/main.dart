@@ -23,6 +23,7 @@ import 'package:etc_meisai/application/usecase/statements/save_vehicle_number_uc
 import 'package:etc_meisai/infrastructure/repository/database/app_database.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_mapping_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_master_repo.dart';
+import 'package:etc_meisai/infrastructure/repository/ic_mapping/vehicle_type_master_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_position/ic_position_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/app_data_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/backup_repo.dart';
@@ -44,6 +45,9 @@ void main() {
   final statementLines = StatementLineRepo(database);
   final icMaster = IcMasterRepo(
     loadJson: () => rootBundle.loadString('assets/ic_master.json'),
+  );
+  final vehicleTypes = VehicleTypeMasterRepo(
+    loadJson: () => rootBundle.loadString('assets/vehicle_type_master.json'),
   );
   final icMappings = IcMappingRepo(database);
   final icPositions = IcPositionRepo(database);
@@ -68,6 +72,7 @@ void main() {
             icMaster: icMaster,
             icMappings: icMappings,
             icPositions: icPositions,
+            vehicleTypes: vehicleTypes,
           ),
         ),
         listRouteMapUCProvider.overrideWithValue(
@@ -76,6 +81,7 @@ void main() {
             icMaster: icMaster,
             icMappings: icMappings,
             icPositions: icPositions,
+            vehicleTypes: vehicleTypes,
           ),
         ),
         saveIcPositionUCProvider.overrideWithValue(

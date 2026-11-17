@@ -18,6 +18,7 @@ class StatementLineDTO {
     required this.fareAfterRebate,
     required this.postpaidFare,
     required this.vehicleType,
+    required this.vehicleTypeName,
     required this.vehicleNumber,
     required this.cardNumberSuffix,
     required this.status,
@@ -48,6 +49,10 @@ class StatementLineDTO {
   final int postpaidFare;
 
   final VehicleTypeValue vehicleType;
+
+  /// The name of the vehicle type for the operator of the line (the division
+  /// of docs/vehicle-types.md).
+  final String vehicleTypeName;
 
   /// Personal information. Never log it. Null when the CSV leaves it blank and
   /// the user has not entered one.

@@ -75,6 +75,7 @@ flutter:
   # The IC master (docs/route-map.md), made by tool/build_ic_master.dart.
   assets:
     - assets/ic_master.json
+    - assets/vehicle_type_master.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

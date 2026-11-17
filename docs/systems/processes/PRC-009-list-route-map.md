@@ -20,6 +20,7 @@
 | 使う窓口（明細行） | `lib/application/interface/statement_line_if.dart` | `StatementLineIF`（`findAll`） |
 | 使う窓口（ICマスタ） | `lib/application/interface/ic_master_if.dart` | `IcMasterIF`（`findAll`） |
 | 使う窓口（ICの対応づけ） | `lib/application/interface/ic_mapping_if.dart` | `IcMappingIF`（`findAll`） |
+| 使う窓口（車種区分のマスタ） | `lib/application/interface/vehicle_type_master_if.dart` | `VehicleTypeMasterIF`（`findAll`）。明細行のDTOの車種の名前に使う（PRC-004 と共通） |
 | 使う窓口（ICの位置） | `lib/application/interface/ic_position_if.dart` | `IcPositionIF`（`findAll`） |
 | 使う窓口（ICのリンク） | `lib/application/interface/ic_master_if.dart` | `IcMasterIF`（`findLinks`） |
 | 窓口の実装 | `lib/infrastructure/repository/ic_position/ic_position_repo.dart` | `IcPositionRepo`（[TBL-003](../tables/TBL-003-ic-positions.md)） |

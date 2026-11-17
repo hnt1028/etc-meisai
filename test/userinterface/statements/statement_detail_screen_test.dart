@@ -35,6 +35,7 @@ StatementLineDTO _line({
   String? id,
   bool withoutVehicleNumber = false,
   bool blankEntranceAt = false,
+  String vehicleTypeName = '普通車',
 }) {
   return StatementLineDTO(
     id: id,
@@ -50,6 +51,7 @@ StatementLineDTO _line({
     fareAfterRebate: 100,
     postpaidFare: 860,
     vehicleType: VehicleTypeValue.standard,
+    vehicleTypeName: vehicleTypeName,
     vehicleNumber: withoutVehicleNumber ? null : 1234,
     cardNumberSuffix: '0001',
     status: status,
@@ -161,6 +163,15 @@ void main() {
     expect(find.text(StatementDetailStrings.notFound), findsNothing);
   });
 
+  testWidgets('shows the vehicle type name of the operator of the line', (
+    tester,
+  ) async {
+    await _show(tester, _line(vehicleTypeName: '大型車Ⅰ'));
+
+    expect(find.text('大型車Ⅰ'), findsOneWidget);
+    expect(find.text('普通車'), findsNothing);
+  });
+
   testWidgets('shows - for a blank entrance and for no discount', (
     tester,
   ) async {
@@ -175,6 +186,7 @@ void main() {
       fareAfterRebate: 0,
       postpaidFare: 960,
       vehicleType: VehicleTypeValue.standard,
+      vehicleTypeName: '普通車',
       vehicleNumber: 1234,
       cardNumberSuffix: '0001',
       status: ConfirmationStatusValue.confirmed,

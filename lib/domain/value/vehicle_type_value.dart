@@ -3,7 +3,9 @@
 /// The CSV holds a number from 1 to 5. The names follow the table of the ETC
 /// usage inquiry service for the vehicle type division 1 of NEXCO roads. Some
 /// other road operators use other names for the same number, but the CSV does
-/// not say which operator a line belongs to, so this one table is used.
+/// not say which operator a line belongs to. These names are the default, for
+/// a line whose operator is not known; the others come from the vehicle type
+/// master (docs/vehicle-types.md).
 /// Source: https://www.etc-meisai.jp/soukou_meisai_exp.html
 enum VehicleTypeValue {
   standard(1, '普通車'),
