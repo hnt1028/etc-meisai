@@ -1,6 +1,7 @@
 import 'package:etc_meisai/application/usecase/route_map/delete_ic_position_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/list_route_map_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/save_ic_position_uc.dart';
+import 'package:etc_meisai/userinterface/route_map/tile_client.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,9 +23,14 @@ final deleteIcPositionUCProvider = Provider<DeleteIcPositionUC>(
 /// The map tiles of OpenStreetMap. This is the only thing the app fetches from
 /// the network (docs/privacy.md). Tests replace it, so that they need no
 /// network.
+///
+/// A tile that fails is tried again (see [createTileClient]), and is asked for
+/// again when it is shown again (the map is moved): a failed tile is not kept.
 final tileLayerProvider = Provider<Widget>(
   (ref) => TileLayer(
     urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     userAgentPackageName: 'jp.mtrk.etc_meisai',
+    tileProvider: NetworkTileProvider(httpClient: createTileClient()),
+    evictErrorTileStrategy: EvictErrorTileStrategy.notVisibleRespectMargin,
   ),
 );
