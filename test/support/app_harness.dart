@@ -12,6 +12,7 @@ import 'package:etc_meisai/application/usecase/settings/delete_all_statement_lin
 import 'package:etc_meisai/application/usecase/settings/export_data_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/import_data_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/import_statement_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/list_entrance_candidates_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/estimate_entrance_at_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_entrance_uc.dart';
@@ -122,6 +123,14 @@ Future<void> pumpApp(
         ),
         saveVehicleNumberUCProvider.overrideWithValue(
           SaveVehicleNumberUC(statementLines: statementLines),
+        ),
+        listEntranceCandidatesUCProvider.overrideWithValue(
+          ListEntranceCandidatesUC(
+            statementLines: statementLines,
+            icMaster: icMaster,
+            icMappings: icMappings,
+            icPositions: icPositions,
+          ),
         ),
         getLineRouteUCProvider.overrideWithValue(
           GetLineRouteUC(

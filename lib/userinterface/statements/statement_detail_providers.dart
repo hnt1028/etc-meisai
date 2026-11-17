@@ -2,6 +2,7 @@ import 'package:etc_meisai/application/dto/line_route_dto.dart';
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/application/usecase/route_map/get_line_route_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/estimate_entrance_at_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/list_entrance_candidates_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_entrance_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_vehicle_number_uc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,6 +29,13 @@ final saveVehicleNumberUCProvider = Provider<SaveVehicleNumberUC>(
 /// OP-4 and OP-5 of SCR-003 (PRC-015). Also built in lib/main.dart.
 final saveEntranceUCProvider = Provider<SaveEntranceUC>(
   (ref) => throw UnimplementedError('Override saveEntranceUCProvider'),
+);
+
+/// The choices for the entrance IC in OP-5 of SCR-003 (PRC-020). Also built in
+/// lib/main.dart.
+final listEntranceCandidatesUCProvider = Provider<ListEntranceCandidatesUC>(
+  (ref) =>
+      throw UnimplementedError('Override listEntranceCandidatesUCProvider'),
 );
 
 /// The entrance time to start with in OP-4 of SCR-003 (PRC-016). Also built in
