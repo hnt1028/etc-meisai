@@ -13,13 +13,16 @@ const _colors = <String, Color>{
   'NEXCO東日本': Color(0xFF2E9E4F),
   'NEXCO中日本': Color(0xFFF08300),
   'NEXCO西日本': Color(0xFF1E7FD8),
-  // Read from the logos, and told by the user (青緑・黄緑・藍・桃).
+  // 首都高: read from the logo. 福岡北九州 (黄緑), 広島 (桃) and 本四 (藍): told
+  // by the user; 本四 is deep, to be told from NEXCO西日本. 阪神 (a red) and
+  // 名古屋 (a purple) are not the colors of their logos: those were too close
+  // to other operators to be told apart on the map.
   '首都高速道路': Color(0xFF1490A8),
-  '阪神高速道路': Color(0xFF00509A),
-  '名古屋高速道路公社': Color(0xFF00897B),
+  '阪神高速道路': Color(0xFFD32F2F),
+  '名古屋高速道路公社': Color(0xFF8E24AA),
   '福岡北九州高速道路公社': Color(0xFF8BC34A),
-  '広島高速道路公社': Color(0xFFE91E63),
-  '本州四国連絡高速道路': Color(0xFF283593),
+  '広島高速道路公社': Color(0xFFF06292),
+  '本州四国連絡高速道路': Color(0xFF1A2A80),
 };
 
 /// The color of the line of [operator]. The color of the neutral outline for
