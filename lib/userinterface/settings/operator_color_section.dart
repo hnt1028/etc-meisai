@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// OP-7 and OP-8 of SCR-001: the color of the lines of every road operator on
-/// the map. Tapping an operator opens its color (red, green and blue sliders).
+/// the map. Tapping an operator opens its color (a palette).
 class OperatorColorSection extends ConsumerWidget {
   const OperatorColorSection({super.key});
 
@@ -118,8 +118,27 @@ class OperatorColorChoice {
   final int? color;
 }
 
-/// Asks for the color of an operator with red, green and blue sliders, showing
-/// the color. Returns null when the dialog was cancelled.
+/// The colors to choose from, with their names (read aloud, and shown as the
+/// tooltip). Each one is an opaque ARGB number.
+const operatorColorPalette = <({String name, int color})>[
+  (name: SettingsStrings.paletteRed, color: 0xFFD32F2F),
+  (name: SettingsStrings.palettePink, color: 0xFFF06292),
+  (name: SettingsStrings.palettePurple, color: 0xFF8E24AA),
+  (name: SettingsStrings.paletteIndigo, color: 0xFF3949AB),
+  (name: SettingsStrings.paletteBlue, color: 0xFF1976D2),
+  (name: SettingsStrings.paletteCyan, color: 0xFF0097A7),
+  (name: SettingsStrings.paletteTeal, color: 0xFF00897B),
+  (name: SettingsStrings.paletteGreen, color: 0xFF388E3C),
+  (name: SettingsStrings.paletteLime, color: 0xFF7CB342),
+  (name: SettingsStrings.paletteYellow, color: 0xFFFBC02D),
+  (name: SettingsStrings.paletteOrange, color: 0xFFF57C00),
+  (name: SettingsStrings.paletteBrown, color: 0xFF6D4C41),
+  (name: SettingsStrings.paletteGrey, color: 0xFF757575),
+  (name: SettingsStrings.paletteBlack, color: 0xFF212121),
+];
+
+/// Asks for the color of an operator by a palette, showing the color. Returns
+/// null when the dialog was cancelled.
 Future<OperatorColorChoice?> showOperatorColorDialog(
   BuildContext context,
   OperatorColorDTO current,
@@ -140,38 +159,16 @@ class _OperatorColorDialog extends StatefulWidget {
 }
 
 class _OperatorColorDialogState extends State<_OperatorColorDialog> {
-  late int _red = (widget.current.color >> 16) & 0xFF;
-  late int _green = (widget.current.color >> 8) & 0xFF;
-  late int _blue = widget.current.color & 0xFF;
-
-  int get _color => 0xFF000000 | (_red << 16) | (_green << 8) | _blue;
-
-  Widget _slider(String key, String label, int value, ValueChanged<int> set) {
-    return Row(
-      children: [
-        SizedBox(width: 24, child: Text(label)),
-        Expanded(
-          child: Slider(
-            key: ValueKey(key),
-            value: value.toDouble(),
-            min: 0,
-            max: 255,
-            divisions: 255,
-            label: '$value',
-            onChanged: (v) => setState(() => set(v.round())),
-          ),
-        ),
-        SizedBox(width: 32, child: Text('$value', textAlign: TextAlign.end)),
-      ],
-    );
-  }
+  late int _color = widget.current.color;
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return AlertDialog(
       title: Text(widget.current.operatorName),
       content: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             key: const ValueKey('operator-color-preview'),
@@ -179,26 +176,41 @@ class _OperatorColorDialogState extends State<_OperatorColorDialog> {
             decoration: BoxDecoration(
               color: Color(_color),
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: scheme.outlineVariant),
             ),
           ),
-          const SizedBox(height: 8),
-          _slider(
-            'slider-red',
-            SettingsStrings.operatorColorRed,
-            _red,
-            (v) => _red = v,
-          ),
-          _slider(
-            'slider-green',
-            SettingsStrings.operatorColorGreen,
-            _green,
-            (v) => _green = v,
-          ),
-          _slider(
-            'slider-blue',
-            SettingsStrings.operatorColorBlue,
-            _blue,
-            (v) => _blue = v,
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final entry in operatorColorPalette)
+                Tooltip(
+                  message: entry.name,
+                  child: InkWell(
+                    key: ValueKey('palette-${entry.color.toRadixString(16)}'),
+                    customBorder: const CircleBorder(),
+                    onTap: () => setState(() => _color = entry.color),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Color(entry.color),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: scheme.outlineVariant),
+                      ),
+                      child: _color == entry.color
+                          ? Icon(
+                              Icons.check,
+                              color: Color(entry.color).computeLuminance() > 0.5
+                                  ? Colors.black
+                                  : Colors.white,
+                            )
+                          : null,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ],
       ),
@@ -215,8 +227,9 @@ class _OperatorColorDialogState extends State<_OperatorColorDialog> {
           child: const Text(SettingsStrings.operatorColorReset),
         ),
         FilledButton(
-          onPressed: () =>
-              Navigator.of(context).pop(OperatorColorChoice(_color)),
+          onPressed: _color == widget.current.color
+              ? null
+              : () => Navigator.of(context).pop(OperatorColorChoice(_color)),
           child: const Text(SettingsStrings.operatorColorSave),
         ),
       ],

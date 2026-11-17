@@ -51,10 +51,9 @@ Color _swatchOf(WidgetTester tester, String operator) => tester
     )
     .backgroundColor!;
 
-/// Sets a slider of the dialog, as a drag would.
-Future<void> _slide(WidgetTester tester, String key, int value) async {
-  final slider = tester.widget<Slider>(find.byKey(ValueKey(key)));
-  slider.onChanged!(value.toDouble());
+/// Taps a color of the palette.
+Future<void> _pick(WidgetTester tester, int color) async {
+  await tester.tap(find.byKey(ValueKey('palette-${color.toRadixString(16)}')));
   await tester.pump();
 }
 
@@ -95,7 +94,7 @@ void main() {
     );
   });
 
-  testWidgets('chooses a color with the sliders, and stores it', (
+  testWidgets('chooses a color from the palette, and stores it', (
     tester,
   ) async {
     final store = FakeOperatorColorIF();
@@ -105,16 +104,31 @@ void main() {
     await tester.pumpAndSettle();
     // The dialog starts with the color in use.
     expect(_preview(tester), const Color(0xFFD32F2F));
-    await _slide(tester, 'slider-red', 1);
-    await _slide(tester, 'slider-green', 2);
-    await _slide(tester, 'slider-blue', 3);
-    expect(_preview(tester), const Color(0xFF010203));
+    // Nothing is chosen yet, so there is nothing to save.
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(
+              FilledButton,
+              SettingsStrings.operatorColorSave,
+            ),
+          )
+          .onPressed,
+      isNull,
+    );
+    await _pick(tester, 0xFF1976D2);
+    expect(_preview(tester), const Color(0xFF1976D2));
+    expect(find.byIcon(Icons.check), findsOneWidget);
+    // A dark color gets a white mark, a light one a black mark.
+    await _pick(tester, 0xFFFBC02D);
+    expect(find.byIcon(Icons.check), findsOneWidget);
+    await _pick(tester, 0xFF1976D2);
     await tester.tap(find.text(SettingsStrings.operatorColorSave));
     await tester.pumpAndSettle();
 
     expect(store.stored.single.operatorName, '阪神高速道路');
-    expect(store.stored.single.color, 0xFF010203);
-    expect(_swatchOf(tester, '阪神高速道路'), const Color(0xFF010203));
+    expect(store.stored.single.color, 0xFF1976D2);
+    expect(_swatchOf(tester, '阪神高速道路'), const Color(0xFF1976D2));
     expect(find.text(SettingsStrings.operatorColorChanged), findsOneWidget);
   });
 
@@ -124,7 +138,7 @@ void main() {
 
     await tester.tap(_tile('NEXCO東日本'));
     await tester.pumpAndSettle();
-    await _slide(tester, 'slider-red', 0);
+    await _pick(tester, 0xFF1976D2);
     await tester.tap(find.text(SettingsStrings.operatorColorCancel));
     await tester.pumpAndSettle();
 
@@ -194,6 +208,7 @@ void main() {
 
     await tester.tap(_tile('NEXCO東日本'));
     await tester.pumpAndSettle();
+    await _pick(tester, 0xFF1976D2);
     await tester.tap(find.text(SettingsStrings.operatorColorSave));
     await tester.pump();
 
