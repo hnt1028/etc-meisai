@@ -5,21 +5,21 @@ import 'package:etc_meisai/application/usecase/aggregation/route_operators.dart'
 import 'package:flutter/material.dart';
 
 /// The color of a line on the road of an operator (docs/route-map.md, "線の
-/// 色"). The user does not choose it. One color for each operator of
-/// [knownOperators], as a Material color: its darker shade on a light theme,
-/// its lighter shade on a dark theme, so that it can be seen on the map.
-const _colors = <String, MaterialColor>{
+/// 色"): the color of the logo of the operator. The user does not choose it.
+/// One color for each operator of [knownOperators], as it is on a light theme;
+/// on a dark theme it is made lighter, so that it can be seen on the map.
+const _colors = <String, Color>{
   // NEXCO: the colors of the logos (ネクスコグリーン / オレンジ / ブルー).
-  'NEXCO東日本': Colors.green,
-  'NEXCO中日本': Colors.orange,
-  'NEXCO西日本': Colors.blue,
-  // The others are not yet the colors of the logos (docs/route-map.md).
-  '首都高速道路': Colors.purple,
-  '阪神高速道路': Colors.red,
-  '名古屋高速道路公社': Colors.teal,
-  '福岡北九州高速道路公社': Colors.brown,
-  '広島高速道路公社': Colors.pink,
-  '本州四国連絡高速道路': Colors.indigo,
+  'NEXCO東日本': Color(0xFF2E9E4F),
+  'NEXCO中日本': Color(0xFFF08300),
+  'NEXCO西日本': Color(0xFF1E7FD8),
+  // Read from the logos, and told by the user (青緑・黄緑・藍・桃).
+  '首都高速道路': Color(0xFF1490A8),
+  '阪神高速道路': Color(0xFF00509A),
+  '名古屋高速道路公社': Color(0xFF00897B),
+  '福岡北九州高速道路公社': Color(0xFF8BC34A),
+  '広島高速道路公社': Color(0xFFE91E63),
+  '本州四国連絡高速道路': Color(0xFF283593),
 };
 
 /// The color of the line of [operator]. The color of the neutral outline for
@@ -29,7 +29,8 @@ Color operatorLineColor(BuildContext context, String operator) {
   final color = _colors[operator];
   if (color == null) return theme.colorScheme.outline.withValues(alpha: 0.8);
   final dark = theme.brightness == Brightness.dark;
-  return (dark ? color.shade300 : color.shade700).withValues(alpha: 0.85);
+  final shown = dark ? Color.lerp(color, Colors.white, 0.4)! : color;
+  return shown.withValues(alpha: 0.85);
 }
 
 /// The parts of a line to draw, each in the color of its operator. A line
