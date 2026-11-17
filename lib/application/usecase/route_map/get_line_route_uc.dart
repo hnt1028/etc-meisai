@@ -100,6 +100,12 @@ class GetLineRouteUC {
       segment: segment,
       places: places,
       unlocatedIcNames: unlocated,
+      meters: lineMeters(
+        entranceIc: entranceName,
+        exitIc: line.exitIc,
+        lookup: lookup,
+        distance: distance,
+      ),
     );
   }
 }

@@ -38,6 +38,7 @@
 | 入口IC | `entranceIc` | 空欄のときは「-」と、「入力」ボタン |
 | 出口IC | `exitIc` | IC名 |
 | 通行した高速道路 | `routeNames` | 「東名高速道路・首都高速道路」のように「・」でつなぐ。無いときは「-」 |
+| 距離（推定） | `LineRouteDTO.meters` | km で、小数1桁（`formatKm`）。入口ICから出口ICまでの道のりの推定（[aggregation.md](../../aggregation.md) の「距離の求め方」）。分からないとき、地図の取得中、取得に失敗したときは「-」 |
 | 割引前料金 | `grossFare` | 「1,200円」。`null`（割引なし）のときは「-」 |
 | ETC割引額 | `etcDiscount` | 「-240円」。`null`（割引なし）のときは「-」 |
 | 通行料金 | `fare` | 「960円」 |
