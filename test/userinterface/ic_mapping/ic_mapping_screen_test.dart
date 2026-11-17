@@ -85,6 +85,9 @@ Future<void> _open(WidgetTester tester, _World world) async {
     find.text(SettingsStrings.icMappingButton),
     100,
   );
+  // Past the navigation bar.
+  await tester.drag(find.byType(ListView).first, const Offset(0, -300));
+  await tester.pumpAndSettle();
   await tester.tap(find.text(SettingsStrings.icMappingButton));
   await tester.pumpAndSettle();
 }
@@ -232,6 +235,9 @@ void main() {
       find.text(SettingsStrings.icMappingButton),
       100,
     );
+    // Past the navigation bar.
+    await tester.drag(find.byType(ListView).first, const Offset(0, -300));
+    await tester.pumpAndSettle();
 
     final gate = Completer<void>();
     world.lines.readGate = gate.future;

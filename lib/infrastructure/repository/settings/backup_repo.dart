@@ -5,6 +5,7 @@ import 'package:etc_meisai/application/interface/backup_if.dart';
 import 'package:etc_meisai/domain/entity/app_data_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
+import 'package:etc_meisai/domain/entity/operator_color_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_record_entity.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/domain/value/vehicle_type_value.dart';
@@ -61,6 +62,14 @@ class BackupRepo implements BackupIF {
             'longitude': p.longitude,
           },
       ],
+      'operatorColors': [
+        for (final c in data.operatorColors)
+          <String, Object?>{
+            'operatorName': c.operatorName,
+            // RRGGBB as a number: the alpha is always opaque.
+            'color': c.color & 0xFFFFFF,
+          },
+      ],
     };
     return Uint8List.fromList(utf8.encode(jsonEncode(json)));
   }
@@ -96,6 +105,12 @@ class BackupRepo implements BackupIF {
         _position(_Row(item, _Messages.position, i + 1)),
     ];
 
+    // A file written before the colors were added has none: no colors.
+    final colors = [
+      for (final (i, item) in _optionalList(root, 'operatorColors').indexed)
+        _color(_Row(item, _Messages.color, i + 1)),
+    ];
+
     _checkUnique(lines.map((l) => l.id), _Messages.line, 'id');
     _checkUnique(
       lines.map((l) => l.duplicateKey),
@@ -104,13 +119,23 @@ class BackupRepo implements BackupIF {
     );
     _checkUnique(mappings.map((m) => m.icName), _Messages.mapping, 'icName');
     _checkUnique(positions.map((p) => p.icName), _Messages.position, 'icName');
+    _checkUnique(
+      colors.map((c) => c.operatorName),
+      _Messages.color,
+      'operatorName',
+    );
 
     return AppDataEntity(
       statementLines: lines,
       icMappings: mappings,
       icPositions: positions,
+      operatorColors: colors,
     );
   }
+
+  /// The list of [key], or none when the file does not have it.
+  List<Object?> _optionalList(Map<String, Object?> root, String key) =>
+      root.containsKey(key) ? _list(root, key) : const [];
 
   List<Object?> _list(Map<String, Object?> root, String key) {
     final value = root[key];
@@ -159,6 +184,15 @@ class BackupRepo implements BackupIF {
       icName: row.text('icName'),
       latitude: latitude,
       longitude: longitude,
+    );
+  }
+
+  OperatorColorEntity _color(_Row row) {
+    final color = row.integer('color');
+    if (color < 0 || color > 0xFFFFFF) throw row.wrong('color');
+    return OperatorColorEntity(
+      operatorName: row.text('operatorName'),
+      color: 0xFF000000 | color,
     );
   }
 
@@ -230,6 +264,7 @@ class _Messages {
   static const line = '明細行';
   static const mapping = 'ICの対応づけ';
   static const position = 'ICの位置の指定';
+  static const color = '線の色';
 
   static const notBackup = 'このアプリのバックアップのファイルではありません';
   static const tooNew = '新しい版のアプリで書き出したファイルです。このアプリでは読み込めません';

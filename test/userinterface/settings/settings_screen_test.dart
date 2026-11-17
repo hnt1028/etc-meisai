@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:etc_meisai/application/usecase/route_map/list_operator_colors_uc.dart';
+import 'package:etc_meisai/userinterface/route_map/operator_color_providers.dart';
 import 'package:etc_meisai/application/usecase/settings/delete_all_statement_lines_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/import_statement_uc.dart';
 import 'package:etc_meisai/userinterface/app.dart';
@@ -28,6 +30,9 @@ Widget _app({
         DeleteAllStatementLinesUC(statementLines: lines),
       ),
       listStatementLinesUCProvider.overrideWithValue(fakeListUC(lines)),
+      listOperatorColorsUCProvider.overrideWithValue(
+        ListOperatorColorsUC(operatorColors: FakeOperatorColorIF()),
+      ),
       csvPickerProvider.overrideWithValue(
         picker ?? () async => Uint8List.fromList([1]),
       ),
@@ -42,6 +47,10 @@ Finder _text(String text) => find.text(text);
 
 /// Starts the app and opens the settings screen from the navigation bar.
 Future<void> _pump(WidgetTester tester, Widget app) async {
+  // The settings are a long list: a tall screen shows all of it.
+  tester.view.physicalSize = const Size(800, 3600);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
   await tester.pumpWidget(app);
   await tester.pumpAndSettle();
   await tester.tap(find.text(AppStrings.settingsTab));

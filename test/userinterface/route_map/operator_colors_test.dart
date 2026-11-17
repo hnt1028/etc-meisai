@@ -1,3 +1,4 @@
+import 'package:etc_meisai/application/dto/operator_color_dto.dart';
 import 'package:etc_meisai/application/dto/route_run_dto.dart';
 import 'package:etc_meisai/application/dto/route_segment_dto.dart';
 import 'package:etc_meisai/application/dto/route_vertex_dto.dart';
@@ -31,15 +32,16 @@ StatementLineDTO _line() => StatementLineDTO(
 Future<Color> _color(
   WidgetTester tester,
   String operator,
-  Brightness brightness,
-) async {
+  Brightness brightness, {
+  List<OperatorColorDTO>? colors,
+}) async {
   late Color color;
   await tester.pumpWidget(
     MaterialApp(
       theme: ThemeData(brightness: brightness),
       home: Builder(
         builder: (context) {
-          color = operatorLineColor(context, operator);
+          color = operatorLineColor(context, operator, colors);
           return const SizedBox();
         },
       ),
@@ -72,6 +74,61 @@ void main() {
         HSLColor.fromColor(dark).lightness,
         greaterThan(HSLColor.fromColor(light).lightness),
       );
+    });
+
+    testWidgets('uses the color the user chose, as it is, on a dark theme', (
+      tester,
+    ) async {
+      // Non-const, so that the constructor counts as run.
+      // ignore: prefer_const_constructors
+      final chosen = OperatorColorDTO(
+        operatorName: 'NEXCO東日本',
+        color: 0xFF102030,
+        isDefault: false,
+      );
+
+      final light = await _color(
+        tester,
+        'NEXCO東日本',
+        Brightness.light,
+        colors: [chosen],
+      );
+      final dark = await _color(
+        tester,
+        'NEXCO東日本',
+        Brightness.dark,
+        colors: [chosen],
+      );
+
+      expect(light, const Color(0xFF102030).withValues(alpha: 0.85));
+      expect(dark, light);
+    });
+
+    testWidgets('uses the default while the colors are read', (tester) async {
+      final reading = await _color(tester, '阪神高速道路', Brightness.light);
+      final explicit = await _color(
+        tester,
+        '阪神高速道路',
+        Brightness.light,
+        colors: defaultOperatorColorDtos,
+      );
+
+      expect(reading, explicit);
+      expect(reading, const Color(0xFFD32F2F).withValues(alpha: 0.85));
+    });
+
+    testWidgets('is the neutral outline for an operator not in the list', (
+      tester,
+    ) async {
+      final color = await _color(
+        tester,
+        '阪神高速道路',
+        Brightness.light,
+        colors: const [],
+      );
+
+      expect(color.a, lessThan(1));
+      expect(color, isNot(const Color(0xFFD32F2F).withValues(alpha: 0.85)));
     });
 
     testWidgets('is the neutral outline for an unknown operator', (
@@ -140,11 +197,13 @@ void main() {
               context,
               const RouteRunDTO(operator: unknownOperator, points: []),
               scheme,
+              null,
             );
             known = runColor(
               context,
               const RouteRunDTO(operator: 'NEXCO中日本', points: []),
               scheme,
+              null,
             );
             expect(unknown, scheme.primary.withValues(alpha: 0.7));
             return const SizedBox();

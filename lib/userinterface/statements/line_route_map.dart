@@ -1,6 +1,7 @@
 import 'package:etc_meisai/application/dto/line_route_dto.dart';
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
+import 'package:etc_meisai/userinterface/route_map/operator_color_providers.dart';
 import 'package:etc_meisai/userinterface/route_map/operator_colors.dart';
 import 'package:etc_meisai/userinterface/common/message_text.dart';
 import 'package:etc_meisai/userinterface/route_map/route_map_providers.dart';
@@ -67,6 +68,7 @@ class _Map extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final operatorColors = ref.watch(operatorColorsProvider).value;
     final scheme = Theme.of(context).colorScheme;
     final segment = route.segment;
     final points = [
@@ -101,7 +103,7 @@ class _Map extends ConsumerWidget {
                     for (final v in run.points) LatLng(v.latitude, v.longitude),
                   ],
                   strokeWidth: 4,
-                  color: runColor(context, run, scheme),
+                  color: runColor(context, run, scheme, operatorColors),
                   pattern: pending
                       ? StrokePattern.dashed(segments: const [10, 8])
                       : const StrokePattern.solid(),

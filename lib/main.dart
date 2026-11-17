@@ -1,6 +1,10 @@
 // coverage:ignore-file
 // The only place that wires the layers together. It opens the real database,
 // so it is checked by the integration test, not by unit tests.
+import 'package:etc_meisai/application/usecase/route_map/list_operator_colors_uc.dart';
+import 'package:etc_meisai/application/usecase/route_map/reset_operator_colors_uc.dart';
+import 'package:etc_meisai/application/usecase/route_map/save_operator_color_uc.dart';
+import 'package:etc_meisai/userinterface/route_map/operator_color_providers.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/delete_ic_mapping_uc.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/list_ic_matches_uc.dart';
@@ -26,6 +30,7 @@ import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_mapping_repo.
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_master_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/vehicle_type_master_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_position/ic_position_repo.dart';
+import 'package:etc_meisai/infrastructure/repository/operator_color/operator_color_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/app_data_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/backup_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/statement_repo.dart';
@@ -52,6 +57,7 @@ void main() {
   );
   final icMappings = IcMappingRepo(database);
   final icPositions = IcPositionRepo(database);
+  final operatorColors = OperatorColorRepo(database);
   final appData = AppDataRepo(database);
   final backup = const BackupRepo();
 
@@ -84,6 +90,15 @@ void main() {
             icPositions: icPositions,
             vehicleTypes: vehicleTypes,
           ),
+        ),
+        listOperatorColorsUCProvider.overrideWithValue(
+          ListOperatorColorsUC(operatorColors: operatorColors),
+        ),
+        saveOperatorColorUCProvider.overrideWithValue(
+          SaveOperatorColorUC(operatorColors: operatorColors),
+        ),
+        resetOperatorColorsUCProvider.overrideWithValue(
+          ResetOperatorColorsUC(operatorColors: operatorColors),
         ),
         saveIcPositionUCProvider.overrideWithValue(
           SaveIcPositionUC(icPositions: icPositions),

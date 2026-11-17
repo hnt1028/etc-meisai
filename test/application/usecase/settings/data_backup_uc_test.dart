@@ -6,6 +6,7 @@ import 'package:etc_meisai/application/usecase/settings/import_data_uc.dart';
 import 'package:etc_meisai/domain/entity/app_data_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
+import 'package:etc_meisai/domain/entity/operator_color_entity.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/fakes.dart';
@@ -23,6 +24,9 @@ AppDataEntity _data({int lines = 2, int mappings = 1, int positions = 3}) =>
       icPositions: [
         for (var i = 0; i < positions; i++)
           IcPositionEntity(icName: 'pos-$i', latitude: 35, longitude: 139),
+      ],
+      operatorColors: const [
+        OperatorColorEntity(operatorName: 'NEXCO東日本', color: 0xFF112233),
       ],
     );
 

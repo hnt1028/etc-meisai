@@ -2,12 +2,14 @@ import 'package:drift/native.dart';
 import 'package:etc_meisai/domain/entity/app_data_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
+import 'package:etc_meisai/domain/entity/operator_color_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/domain/value/vehicle_type_value.dart';
 import 'package:etc_meisai/infrastructure/repository/database/app_database.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_mapping_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_position/ic_position_repo.dart';
+import 'package:etc_meisai/infrastructure/repository/operator_color/operator_color_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/app_data_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/statements/statement_line_repo.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -64,6 +66,9 @@ void main() {
     await IcPositionRepo(db).save(
       const IcPositionEntity(icName: '東', latitude: 35.5, longitude: 139.5),
     );
+    await OperatorColorRepo(db).save(
+      const OperatorColorEntity(operatorName: '首都高速道路', color: 0xFF123456),
+    );
   }
 
   group('readAll', () {
@@ -73,6 +78,7 @@ void main() {
       expect(data.statementLines, isEmpty);
       expect(data.icMappings, isEmpty);
       expect(data.icPositions, isEmpty);
+      expect(data.operatorColors, isEmpty);
     });
 
     test(
@@ -99,6 +105,8 @@ void main() {
         expect(blank.vehicleNumber, 4321);
         expect(data.icMappings.single.pointId, 'p-1');
         expect(data.icPositions.single.latitude, 35.5);
+        expect(data.operatorColors.single.operatorName, '首都高速道路');
+        expect(data.operatorColors.single.color, 0xFF123456);
       },
     );
 
@@ -153,6 +161,7 @@ void main() {
       }
       expect(after.icMappings.single.icName, '北');
       expect(after.icPositions.single.icName, '東');
+      expect(after.operatorColors.single.operatorName, '首都高速道路');
     });
 
     test(
@@ -182,6 +191,9 @@ void main() {
           statementLines: [fakeRecord(id: 'new', duplicateKey: 'new-key')],
           icMappings: const [IcMappingEntity(icName: '南', pointId: 'p-9')],
           icPositions: const [],
+          operatorColors: const [
+            OperatorColorEntity(operatorName: 'NEXCO東日本', color: 0xFF0A0B0C),
+          ],
         ),
       );
 
@@ -189,6 +201,9 @@ void main() {
       expect(data.statementLines.single.id, 'new');
       expect(data.icMappings.single.icName, '南');
       expect(data.icPositions, isEmpty);
+      // The color that was stored is gone, and the new one is stored.
+      expect(data.operatorColors.single.operatorName, 'NEXCO東日本');
+      expect(data.operatorColors.single.color, 0xFF0A0B0C);
     });
 
     test('can replace everything with nothing', () async {
@@ -200,6 +215,7 @@ void main() {
       expect(data.statementLines, isEmpty);
       expect(data.icMappings, isEmpty);
       expect(data.icPositions, isEmpty);
+      expect(data.operatorColors, isEmpty);
     });
 
     test('keeps what was stored when it fails half way', () async {
@@ -216,6 +232,7 @@ void main() {
             ],
             icMappings: const [IcMappingEntity(icName: '南', pointId: 'x')],
             icPositions: const [],
+            operatorColors: const [],
           ),
         ),
         throwsA(anything),
@@ -241,6 +258,7 @@ void main() {
       expect(data.statementLines, isEmpty);
       expect(data.icMappings, isEmpty);
       expect(data.icPositions, isEmpty);
+      expect(data.operatorColors, isEmpty);
     });
 
     test('does nothing to an empty database', () async {

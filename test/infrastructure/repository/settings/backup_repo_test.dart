@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:etc_meisai/domain/entity/app_data_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
+import 'package:etc_meisai/domain/entity/operator_color_entity.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/domain/value/vehicle_type_value.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/backup_repo.dart';
@@ -35,6 +36,10 @@ AppDataEntity _data() => AppDataEntity(
   icPositions: const [
     IcPositionEntity(icName: '東', latitude: 35.123456, longitude: 139.654321),
   ],
+  operatorColors: const [
+    OperatorColorEntity(operatorName: 'NEXCO東日本', color: 0xFF112233),
+    OperatorColorEntity(operatorName: '首都高速道路', color: 0xFFFFFFFF),
+  ],
 );
 
 /// A valid file as a map, for a test to break in one place.
@@ -42,6 +47,7 @@ Map<String, Object?> _file({
   List<Object?>? lines,
   List<Object?>? mappings,
   List<Object?>? positions,
+  Object? colors,
 }) => {
   'format': 'etc-meisai-backup',
   'version': 1,
@@ -49,6 +55,7 @@ Map<String, Object?> _file({
   'statementLines': lines ?? [],
   'icMappings': mappings ?? [],
   'icPositions': positions ?? [],
+  'operatorColors': ?colors,
 };
 
 Map<String, Object?> _line([Map<String, Object?>? changes]) => {
@@ -123,6 +130,10 @@ void main() {
       expect(back.icMappings.single.pointId, 'p-1');
       expect(back.icPositions.single.latitude, 35.123456);
       expect(back.icPositions.single.longitude, 139.654321);
+      expect(back.operatorColors.map((c) => (c.operatorName, c.color)), [
+        ('NEXCO東日本', 0xFF112233),
+        ('首都高速道路', 0xFFFFFFFF),
+      ]);
     });
 
     test('keeps amounts, with the sign of a discount', () {
@@ -130,6 +141,7 @@ void main() {
         statementLines: [fakeRecord()],
         icMappings: const [],
         icPositions: const [],
+        operatorColors: const [],
       );
 
       final line = repo
@@ -158,6 +170,7 @@ void main() {
             statementLines: [],
             icMappings: [],
             icPositions: [],
+            operatorColors: [],
           ),
           DateTime.now(),
         ),
@@ -295,6 +308,54 @@ void main() {
         ).message,
         contains('discountTypes'),
       );
+    });
+
+    test('reads a file without colors as having none', () {
+      // A file written before the colors were added has no such list.
+      expect(repo.decode(_bytes(_file())).operatorColors, isEmpty);
+    });
+
+    test('reads the colors as opaque, and rejects a wrong one', () {
+      final ok = repo.decode(
+        _bytes(
+          _file(
+            colors: [
+              {'operatorName': 'NEXCO東日本', 'color': 0},
+              {'operatorName': '首都高速道路', 'color': 0xFFFFFF},
+            ],
+          ),
+        ),
+      );
+      expect(ok.operatorColors.map((c) => c.color), [0xFF000000, 0xFFFFFFFF]);
+
+      for (final bad in [
+        {'operatorName': 'a', 'color': -1},
+        {'operatorName': 'a', 'color': 0x1000000},
+        {'operatorName': 'a', 'color': '112233'},
+        {'operatorName': 'a', 'color': null},
+        {'operatorName': 5, 'color': 1},
+      ]) {
+        final error = _decodeError(_file(colors: [bad]));
+        expect(error.message, contains('線の色'));
+        expect(error.message, isNot(contains('112233')));
+      }
+      expect(
+        _decodeError(_file(colors: 'x')).message,
+        contains('operatorColors'),
+      );
+    });
+
+    test('rejects the same operator twice', () {
+      final error = _decodeError(
+        _file(
+          colors: [
+            {'operatorName': 'a', 'color': 1},
+            {'operatorName': 'a', 'color': 2},
+          ],
+        ),
+      );
+
+      expect(error.message, contains('operatorName'));
     });
 
     test('rejects an item that is not an object', () {

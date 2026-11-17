@@ -13,12 +13,26 @@ abstract final class SettingsStrings {
   static String importFailed(String message) => '取り込めませんでした: $message';
   static const importUnexpected = '取り込み中にエラーが発生しました';
 
+  static const operatorColorSection = '地図の線の色';
+  static const operatorColorNote = '道路の事業者ごとに、地図の線の色を変えられます。';
+  static const operatorColorDefault = '初期値';
+  static const operatorColorChanged = '変更済み';
+  static const operatorColorRed = '赤';
+  static const operatorColorGreen = '緑';
+  static const operatorColorBlue = '青';
+  static const operatorColorCancel = 'キャンセル';
+  static const operatorColorReset = '初期値に戻す';
+  static const operatorColorSave = '保存';
+  static const operatorColorResetAll = 'すべての色を初期値に戻す';
+  static const operatorColorLoadFailed = '線の色を読み込めませんでした';
+  static const operatorColorSaveFailed = '保存できませんでした';
+
   static const backupSection = 'データのバックアップ';
   static const exportButton = 'データを書き出す';
   static const exportNote = '書き出したファイルには、車両番号とETCカード番号が含まれます。保管に注意してください。';
   static const restoreButton = 'データを読み込む（すべて置き換え）';
   static const restoreConfirmMessage =
-      '読み込むファイルの内容で、いまのすべてのデータ（明細行・ICの対応づけ・位置の指定）を置き換えます。'
+      '読み込むファイルの内容で、いまのすべてのデータ（明細行・ICの対応づけ・位置の指定・線の色）を置き換えます。'
       'いまのデータはすべて消え、元に戻せません。';
   static const restoreConfirmOk = '置き換える';
 
@@ -47,7 +61,7 @@ abstract final class SettingsStrings {
 
   static const deleteAllButton = 'すべてのデータを削除する';
   static const deleteAllConfirmMessage =
-      'すべてのデータ（明細行・ICの対応づけ・位置の指定）を削除します。元に戻せません。';
+      'すべてのデータ（明細行・ICの対応づけ・位置の指定・線の色）を削除します。元に戻せません。';
   static const deletedAll = 'すべてのデータを削除しました';
   static const deleteAllFailed = '削除できませんでした。データは変わっていません';
 

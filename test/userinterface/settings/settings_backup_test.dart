@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:etc_meisai/application/usecase/route_map/list_operator_colors_uc.dart';
+import 'package:etc_meisai/userinterface/route_map/operator_color_providers.dart';
 import 'package:etc_meisai/application/usecase/settings/delete_all_data_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/delete_all_statement_lines_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/export_data_uc.dart';
@@ -45,6 +47,7 @@ class _World {
     ],
     icMappings: const [IcMappingEntity(icName: '北', pointId: 'p')],
     icPositions: const [],
+    operatorColors: const [],
   );
 
   Widget app() {
@@ -79,6 +82,9 @@ class _World {
           pickCount++;
           return picked;
         }),
+        listOperatorColorsUCProvider.overrideWithValue(
+          ListOperatorColorsUC(operatorColors: FakeOperatorColorIF()),
+        ),
         backupSaverProvider.overrideWithValue((name, bytes) async {
           if (saveError != null) throw saveError!;
           if (saves) saved.add((name, bytes));
@@ -96,7 +102,7 @@ Finder _text(String text) => find.text(text);
 /// The settings are a long list, so the window is made tall enough to build
 /// every button.
 Future<void> _open(WidgetTester tester, _World world) async {
-  tester.view.physicalSize = const Size(800, 2400);
+  tester.view.physicalSize = const Size(800, 3600);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(world.app());
@@ -204,6 +210,7 @@ void main() {
             statementLines: [fakeRecord(id: 'new', duplicateKey: 'kn')],
             icMappings: const [],
             icPositions: const [],
+            operatorColors: const [],
           ),
         ),
       );

@@ -1,6 +1,7 @@
 import 'package:etc_meisai/userinterface/common/confirm_dialog.dart';
 import 'package:etc_meisai/userinterface/common/message_text.dart';
 import 'package:etc_meisai/userinterface/common/section_title.dart';
+import 'package:etc_meisai/userinterface/settings/operator_color_section.dart';
 import 'package:etc_meisai/userinterface/settings/settings_controller.dart';
 import 'package:etc_meisai/userinterface/settings/settings_strings.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +39,8 @@ class SettingsScreen extends ConsumerWidget {
             ),
           if (_shows(state, SettingsSection.importCsv) && state.error != null)
             MessageText(state.error!, isError: true),
+          const Divider(height: 32),
+          const OperatorColorSection(),
           const Divider(height: 32),
           const SectionTitle(SettingsStrings.backupSection),
           OutlinedButton(

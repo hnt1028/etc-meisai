@@ -1,7 +1,8 @@
 import 'package:etc_meisai/domain/entity/app_data_entity.dart';
 
 /// Reads, replaces and deletes everything the app stores on the device (the
-/// statement lines, the IC mappings and the IC positions) as a whole.
+/// statement lines, the IC mappings, the IC positions and the operator colors)
+/// as a whole.
 abstract interface class AppDataIF {
   /// Returns everything that is stored.
   Future<AppDataEntity> readAll();
