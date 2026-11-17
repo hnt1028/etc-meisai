@@ -41,8 +41,16 @@ abstract final class StatementDetailStrings {
   static const entranceAtPickDateEstimated = '入口の日付（出口日時から計算した目安）';
   static const entranceAtPickTimeEstimated = '入口の時刻（出口日時から計算した目安）';
   static const entranceAtDialogTitle = '入口日時を保存';
-  static const entranceIcDialogTitle = '入口ICを入力';
-  static const entranceIcInputLabel = '入口IC';
+  static const entranceIcDialogTitle = '入口ICを選ぶ';
+  static const entranceIcInputLabel = '入口IC（自由入力）';
+  static const entranceIcFilterLabel = 'IC名で絞り込む';
+  static const entranceIcUsedHeader = 'これまでに使った入口IC';
+  static const entranceIcSameRouteHeader = '同じ路線のIC';
+  static const entranceIcFreeInput = '一覧にない場合は、自由に入力する';
+  static const entranceIcNoMatch = '当てはまるICがありません';
+
+  /// The number of times an IC was the entrance with the same exit.
+  static String entranceIcUses(int uses) => '同じ出口で $uses回';
   static const entranceAfterExit = '入口日時は、出口日時より前にしてください';
   static const cancel = 'キャンセル';
   static const save = '保存';

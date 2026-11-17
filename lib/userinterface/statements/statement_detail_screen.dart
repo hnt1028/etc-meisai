@@ -1,3 +1,4 @@
+import 'package:etc_meisai/application/dto/entrance_candidates_dto.dart';
 import 'package:etc_meisai/application/dto/line_route_dto.dart';
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
@@ -86,7 +87,18 @@ class _StatementDetailScreenState extends ConsumerState<StatementDetailScreen> {
     final line = _line;
     final id = line?.id;
     if (line == null || id == null) return;
-    final entranceIc = await showEntranceIcDialog(context);
+    // When the choices cannot be read, the user can still type the name.
+    var candidates = const EntranceCandidatesDTO(used: [], sameRoute: []);
+    try {
+      candidates = await ref
+          .read(listEntranceCandidatesUCProvider)
+          .execute(line);
+    } catch (_) {}
+    if (!mounted) return;
+    final entranceIc = await showEntranceIcDialog(
+      context,
+      candidates: candidates,
+    );
     if (entranceIc == null || !mounted) return;
     await _saveEntrance(
       () => ref

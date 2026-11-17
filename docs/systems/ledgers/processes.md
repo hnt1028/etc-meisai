@@ -21,3 +21,4 @@
 | PRC-017 | データの書き出し（ExportDataUC） | [PRC-017-export-data.md](../processes/PRC-017-export-data.md) | 草案 |
 | PRC-018 | データの読み込み（ImportDataUC） | [PRC-018-import-data.md](../processes/PRC-018-import-data.md) | 草案 |
 | PRC-019 | すべてのデータの削除（DeleteAllDataUC） | [PRC-019-delete-all-data.md](../processes/PRC-019-delete-all-data.md) | 草案 |
+| PRC-020 | 入口ICの候補の取得（ListEntranceCandidatesUC） | [PRC-020-list-entrance-candidates.md](../processes/PRC-020-list-entrance-candidates.md) | 草案 |
