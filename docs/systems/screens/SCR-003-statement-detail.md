@@ -13,7 +13,7 @@
 | 金額・日時の表示形式 | `lib/userinterface/common/format.dart` | `formatYen`、`formatDateTime` |
 | ルートの地図 | `lib/userinterface/statements/line_route_map.dart` | `LineRouteMap` |
 | 車両番号の入力 | `lib/userinterface/statements/vehicle_number_dialog.dart` | `showVehicleNumberDialog` |
-| 入口日時・入口ICの入力 | `lib/userinterface/statements/entrance_dialogs.dart` | `showEntranceAtDialog`（初めの値を引数に取る）、`showEntranceIcDialog` |
+| 入口日時・入口ICの入力 | `lib/userinterface/statements/entrance_dialogs.dart` | `showEntranceAtDialog`（初めの値を引数に取る）、`showEntranceIcDialog`（候補を引数に取る） |
 | 使う処理の受け口 | `lib/userinterface/statements/statement_detail_providers.dart` | `getLineRouteUCProvider`、`lineRouteProvider` |
 
 ## 呼び出し箇所
@@ -46,7 +46,7 @@
 | 車種 | `vehicleTypeName` | 名前（普通車、大型Ⅰなど。事業者の車種区分による。[vehicle-types.md](../../vehicle-types.md)） |
 | 車両番号 | `vehicleNumber` | 数字（個人情報）。`null`（CSVで空欄）のときは「-」と、「入力」ボタン |
 | 入口日時の入力 | 入力 | 日付の選択、時分の選択 | 「入力」で、日付の選択、続けて時分の選択を開く。初めの値は、入口日時の目安（[PRC-016](../processes/PRC-016-estimate-entrance-at.md)）。目安が無いときは、出口日時。目安を使うときは、選択の見出しに「（出口日時から計算した目安）」と出す。続けて、確認のダイアログ（下の「確認」）。出口日時より後のときは、ER-4 |
-| 入口ICの入力 | 入力 | ダイアログ | 「入力」で開く。IC名の入力欄、「保存すると、あとから変更できません」の注意、「キャンセル」「保存」。空のときは、「保存」を押せない |
+| 入口ICの入力 | 入力 | ダイアログ | 「入力」で開く。一覧から選ぶのが基本。上に、IC名で絞る欄。一覧は、「これまでに使った入口IC」（回数つき）、「同じ路線のIC」（路線名つき）、最後に「一覧にない場合は、自由に入力する」。選ぶと、「保存」を押せる。「自由に入力する」を選ぶと、IC名の入力欄が出る（空のときは「保存」を押せない）。「保存すると、あとから変更できません」の注意、「キャンセル」「保存」。一覧は、[PRC-020](../processes/PRC-020-list-entrance-candidates.md) で取得する。取得に失敗したときは、一覧なしで、自由入力だけを出す |
 | 車両番号の入力 | 入力 | ダイアログ | 「入力」で開く。数字の入力欄（1〜4桁）、「保存すると、あとから変更できません」の注意、「キャンセル」「保存」。入力が1〜4桁の数字でないときは、「保存」を押せない |
 | ETCカード番号 | `cardNumberSuffix` | 「**** 0001」（下4桁のみ） |
 | 状態 | `status` | 「確定」または「確認中」 |
@@ -61,7 +61,7 @@
 | OP-1 | 戻る | 戻るボタン（画面上部、または端末の戻る操作） | 元の表示（一覧またはタイムライン）に戻る。絞り込みなどの状態は保たれる | [SCR-002](SCR-002-statement-list.md) |
 | OP-3 | 車両番号を入力する | 「入力」のタップ（車両番号が空欄のときだけ） | 入力のダイアログを開く。「保存」で、車両番号を保存して、この画面の車両番号を更新する。一覧・ルートマップ・集計も、読み込み直させる（`dataRevisionProvider`）。「入力」は、保存したあとは出ない（再編集はできない） | なし |
 | OP-4 | 入口日時を入力する | 入口日時の「入力」のタップ（入口日時が空欄のときだけ） | 入口日時の目安を求め（失敗したときは、目安なし）、日付と時分を選び、確認して、入口日時を保存し、この画面を更新する。保存したあと、ルートの地図、路線名、一覧・タイムライン・ルートマップ・集計も、読み込み直させる。「入力」は、保存したあとは出ない | なし |
-| OP-5 | 入口ICを入力する | 入口ICの「入力」のタップ（入口ICが空欄のときだけ） | IC名を入力して保存し、OP-4 と同じように更新する | なし |
+| OP-5 | 入口ICを入力する | 入口ICの「入力」のタップ（入口ICが空欄のときだけ） | 候補を取得し（PRC-020）、一覧から入口ICを選ぶか、自由に入力して、保存する。OP-4 と同じように更新する | なし |
 | OP-2 | ルートの地図を表示する | 画面を開く | 渡された明細行のルート（区間、マーカー、位置が分からないIC）を取得し、地図に描く。取得中は、地図の場所に読み込み中の表示を出す。ほかの項目は、取得を待たずに表示する | なし |
 
 ### エラー一覧

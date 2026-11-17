@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/application/usecase/route_map/get_line_route_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/estimate_entrance_at_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/list_entrance_candidates_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_entrance_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_vehicle_number_uc.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_providers.dart';
@@ -90,10 +91,13 @@ Future<void> _show(
   FakeStatementLineIF? lines,
   FakeStatementLineIF? listLines,
   bool settle = true,
+  Object? candidatesError,
 }) async {
   tester.view.physicalSize = const Size(800, 1600);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
+  final candidateLines = lines ?? FakeStatementLineIF();
+  if (candidatesError != null) candidateLines.readError = candidatesError;
   final uc = GetLineRouteUC(
     icMaster: master ?? _master(),
     icMappings: FakeIcMappingIF(),
@@ -123,6 +127,14 @@ Future<void> _show(
         saveVehicleNumberUCProvider.overrideWithValue(
           SaveVehicleNumberUC(statementLines: lines ?? FakeStatementLineIF()),
         ),
+        listEntranceCandidatesUCProvider.overrideWithValue(
+          ListEntranceCandidatesUC(
+            statementLines: candidateLines,
+            icMaster: master ?? _master(),
+            icMappings: FakeIcMappingIF(),
+            icPositions: positions ?? FakeIcPositionIF(),
+          ),
+        ),
         tileLayerProvider.overrideWithValue(const SizedBox.shrink()),
       ],
       child: MaterialApp(home: StatementDetailScreen(line: line)),
@@ -136,6 +148,19 @@ Future<void> _show(
 }
 
 void main() {
+  test(
+    'the entrance candidates are read only when the app gives the use case',
+    () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      expect(
+        () => container.read(listEntranceCandidatesUCProvider),
+        throwsA(anything),
+      );
+    },
+  );
+
   testWidgets('shows every field', (tester) async {
     await _show(tester, _line());
 
@@ -825,6 +850,175 @@ void main() {
       expect(find.text('テスト北'), findsWidgets);
       expect(enterIc, findsNothing);
       expect(enterAt, findsOneWidget);
+    });
+
+    /// A blank line whose exit is テスト東: the points of the master on the same
+    /// route (テスト北, 近く), and an entrance used by another line.
+    Future<FakeStatementLineIF> showWithChoices(WidgetTester tester) async {
+      final lines = FakeStatementLineIF()
+        ..stored.addAll([
+          fakeStatementLine(id: 'blank', withoutEntrance: true, exitIc: 'テスト東'),
+          fakeStatementLine(id: 'past', entranceIc: '過去ＩＣ', exitIc: 'テスト東'),
+        ]);
+      await _show(
+        tester,
+        _line(
+          id: 'blank',
+          entranceIc: null,
+          blankEntranceAt: true,
+          exitIc: 'テスト東',
+        ),
+        lines: lines,
+        master: FakeIcMasterIF([
+          fakeIcPoint(name: 'テスト北', latitude: 35.1, longitude: 139.1),
+          fakeIcPoint(name: 'テスト東', latitude: 35.2, longitude: 139.2),
+          fakeIcPoint(name: 'テスト南', latitude: 35.0, longitude: 139.0),
+        ]),
+      );
+      await tester.tap(enterIc);
+      await tester.pumpAndSettle();
+      return lines;
+    }
+
+    FilledButton entranceSave(WidgetTester tester) =>
+        tester.widget<FilledButton>(
+          find.widgetWithText(FilledButton, StatementDetailStrings.save),
+        );
+
+    testWidgets('lists what was used, and the ICs of the same route', (
+      tester,
+    ) async {
+      await showWithChoices(tester);
+      debugPrint(
+        tester.widgetList<Text>(find.byType(Text)).map((t) => t.data).join('|'),
+      );
+
+      expect(find.text(StatementDetailStrings.entranceIcUsedHeader), findsOne);
+      expect(find.text('過去ＩＣ'), findsOneWidget);
+      expect(
+        find.textContaining(StatementDetailStrings.entranceIcUses(1)),
+        findsOneWidget,
+      );
+      expect(
+        find.text(StatementDetailStrings.entranceIcSameRouteHeader),
+        findsOneWidget,
+      );
+      // The nearest to the exit first: テスト北, then テスト南.
+      final north = tester.getTopLeft(find.text('テスト北')).dy;
+      final south = tester.getTopLeft(find.text('テスト南')).dy;
+      expect(north, lessThan(south));
+      // The typing is one of the choices, and is not open yet.
+      expect(find.text(StatementDetailStrings.entranceIcFreeInput), findsOne);
+      expect(find.byKey(const ValueKey('entrance-ic-typed')), findsNothing);
+      expect(entranceSave(tester).onPressed, isNull);
+    });
+
+    testWidgets('saves the IC chosen from the list, with its own name', (
+      tester,
+    ) async {
+      final lines = await showWithChoices(tester);
+
+      await tester.tap(find.byKey(const ValueKey('route-テスト北')));
+      await tester.pumpAndSettle();
+      expect(entranceSave(tester).onPressed, isNotNull);
+      await tester.tap(find.text(StatementDetailStrings.save));
+      await tester.pumpAndSettle();
+
+      expect(
+        lines.stored.firstWhere((l) => l.id == 'blank').entranceIc,
+        'テスト北',
+      );
+    });
+
+    testWidgets('saves an IC that was used, as it was written', (tester) async {
+      final lines = await showWithChoices(tester);
+
+      await tester.tap(find.byKey(const ValueKey('used-過去ＩＣ')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(StatementDetailStrings.save));
+      await tester.pumpAndSettle();
+
+      expect(
+        lines.stored.firstWhere((l) => l.id == 'blank').entranceIc,
+        '過去ＩＣ',
+      );
+    });
+
+    testWidgets('filters the list by the name', (tester) async {
+      await showWithChoices(tester);
+
+      await tester.enterText(
+        find.byKey(const ValueKey('entrance-ic-filter')),
+        '南',
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('テスト南'), findsOneWidget);
+      expect(find.text('テスト北'), findsNothing);
+      expect(find.text('過去ＩＣ'), findsNothing);
+
+      await tester.enterText(
+        find.byKey(const ValueKey('entrance-ic-filter')),
+        '存在しない',
+      );
+      await tester.pumpAndSettle();
+      expect(find.text(StatementDetailStrings.entranceIcNoMatch), findsOne);
+      // The typing is still there.
+      expect(find.text(StatementDetailStrings.entranceIcFreeInput), findsOne);
+    });
+
+    testWidgets('types a name when the IC is not in the list', (tester) async {
+      final lines = await showWithChoices(tester);
+
+      await tester.tap(find.byKey(const ValueKey('route-テスト北')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('entrance-ic-free')));
+      await tester.pumpAndSettle();
+      // The typing replaces the chosen IC: nothing is saved until it is typed.
+      expect(find.byKey(const ValueKey('entrance-ic-typed')), findsOneWidget);
+      expect(entranceSave(tester).onPressed, isNull);
+
+      await tester.enterText(
+        find.byKey(const ValueKey('entrance-ic-typed')),
+        ' 自由なIC ',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(StatementDetailStrings.save));
+      await tester.pumpAndSettle();
+
+      expect(
+        lines.stored.firstWhere((l) => l.id == 'blank').entranceIc,
+        '自由なIC',
+      );
+    });
+
+    testWidgets('goes back from the typing to a chosen IC', (tester) async {
+      await showWithChoices(tester);
+
+      await tester.tap(find.byKey(const ValueKey('entrance-ic-free')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('used-過去ＩＣ')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('entrance-ic-typed')), findsNothing);
+      expect(entranceSave(tester).onPressed, isNotNull);
+    });
+
+    testWidgets('offers the typing when the choices cannot be read', (
+      tester,
+    ) async {
+      final lines = FakeStatementLineIF()
+        ..stored.add(fakeStatementLine(id: 'blank', withoutEntrance: true));
+      await _show(
+        tester,
+        _line(id: 'blank', entranceIc: null, blankEntranceAt: true),
+        lines: lines,
+        candidatesError: StateError('x'),
+      );
+      await tester.tap(enterIc);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('entrance-ic-typed')), findsOneWidget);
+      expect(find.byKey(const ValueKey('entrance-ic-filter')), findsNothing);
     });
 
     testWidgets('cannot save a blank entrance IC', (tester) async {
