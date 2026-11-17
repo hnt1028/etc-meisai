@@ -36,6 +36,12 @@ class StatementRepo implements StatementIF {
   static const _statusConfirmed = '確定';
   static const _statusPending = '確認中';
 
+  /// Notes of the "備考" column that are not a kind of discount or adjustment of
+  /// the fare: the date the line really belongs to (`yy/mm/dd`), and the
+  /// notices after the proof of use was issued. Source:
+  /// https://www.etc-meisai.jp/soukou_meisai_exp.html
+  static final _notDiscount = RegExp(r'^(\d{2}/\d{2}/\d{2}|更新あり|削除あり)$');
+
   @override
   List<StatementLineEntity> parse(Uint8List bytes) {
     final rows = _decode(bytes);
@@ -193,7 +199,10 @@ class StatementRepo implements StatementIF {
     }
     final discountTypes = [
       for (final part in parts)
-        if (part != _statusConfirmed && part != _statusPending) part,
+        if (part != _statusConfirmed &&
+            part != _statusPending &&
+            !_notDiscount.hasMatch(part))
+          part,
     ];
     return (
       confirmed
