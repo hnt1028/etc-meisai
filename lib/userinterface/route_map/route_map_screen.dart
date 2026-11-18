@@ -240,6 +240,13 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
       for (final p in data.places) LatLng(p.latitude, p.longitude),
     ];
     final pin = widget.picking.pin;
+    // The camera fits the lines too, not only the markers.
+    final extent = [
+      ...points,
+      for (final segment in data.segments)
+        for (final run in segmentRuns(segment))
+          for (final v in run.points) LatLng(v.latitude, v.longitude),
+    ];
 
     return LayoutBuilder(
       builder: (context, constraints) => FlutterMap(
@@ -251,10 +258,10 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
         options: MapOptions(
           initialCenter: _japan,
           initialZoom: 5,
-          initialCameraFit: points.isEmpty
+          initialCameraFit: extent.isEmpty
               ? null
               : CameraFit.coordinates(
-                  coordinates: points,
+                  coordinates: extent,
                   padding: EdgeInsets.all(
                     math.min(48, constraints.biggest.shortestSide / 4),
                   ),

@@ -1,3 +1,4 @@
+import 'package:etc_meisai/application/dto/route_run_dto.dart';
 import 'package:etc_meisai/application/dto/line_route_dto.dart';
 import 'package:etc_meisai/application/dto/statement_line_dto.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
@@ -74,6 +75,14 @@ class _Map extends ConsumerWidget {
     final points = [
       for (final p in route.places) LatLng(p.latitude, p.longitude),
     ];
+    final runs = segment == null ? const <RouteRunDTO>[] : segmentRuns(segment);
+    // The camera fits the whole line, not only its ends: the line may go far
+    // from the straight way between them (e.g. through a junction).
+    final extent = [
+      ...points,
+      for (final run in runs)
+        for (final v in run.points) LatLng(v.latitude, v.longitude),
+    ];
 
     return FlutterMap(
       options: MapOptions(
@@ -81,7 +90,7 @@ class _Map extends ConsumerWidget {
         initialZoom: 12,
         // A single marker has no extent to fit, so the zoom is capped.
         initialCameraFit: CameraFit.coordinates(
-          coordinates: points,
+          coordinates: extent,
           padding: const EdgeInsets.all(48),
           maxZoom: 14,
         ),
@@ -97,7 +106,7 @@ class _Map extends ConsumerWidget {
         if (segment != null)
           PolylineLayer(
             polylines: [
-              for (final run in segmentRuns(segment))
+              for (final run in runs)
                 Polyline(
                   points: [
                     for (final v in run.points) LatLng(v.latitude, v.longitude),

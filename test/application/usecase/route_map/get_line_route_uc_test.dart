@@ -112,8 +112,26 @@ void main() {
         expect(route.segment!.fromIcName, '中ノ湯');
         expect(route.segment!.fromLatitude, 36.2);
         expect(route.segment!.toLongitude, 137.55);
+        // The other end is marked too, so that the map shows the whole line.
+        expect(route.places.map((p) => p.icName), ['中ノ湯', '平湯']);
+        expect(route.unlocatedIcNames, isEmpty);
       },
     );
+
+    test('does not report an implied entrance that has no position', () async {
+      final uc = GetLineRouteUC(
+        icMaster: FakeIcMasterIF([
+          fakeIcPoint(name: '平湯', routeNames: const ['安房峠道路']),
+        ]),
+        icMappings: FakeIcMappingIF(),
+        icPositions: FakeIcPositionIF(),
+      );
+      final route = await uc.execute(_line(entranceIc: null, exitIc: '平湯'));
+
+      expect(route.places.map((p) => p.icName), ['平湯']);
+      expect(route.unlocatedIcNames, isEmpty);
+      expect(route.segment, isNull);
+    });
 
     test('cuts the line by operator', () async {
       final uc = GetLineRouteUC(
