@@ -1564,12 +1564,236 @@ class IcPositionsCompanion extends UpdateCompanion<IcPosition> {
   }
 }
 
+class $OperatorColorsTable extends OperatorColors
+    with TableInfo<$OperatorColorsTable, OperatorColor> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $OperatorColorsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _operatorNameMeta = const VerificationMeta(
+    'operatorName',
+  );
+  @override
+  late final GeneratedColumn<String> operatorName = GeneratedColumn<String>(
+    'operator_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<int> color = GeneratedColumn<int>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [operatorName, color];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'operator_colors';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<OperatorColor> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('operator_name')) {
+      context.handle(
+        _operatorNameMeta,
+        operatorName.isAcceptableOrUnknown(
+          data['operator_name']!,
+          _operatorNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_operatorNameMeta);
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_colorMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {operatorName};
+  @override
+  OperatorColor map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return OperatorColor(
+      operatorName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}operator_name'],
+      )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}color'],
+      )!,
+    );
+  }
+
+  @override
+  $OperatorColorsTable createAlias(String alias) {
+    return $OperatorColorsTable(attachedDatabase, alias);
+  }
+}
+
+class OperatorColor extends DataClass implements Insertable<OperatorColor> {
+  /// The road operator, such as NEXCO東日本.
+  final String operatorName;
+
+  /// Opaque ARGB, `0xFFRRGGBB`.
+  final int color;
+  const OperatorColor({required this.operatorName, required this.color});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['operator_name'] = Variable<String>(operatorName);
+    map['color'] = Variable<int>(color);
+    return map;
+  }
+
+  OperatorColorsCompanion toCompanion(bool nullToAbsent) {
+    return OperatorColorsCompanion(
+      operatorName: Value(operatorName),
+      color: Value(color),
+    );
+  }
+
+  factory OperatorColor.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return OperatorColor(
+      operatorName: serializer.fromJson<String>(json['operatorName']),
+      color: serializer.fromJson<int>(json['color']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'operatorName': serializer.toJson<String>(operatorName),
+      'color': serializer.toJson<int>(color),
+    };
+  }
+
+  OperatorColor copyWith({String? operatorName, int? color}) => OperatorColor(
+    operatorName: operatorName ?? this.operatorName,
+    color: color ?? this.color,
+  );
+  OperatorColor copyWithCompanion(OperatorColorsCompanion data) {
+    return OperatorColor(
+      operatorName: data.operatorName.present
+          ? data.operatorName.value
+          : this.operatorName,
+      color: data.color.present ? data.color.value : this.color,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OperatorColor(')
+          ..write('operatorName: $operatorName, ')
+          ..write('color: $color')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(operatorName, color);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OperatorColor &&
+          other.operatorName == this.operatorName &&
+          other.color == this.color);
+}
+
+class OperatorColorsCompanion extends UpdateCompanion<OperatorColor> {
+  final Value<String> operatorName;
+  final Value<int> color;
+  final Value<int> rowid;
+  const OperatorColorsCompanion({
+    this.operatorName = const Value.absent(),
+    this.color = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  OperatorColorsCompanion.insert({
+    required String operatorName,
+    required int color,
+    this.rowid = const Value.absent(),
+  }) : operatorName = Value(operatorName),
+       color = Value(color);
+  static Insertable<OperatorColor> custom({
+    Expression<String>? operatorName,
+    Expression<int>? color,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (operatorName != null) 'operator_name': operatorName,
+      if (color != null) 'color': color,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  OperatorColorsCompanion copyWith({
+    Value<String>? operatorName,
+    Value<int>? color,
+    Value<int>? rowid,
+  }) {
+    return OperatorColorsCompanion(
+      operatorName: operatorName ?? this.operatorName,
+      color: color ?? this.color,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (operatorName.present) {
+      map['operator_name'] = Variable<String>(operatorName.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<int>(color.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OperatorColorsCompanion(')
+          ..write('operatorName: $operatorName, ')
+          ..write('color: $color, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $StatementLinesTable statementLines = $StatementLinesTable(this);
   late final $IcMappingsTable icMappings = $IcMappingsTable(this);
   late final $IcPositionsTable icPositions = $IcPositionsTable(this);
+  late final $OperatorColorsTable operatorColors = $OperatorColorsTable(this);
   late final Index statementLinesExitAt = Index(
     'statement_lines_exit_at',
     'CREATE INDEX statement_lines_exit_at ON statement_lines (exit_at)',
@@ -1582,6 +1806,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     statementLines,
     icMappings,
     icPositions,
+    operatorColors,
     statementLinesExitAt,
   ];
 }
@@ -2395,6 +2620,162 @@ typedef $$IcPositionsTableProcessedTableManager =
       IcPosition,
       PrefetchHooks Function()
     >;
+typedef $$OperatorColorsTableCreateCompanionBuilder =
+    OperatorColorsCompanion Function({
+      required String operatorName,
+      required int color,
+      Value<int> rowid,
+    });
+typedef $$OperatorColorsTableUpdateCompanionBuilder =
+    OperatorColorsCompanion Function({
+      Value<String> operatorName,
+      Value<int> color,
+      Value<int> rowid,
+    });
+
+class $$OperatorColorsTableFilterComposer
+    extends Composer<_$AppDatabase, $OperatorColorsTable> {
+  $$OperatorColorsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get operatorName => $composableBuilder(
+    column: $table.operatorName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$OperatorColorsTableOrderingComposer
+    extends Composer<_$AppDatabase, $OperatorColorsTable> {
+  $$OperatorColorsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get operatorName => $composableBuilder(
+    column: $table.operatorName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$OperatorColorsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $OperatorColorsTable> {
+  $$OperatorColorsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get operatorName => $composableBuilder(
+    column: $table.operatorName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+}
+
+class $$OperatorColorsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $OperatorColorsTable,
+          OperatorColor,
+          $$OperatorColorsTableFilterComposer,
+          $$OperatorColorsTableOrderingComposer,
+          $$OperatorColorsTableAnnotationComposer,
+          $$OperatorColorsTableCreateCompanionBuilder,
+          $$OperatorColorsTableUpdateCompanionBuilder,
+          (
+            OperatorColor,
+            BaseReferences<_$AppDatabase, $OperatorColorsTable, OperatorColor>,
+          ),
+          OperatorColor,
+          PrefetchHooks Function()
+        > {
+  $$OperatorColorsTableTableManager(
+    _$AppDatabase db,
+    $OperatorColorsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$OperatorColorsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$OperatorColorsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$OperatorColorsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> operatorName = const Value.absent(),
+                Value<int> color = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => OperatorColorsCompanion(
+                operatorName: operatorName,
+                color: color,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String operatorName,
+                required int color,
+                Value<int> rowid = const Value.absent(),
+              }) => OperatorColorsCompanion.insert(
+                operatorName: operatorName,
+                color: color,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$OperatorColorsTable, OperatorColor>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $OperatorColorsTable,
+                    OperatorColor
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$OperatorColorsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $OperatorColorsTable,
+      OperatorColor,
+      $$OperatorColorsTableFilterComposer,
+      $$OperatorColorsTableOrderingComposer,
+      $$OperatorColorsTableAnnotationComposer,
+      $$OperatorColorsTableCreateCompanionBuilder,
+      $$OperatorColorsTableUpdateCompanionBuilder,
+      (
+        OperatorColor,
+        BaseReferences<_$AppDatabase, $OperatorColorsTable, OperatorColor>,
+      ),
+      OperatorColor,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2405,4 +2786,6 @@ class $AppDatabaseManager {
       $$IcMappingsTableTableManager(_db, _db.icMappings);
   $$IcPositionsTableTableManager get icPositions =>
       $$IcPositionsTableTableManager(_db, _db.icPositions);
+  $$OperatorColorsTableTableManager get operatorColors =>
+      $$OperatorColorsTableTableManager(_db, _db.operatorColors);
 }

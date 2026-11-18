@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:etc_meisai/application/dto/route_map_dto.dart';
 import 'package:etc_meisai/application/dto/route_segment_dto.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
+import 'package:etc_meisai/userinterface/route_map/operator_color_providers.dart';
 import 'package:etc_meisai/userinterface/route_map/operator_colors.dart';
 import 'package:etc_meisai/userinterface/common/message_text.dart';
 import 'package:etc_meisai/userinterface/route_map/route_map_controller.dart';
@@ -234,10 +235,18 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
   Widget build(BuildContext context) {
     final data = widget.data;
     final scheme = Theme.of(context).colorScheme;
+    final operatorColors = ref.watch(operatorColorsProvider).value;
     final points = [
       for (final p in data.places) LatLng(p.latitude, p.longitude),
     ];
     final pin = widget.picking.pin;
+    // The camera fits the lines too, not only the markers.
+    final extent = [
+      ...points,
+      for (final segment in data.segments)
+        for (final run in segmentRuns(segment))
+          for (final v in run.points) LatLng(v.latitude, v.longitude),
+    ];
 
     return LayoutBuilder(
       builder: (context, constraints) => FlutterMap(
@@ -249,10 +258,10 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
         options: MapOptions(
           initialCenter: _japan,
           initialZoom: 5,
-          initialCameraFit: points.isEmpty
+          initialCameraFit: extent.isEmpty
               ? null
               : CameraFit.coordinates(
-                  coordinates: points,
+                  coordinates: extent,
                   padding: EdgeInsets.all(
                     math.min(48, constraints.biggest.shortestSide / 4),
                   ),
@@ -273,7 +282,7 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
                         LatLng(v.latitude, v.longitude),
                     ],
                     strokeWidth: 4,
-                    color: runColor(context, run, scheme),
+                    color: runColor(context, run, scheme, operatorColors),
                     pattern:
                         segment.line.status == ConfirmationStatusValue.pending
                         ? StrokePattern.dashed(segments: const [10, 8])

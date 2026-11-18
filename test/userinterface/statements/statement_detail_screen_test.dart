@@ -20,6 +20,7 @@ import 'package:etc_meisai/userinterface/statements/statement_detail_strings.dar
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/fakes.dart';
@@ -319,6 +320,11 @@ void main() {
         35.3,
         35.2,
       ]);
+      // The camera shows the way too, not only the entrance and the exit.
+      final camera = MapCamera.of(
+        tester.element(find.byType(PolylineLayer<Object>)),
+      );
+      expect(camera.visibleBounds.contains(const LatLng(35.3, 139.15)), isTrue);
       // The markers are still the entrance and the exit only.
       expect(find.byKey(const ValueKey('line-place-テスト北')), findsOneWidget);
       expect(find.byKey(const ValueKey('line-place-テスト中')), findsNothing);

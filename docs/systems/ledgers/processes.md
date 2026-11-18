@@ -22,3 +22,6 @@
 | PRC-018 | データの読み込み（ImportDataUC） | [PRC-018-import-data.md](../processes/PRC-018-import-data.md) | 草案 |
 | PRC-019 | すべてのデータの削除（DeleteAllDataUC） | [PRC-019-delete-all-data.md](../processes/PRC-019-delete-all-data.md) | 草案 |
 | PRC-020 | 入口ICの候補の取得（ListEntranceCandidatesUC） | [PRC-020-list-entrance-candidates.md](../processes/PRC-020-list-entrance-candidates.md) | 草案 |
+| PRC-021 | 事業者の線の色の取得（ListOperatorColorsUC） | [PRC-021-list-operator-colors.md](../processes/PRC-021-list-operator-colors.md) | 草案 |
+| PRC-022 | 事業者の線の色の保存（SaveOperatorColorUC） | [PRC-022-save-operator-color.md](../processes/PRC-022-save-operator-color.md) | 草案 |
+| PRC-023 | 事業者の線の色の初期値への復帰（ResetOperatorColorsUC） | [PRC-023-reset-operator-colors.md](../processes/PRC-023-reset-operator-colors.md) | 草案 |

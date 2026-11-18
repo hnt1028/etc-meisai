@@ -31,6 +31,7 @@ void main() {
     final lines = await database.select(database.statementLines).get();
     final mappings = await database.select(database.icMappings).get();
     final positions = await database.select(database.icPositions).get();
+    final colors = await database.select(database.operatorColors).get();
     return {
       'lines': [
         for (final l in lines)
@@ -53,6 +54,7 @@ void main() {
       'positions': [
         for (final p in positions) '${p.icName}|${p.latitude}|${p.longitude}',
       ],
+      'colors': [for (final c in colors) '${c.operatorName}|${c.color}'],
     };
   }
 
@@ -112,8 +114,12 @@ void main() {
     await database.customStatement(
       "INSERT INTO ic_positions (ic_name, latitude, longitude) VALUES ('テスト南ＩＣ', 35.4, 139.4)",
     );
+    await database.customStatement(
+      "INSERT INTO operator_colors (operator_name, color) VALUES ('NEXCO東日本', 4279312435)",
+    );
     final before = await snapshot();
     expect((before['lines'] as List), hasLength(2));
+    expect((before['colors'] as List), hasLength(1));
 
     // Export: the file is saved under a name of the time.
     await tapSetting(tester, SettingsStrings.exportButton);
@@ -136,6 +142,7 @@ void main() {
     expect(empty['lines'], isEmpty);
     expect(empty['mappings'], isEmpty);
     expect(empty['positions'], isEmpty);
+    expect(empty['colors'], isEmpty);
     await openTab(tester, AppStrings.statementsTab);
     expect(find.text(StatementListStrings.emptyNoData), findsOneWidget);
 

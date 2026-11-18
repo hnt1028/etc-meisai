@@ -32,14 +32,24 @@ class GetLineRouteUC {
     );
 
     final entranceName = line.entranceIc;
-    // The same IC name is one marker, and is listed once.
-    final names = [?entranceName, if (line.exitIc != entranceName) line.exitIc];
+    // A blank entrance of a road with two ICs is the other end.
+    final impliedName = entranceName == null
+        ? impliedEntranceNameOf(line.exitIc, lookup)
+        : null;
+    // The same IC name is one marker, and is listed once. The implied entrance
+    // is a marker too, but it is never reported as unlocated: the user did not
+    // write it.
+    final names = [
+      ?entranceName,
+      ?impliedName,
+      if (line.exitIc != entranceName) line.exitIc,
+    ];
     final places = <RoutePlaceDTO>[];
     final unlocated = <String>[];
     for (final name in names) {
       final place = lookup.placeOf(name);
       if (place == null) {
-        unlocated.add(name);
+        if (name != impliedName) unlocated.add(name);
         continue;
       }
       places.add(
@@ -57,10 +67,6 @@ class GetLineRouteUC {
 
     final entrance = entranceName == null ? null : lookup.placeOf(entranceName);
     final exit = lookup.placeOf(line.exitIc);
-    // A blank entrance of a road with two ICs is the other end.
-    final impliedName = entranceName == null
-        ? impliedEntranceNameOf(line.exitIc, lookup)
-        : null;
     final drawnFromName = entranceName ?? impliedName;
     final drawnFrom =
         entrance ?? (impliedName == null ? null : lookup.placeOf(impliedName));
