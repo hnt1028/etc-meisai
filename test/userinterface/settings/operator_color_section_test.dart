@@ -132,6 +132,54 @@ void main() {
     expect(find.text(SettingsStrings.operatorColorChanged), findsOneWidget);
   });
 
+  testWidgets('chooses any color with the wheel, and stores it', (
+    tester,
+  ) async {
+    final store = FakeOperatorColorIF();
+    await _show(tester, store);
+    await tester.tap(_tile('阪神高速道路'));
+    await tester.pumpAndSettle();
+    final value = HSVColor.fromColor(const Color(0xFFD32F2F)).value;
+    final wheel = find.byKey(const ValueKey('color-wheel'));
+    final center = tester.getCenter(wheel);
+    final radius = tester.getSize(wheel).width / 2;
+
+    // Near the right edge is red; a tap keeps the brightness.
+    await tester.tapAt(center + Offset(radius - 1, 0));
+    await tester.pump();
+    var hsv = HSVColor.fromColor(_preview(tester));
+    expect(hsv.hue, closeTo(0, 1));
+    expect(hsv.saturation, greaterThan(0.95));
+    expect(hsv.value, closeTo(value, 0.01));
+    // Below the center, in the corner (past the edge of the wheel): the hue
+    // is 90 degrees, as saturated as possible.
+    await tester.tapAt(center + Offset(radius * 0.01, radius - 1));
+    await tester.pump();
+    hsv = HSVColor.fromColor(_preview(tester));
+    expect(hsv.hue, closeTo(90, 2));
+    expect(hsv.saturation, greaterThan(0.95));
+    // A drag follows the finger.
+    await tester.dragFrom(
+      center + Offset(radius / 2, 0),
+      Offset(0, radius / 2),
+    );
+    await tester.pump();
+    final dragged = _preview(tester);
+    expect(HSVColor.fromColor(dragged).hue, greaterThan(0));
+    expect(HSVColor.fromColor(dragged).hue, lessThan(90));
+    // The brightness is set apart.
+    tester
+        .widget<Slider>(find.byKey(const ValueKey('slider-brightness')))
+        .onChanged!(0.5);
+    await tester.pump();
+    expect(HSVColor.fromColor(_preview(tester)).value, closeTo(0.5, 0.01));
+
+    final chosen = _preview(tester).toARGB32();
+    await tester.tap(find.text(SettingsStrings.operatorColorSave));
+    await tester.pumpAndSettle();
+    expect(store.stored.single.color, chosen);
+  });
+
   testWidgets('stores nothing when the dialog is cancelled', (tester) async {
     final store = FakeOperatorColorIF();
     await _show(tester, store);

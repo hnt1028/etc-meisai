@@ -17,6 +17,8 @@ abstract final class SettingsStrings {
   static const operatorColorNote = '道路の事業者ごとに、地図の線の色を変えられます。';
   static const operatorColorDefault = '初期値';
   static const operatorColorChanged = '変更済み';
+  static const operatorColorWheel = '色環';
+  static const operatorColorBrightness = '明るさ';
   static const paletteRed = '赤';
   static const palettePink = 'ピンク';
   static const palettePurple = '紫';
