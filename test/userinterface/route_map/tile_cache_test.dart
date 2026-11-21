@@ -16,6 +16,16 @@ void main() {
     expect(cache, isNull);
   });
 
+  test('finds the folder, or none', () async {
+    expect(await findApplicationSupportPath(directory: () async => '/x'), '/x');
+    expect(
+      await findApplicationSupportPath(
+        directory: () async => throw const FileSystemException('none'),
+      ),
+      isNull,
+    );
+  });
+
   test('makes the cache in the folder it is given', () async {
     final folder = Directory.systemTemp.createTempSync('tile_cache_test');
     addTearDown(() => folder.deleteSync(recursive: true));

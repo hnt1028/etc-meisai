@@ -35,6 +35,10 @@ import 'package:etc_meisai/userinterface/app_strings.dart';
 import 'package:etc_meisai/userinterface/ic_mapping/ic_mapping_providers.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_providers.dart';
 import 'package:etc_meisai/userinterface/route_map/route_map_providers.dart';
+import 'package:etc_meisai/userinterface/settings/tile_cache_providers.dart';
+import 'package:etc_meisai/application/usecase/settings/clear_tile_cache_uc.dart';
+import 'package:etc_meisai/application/usecase/settings/get_tile_cache_size_uc.dart';
+import 'package:etc_meisai/infrastructure/repository/tile_cache/tile_cache_repo.dart';
 import 'package:etc_meisai/userinterface/statements/statement_detail_providers.dart';
 import 'package:etc_meisai/userinterface/settings/backup_files.dart';
 import 'package:etc_meisai/userinterface/settings/csv_picker.dart';
@@ -135,6 +139,12 @@ Future<void> pumpApp(
         ),
         saveEntranceUCProvider.overrideWithValue(
           SaveEntranceUC(statementLines: statementLines),
+        ),
+        getTileCacheSizeUCProvider.overrideWithValue(
+          const GetTileCacheSizeUC(tileCache: TileCacheRepo(directory: null)),
+        ),
+        clearTileCacheUCProvider.overrideWithValue(
+          const ClearTileCacheUC(tileCache: TileCacheRepo(directory: null)),
         ),
         saveVehicleNumberUCProvider.overrideWithValue(
           SaveVehicleNumberUC(statementLines: statementLines),

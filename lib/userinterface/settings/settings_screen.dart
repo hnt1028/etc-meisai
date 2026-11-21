@@ -4,6 +4,7 @@ import 'package:etc_meisai/userinterface/common/section_title.dart';
 import 'package:etc_meisai/userinterface/settings/operator_color_section.dart';
 import 'package:etc_meisai/userinterface/settings/settings_controller.dart';
 import 'package:etc_meisai/userinterface/settings/settings_strings.dart';
+import 'package:etc_meisai/userinterface/settings/tile_cache_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -41,6 +42,8 @@ class SettingsScreen extends ConsumerWidget {
             MessageText(state.error!, isError: true),
           const Divider(height: 32),
           const OperatorColorSection(),
+          const Divider(height: 32),
+          const TileCacheSection(),
           const Divider(height: 32),
           const SectionTitle(SettingsStrings.backupSection),
           OutlinedButton(

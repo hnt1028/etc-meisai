@@ -25,3 +25,5 @@
 | PRC-021 | 事業者の線の色の取得（ListOperatorColorsUC） | [PRC-021-list-operator-colors.md](../processes/PRC-021-list-operator-colors.md) | 草案 |
 | PRC-022 | 事業者の線の色の保存（SaveOperatorColorUC） | [PRC-022-save-operator-color.md](../processes/PRC-022-save-operator-color.md) | 草案 |
 | PRC-023 | 事業者の線の色の初期値への復帰（ResetOperatorColorsUC） | [PRC-023-reset-operator-colors.md](../processes/PRC-023-reset-operator-colors.md) | 草案 |
+| PRC-028 | 保存した地図の大きさの取得（GetTileCacheSizeUC） | [PRC-028-get-tile-cache-size.md](../processes/PRC-028-get-tile-cache-size.md) | 草案 |
+| PRC-029 | 保存した地図の削除（ClearTileCacheUC） | [PRC-029-clear-tile-cache.md](../processes/PRC-029-clear-tile-cache.md) | 草案 |
