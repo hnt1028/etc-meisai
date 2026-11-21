@@ -110,7 +110,13 @@ void main() {
     // The entrance IC.
     await tester.tap(find.byKey(const ValueKey('enter-entrance-ic')));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'テスト北ＩＣ');
+    // The dialog lists the ICs first: the name is typed as the last choice.
+    await tester.tap(find.byKey(const ValueKey('entrance-ic-free')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('entrance-ic-typed')),
+      'テスト北ＩＣ',
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text(StatementDetailStrings.save));
     await tester.pumpAndSettle();

@@ -202,6 +202,26 @@ class $StatementLinesTable extends StatementLines
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _memoMeta = const VerificationMeta('memo');
+  @override
+  late final GeneratedColumn<String> memo = GeneratedColumn<String>(
+    'memo',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _tagsMeta = const VerificationMeta('tags');
+  @override
+  late final GeneratedColumn<String> tags = GeneratedColumn<String>(
+    'tags',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -222,6 +242,8 @@ class $StatementLinesTable extends StatementLines
     cardNumber,
     status,
     discountTypes,
+    memo,
+    tags,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -368,6 +390,18 @@ class $StatementLinesTable extends StatementLines
     } else if (isInserting) {
       context.missing(_discountTypesMeta);
     }
+    if (data.containsKey('memo')) {
+      context.handle(
+        _memoMeta,
+        memo.isAcceptableOrUnknown(data['memo']!, _memoMeta),
+      );
+    }
+    if (data.containsKey('tags')) {
+      context.handle(
+        _tagsMeta,
+        tags.isAcceptableOrUnknown(data['tags']!, _tagsMeta),
+      );
+    }
     return context;
   }
 
@@ -453,6 +487,14 @@ class $StatementLinesTable extends StatementLines
         DriftSqlType.string,
         data['${effectivePrefix}discount_types'],
       )!,
+      memo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}memo'],
+      )!,
+      tags: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tags'],
+      )!,
     );
   }
 
@@ -505,6 +547,13 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
 
   /// Discount types joined with `;`, like the CSV note. Empty when none.
   final String discountTypes;
+
+  /// A note of the user. Empty when there is none. The import does not touch
+  /// it, so that a line that is imported again keeps its note.
+  final String memo;
+
+  /// Tags of the user joined with `;`. Empty when none.
+  final String tags;
   const StatementLine({
     required this.id,
     required this.duplicateKey,
@@ -524,6 +573,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
     required this.cardNumber,
     required this.status,
     required this.discountTypes,
+    required this.memo,
+    required this.tags,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -568,6 +619,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
       );
     }
     map['discount_types'] = Variable<String>(discountTypes);
+    map['memo'] = Variable<String>(memo);
+    map['tags'] = Variable<String>(tags);
     return map;
   }
 
@@ -605,6 +658,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
       cardNumber: Value(cardNumber),
       status: Value(status),
       discountTypes: Value(discountTypes),
+      memo: Value(memo),
+      tags: Value(tags),
     );
   }
 
@@ -638,6 +693,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
         serializer.fromJson<int>(json['status']),
       ),
       discountTypes: serializer.fromJson<String>(json['discountTypes']),
+      memo: serializer.fromJson<String>(json['memo']),
+      tags: serializer.fromJson<String>(json['tags']),
     );
   }
   @override
@@ -664,6 +721,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
         $StatementLinesTable.$converterstatus.toJson(status),
       ),
       'discountTypes': serializer.toJson<String>(discountTypes),
+      'memo': serializer.toJson<String>(memo),
+      'tags': serializer.toJson<String>(tags),
     };
   }
 
@@ -686,6 +745,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
     String? cardNumber,
     ConfirmationStatusValue? status,
     String? discountTypes,
+    String? memo,
+    String? tags,
   }) => StatementLine(
     id: id ?? this.id,
     duplicateKey: duplicateKey ?? this.duplicateKey,
@@ -711,6 +772,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
     cardNumber: cardNumber ?? this.cardNumber,
     status: status ?? this.status,
     discountTypes: discountTypes ?? this.discountTypes,
+    memo: memo ?? this.memo,
+    tags: tags ?? this.tags,
   );
   StatementLine copyWithCompanion(StatementLinesCompanion data) {
     return StatementLine(
@@ -756,6 +819,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
       discountTypes: data.discountTypes.present
           ? data.discountTypes.value
           : this.discountTypes,
+      memo: data.memo.present ? data.memo.value : this.memo,
+      tags: data.tags.present ? data.tags.value : this.tags,
     );
   }
 
@@ -779,7 +844,9 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
           ..write('enteredEntranceIc: $enteredEntranceIc, ')
           ..write('cardNumber: $cardNumber, ')
           ..write('status: $status, ')
-          ..write('discountTypes: $discountTypes')
+          ..write('discountTypes: $discountTypes, ')
+          ..write('memo: $memo, ')
+          ..write('tags: $tags')
           ..write(')'))
         .toString();
   }
@@ -804,6 +871,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
     cardNumber,
     status,
     discountTypes,
+    memo,
+    tags,
   );
   @override
   bool operator ==(Object other) =>
@@ -826,7 +895,9 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
           other.enteredEntranceIc == this.enteredEntranceIc &&
           other.cardNumber == this.cardNumber &&
           other.status == this.status &&
-          other.discountTypes == this.discountTypes);
+          other.discountTypes == this.discountTypes &&
+          other.memo == this.memo &&
+          other.tags == this.tags);
 }
 
 class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
@@ -848,6 +919,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
   final Value<String> cardNumber;
   final Value<ConfirmationStatusValue> status;
   final Value<String> discountTypes;
+  final Value<String> memo;
+  final Value<String> tags;
   final Value<int> rowid;
   const StatementLinesCompanion({
     this.id = const Value.absent(),
@@ -868,6 +941,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
     this.cardNumber = const Value.absent(),
     this.status = const Value.absent(),
     this.discountTypes = const Value.absent(),
+    this.memo = const Value.absent(),
+    this.tags = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   StatementLinesCompanion.insert({
@@ -889,6 +964,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
     required String cardNumber,
     required ConfirmationStatusValue status,
     required String discountTypes,
+    this.memo = const Value.absent(),
+    this.tags = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : duplicateKey = Value(duplicateKey),
        exitAt = Value(exitAt),
@@ -919,6 +996,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
     Expression<String>? cardNumber,
     Expression<int>? status,
     Expression<String>? discountTypes,
+    Expression<String>? memo,
+    Expression<String>? tags,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -940,6 +1019,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
       if (cardNumber != null) 'card_number': cardNumber,
       if (status != null) 'status': status,
       if (discountTypes != null) 'discount_types': discountTypes,
+      if (memo != null) 'memo': memo,
+      if (tags != null) 'tags': tags,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -963,6 +1044,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
     Value<String>? cardNumber,
     Value<ConfirmationStatusValue>? status,
     Value<String>? discountTypes,
+    Value<String>? memo,
+    Value<String>? tags,
     Value<int>? rowid,
   }) {
     return StatementLinesCompanion(
@@ -984,6 +1067,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
       cardNumber: cardNumber ?? this.cardNumber,
       status: status ?? this.status,
       discountTypes: discountTypes ?? this.discountTypes,
+      memo: memo ?? this.memo,
+      tags: tags ?? this.tags,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1049,6 +1134,12 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
     if (discountTypes.present) {
       map['discount_types'] = Variable<String>(discountTypes.value);
     }
+    if (memo.present) {
+      map['memo'] = Variable<String>(memo.value);
+    }
+    if (tags.present) {
+      map['tags'] = Variable<String>(tags.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1076,6 +1167,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
           ..write('cardNumber: $cardNumber, ')
           ..write('status: $status, ')
           ..write('discountTypes: $discountTypes, ')
+          ..write('memo: $memo, ')
+          ..write('tags: $tags, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1787,6 +1880,229 @@ class OperatorColorsCompanion extends UpdateCompanion<OperatorColor> {
   }
 }
 
+class $RouteMapLayersTable extends RouteMapLayers
+    with TableInfo<$RouteMapLayersTable, RouteMapLayer> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RouteMapLayersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _layerCodeMeta = const VerificationMeta(
+    'layerCode',
+  );
+  @override
+  late final GeneratedColumn<String> layerCode = GeneratedColumn<String>(
+    'layer_code',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _visibleMeta = const VerificationMeta(
+    'visible',
+  );
+  @override
+  late final GeneratedColumn<bool> visible = GeneratedColumn<bool>(
+    'visible',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("visible" IN (0, 1))',
+    ),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [layerCode, visible];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'route_map_layers';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RouteMapLayer> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('layer_code')) {
+      context.handle(
+        _layerCodeMeta,
+        layerCode.isAcceptableOrUnknown(data['layer_code']!, _layerCodeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_layerCodeMeta);
+    }
+    if (data.containsKey('visible')) {
+      context.handle(
+        _visibleMeta,
+        visible.isAcceptableOrUnknown(data['visible']!, _visibleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_visibleMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {layerCode};
+  @override
+  RouteMapLayer map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RouteMapLayer(
+      layerCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}layer_code'],
+      )!,
+      visible: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}visible'],
+      )!,
+    );
+  }
+
+  @override
+  $RouteMapLayersTable createAlias(String alias) {
+    return $RouteMapLayersTable(attachedDatabase, alias);
+  }
+}
+
+class RouteMapLayer extends DataClass implements Insertable<RouteMapLayer> {
+  /// `RouteMapLayerValue.code`, such as `network`.
+  final String layerCode;
+
+  /// Whether the layer is shown.
+  final bool visible;
+  const RouteMapLayer({required this.layerCode, required this.visible});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['layer_code'] = Variable<String>(layerCode);
+    map['visible'] = Variable<bool>(visible);
+    return map;
+  }
+
+  RouteMapLayersCompanion toCompanion(bool nullToAbsent) {
+    return RouteMapLayersCompanion(
+      layerCode: Value(layerCode),
+      visible: Value(visible),
+    );
+  }
+
+  factory RouteMapLayer.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RouteMapLayer(
+      layerCode: serializer.fromJson<String>(json['layerCode']),
+      visible: serializer.fromJson<bool>(json['visible']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'layerCode': serializer.toJson<String>(layerCode),
+      'visible': serializer.toJson<bool>(visible),
+    };
+  }
+
+  RouteMapLayer copyWith({String? layerCode, bool? visible}) => RouteMapLayer(
+    layerCode: layerCode ?? this.layerCode,
+    visible: visible ?? this.visible,
+  );
+  RouteMapLayer copyWithCompanion(RouteMapLayersCompanion data) {
+    return RouteMapLayer(
+      layerCode: data.layerCode.present ? data.layerCode.value : this.layerCode,
+      visible: data.visible.present ? data.visible.value : this.visible,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RouteMapLayer(')
+          ..write('layerCode: $layerCode, ')
+          ..write('visible: $visible')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(layerCode, visible);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RouteMapLayer &&
+          other.layerCode == this.layerCode &&
+          other.visible == this.visible);
+}
+
+class RouteMapLayersCompanion extends UpdateCompanion<RouteMapLayer> {
+  final Value<String> layerCode;
+  final Value<bool> visible;
+  final Value<int> rowid;
+  const RouteMapLayersCompanion({
+    this.layerCode = const Value.absent(),
+    this.visible = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RouteMapLayersCompanion.insert({
+    required String layerCode,
+    required bool visible,
+    this.rowid = const Value.absent(),
+  }) : layerCode = Value(layerCode),
+       visible = Value(visible);
+  static Insertable<RouteMapLayer> custom({
+    Expression<String>? layerCode,
+    Expression<bool>? visible,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (layerCode != null) 'layer_code': layerCode,
+      if (visible != null) 'visible': visible,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RouteMapLayersCompanion copyWith({
+    Value<String>? layerCode,
+    Value<bool>? visible,
+    Value<int>? rowid,
+  }) {
+    return RouteMapLayersCompanion(
+      layerCode: layerCode ?? this.layerCode,
+      visible: visible ?? this.visible,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (layerCode.present) {
+      map['layer_code'] = Variable<String>(layerCode.value);
+    }
+    if (visible.present) {
+      map['visible'] = Variable<bool>(visible.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RouteMapLayersCompanion(')
+          ..write('layerCode: $layerCode, ')
+          ..write('visible: $visible, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1794,6 +2110,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $IcMappingsTable icMappings = $IcMappingsTable(this);
   late final $IcPositionsTable icPositions = $IcPositionsTable(this);
   late final $OperatorColorsTable operatorColors = $OperatorColorsTable(this);
+  late final $RouteMapLayersTable routeMapLayers = $RouteMapLayersTable(this);
   late final Index statementLinesExitAt = Index(
     'statement_lines_exit_at',
     'CREATE INDEX statement_lines_exit_at ON statement_lines (exit_at)',
@@ -1807,6 +2124,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     icMappings,
     icPositions,
     operatorColors,
+    routeMapLayers,
     statementLinesExitAt,
   ];
 }
@@ -1831,6 +2149,8 @@ typedef $$StatementLinesTableCreateCompanionBuilder =
       required String cardNumber,
       required ConfirmationStatusValue status,
       required String discountTypes,
+      Value<String> memo,
+      Value<String> tags,
       Value<int> rowid,
     });
 typedef $$StatementLinesTableUpdateCompanionBuilder =
@@ -1853,6 +2173,8 @@ typedef $$StatementLinesTableUpdateCompanionBuilder =
       Value<String> cardNumber,
       Value<ConfirmationStatusValue> status,
       Value<String> discountTypes,
+      Value<String> memo,
+      Value<String> tags,
       Value<int> rowid,
     });
 
@@ -1960,6 +2282,16 @@ class $$StatementLinesTableFilterComposer
     column: $table.discountTypes,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get memo => $composableBuilder(
+    column: $table.memo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tags => $composableBuilder(
+    column: $table.tags,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$StatementLinesTableOrderingComposer
@@ -2060,6 +2392,16 @@ class $$StatementLinesTableOrderingComposer
     column: $table.discountTypes,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get memo => $composableBuilder(
+    column: $table.memo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tags => $composableBuilder(
+    column: $table.tags,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$StatementLinesTableAnnotationComposer
@@ -2149,6 +2491,12 @@ class $$StatementLinesTableAnnotationComposer
     column: $table.discountTypes,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get memo =>
+      $composableBuilder(column: $table.memo, builder: (column) => column);
+
+  GeneratedColumn<String> get tags =>
+      $composableBuilder(column: $table.tags, builder: (column) => column);
 }
 
 class $$StatementLinesTableTableManager
@@ -2202,6 +2550,8 @@ class $$StatementLinesTableTableManager
                 Value<String> cardNumber = const Value.absent(),
                 Value<ConfirmationStatusValue> status = const Value.absent(),
                 Value<String> discountTypes = const Value.absent(),
+                Value<String> memo = const Value.absent(),
+                Value<String> tags = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => StatementLinesCompanion(
                 id: id,
@@ -2222,6 +2572,8 @@ class $$StatementLinesTableTableManager
                 cardNumber: cardNumber,
                 status: status,
                 discountTypes: discountTypes,
+                memo: memo,
+                tags: tags,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2244,6 +2596,8 @@ class $$StatementLinesTableTableManager
                 required String cardNumber,
                 required ConfirmationStatusValue status,
                 required String discountTypes,
+                Value<String> memo = const Value.absent(),
+                Value<String> tags = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => StatementLinesCompanion.insert(
                 id: id,
@@ -2264,6 +2618,8 @@ class $$StatementLinesTableTableManager
                 cardNumber: cardNumber,
                 status: status,
                 discountTypes: discountTypes,
+                memo: memo,
+                tags: tags,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -2776,6 +3132,160 @@ typedef $$OperatorColorsTableProcessedTableManager =
       OperatorColor,
       PrefetchHooks Function()
     >;
+typedef $$RouteMapLayersTableCreateCompanionBuilder =
+    RouteMapLayersCompanion Function({
+      required String layerCode,
+      required bool visible,
+      Value<int> rowid,
+    });
+typedef $$RouteMapLayersTableUpdateCompanionBuilder =
+    RouteMapLayersCompanion Function({
+      Value<String> layerCode,
+      Value<bool> visible,
+      Value<int> rowid,
+    });
+
+class $$RouteMapLayersTableFilterComposer
+    extends Composer<_$AppDatabase, $RouteMapLayersTable> {
+  $$RouteMapLayersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get layerCode => $composableBuilder(
+    column: $table.layerCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get visible => $composableBuilder(
+    column: $table.visible,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RouteMapLayersTableOrderingComposer
+    extends Composer<_$AppDatabase, $RouteMapLayersTable> {
+  $$RouteMapLayersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get layerCode => $composableBuilder(
+    column: $table.layerCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get visible => $composableBuilder(
+    column: $table.visible,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RouteMapLayersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RouteMapLayersTable> {
+  $$RouteMapLayersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get layerCode =>
+      $composableBuilder(column: $table.layerCode, builder: (column) => column);
+
+  GeneratedColumn<bool> get visible =>
+      $composableBuilder(column: $table.visible, builder: (column) => column);
+}
+
+class $$RouteMapLayersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RouteMapLayersTable,
+          RouteMapLayer,
+          $$RouteMapLayersTableFilterComposer,
+          $$RouteMapLayersTableOrderingComposer,
+          $$RouteMapLayersTableAnnotationComposer,
+          $$RouteMapLayersTableCreateCompanionBuilder,
+          $$RouteMapLayersTableUpdateCompanionBuilder,
+          (
+            RouteMapLayer,
+            BaseReferences<_$AppDatabase, $RouteMapLayersTable, RouteMapLayer>,
+          ),
+          RouteMapLayer,
+          PrefetchHooks Function()
+        > {
+  $$RouteMapLayersTableTableManager(
+    _$AppDatabase db,
+    $RouteMapLayersTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RouteMapLayersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RouteMapLayersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RouteMapLayersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> layerCode = const Value.absent(),
+                Value<bool> visible = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RouteMapLayersCompanion(
+                layerCode: layerCode,
+                visible: visible,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String layerCode,
+                required bool visible,
+                Value<int> rowid = const Value.absent(),
+              }) => RouteMapLayersCompanion.insert(
+                layerCode: layerCode,
+                visible: visible,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$RouteMapLayersTable, RouteMapLayer>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $RouteMapLayersTable,
+                    RouteMapLayer
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RouteMapLayersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RouteMapLayersTable,
+      RouteMapLayer,
+      $$RouteMapLayersTableFilterComposer,
+      $$RouteMapLayersTableOrderingComposer,
+      $$RouteMapLayersTableAnnotationComposer,
+      $$RouteMapLayersTableCreateCompanionBuilder,
+      $$RouteMapLayersTableUpdateCompanionBuilder,
+      (
+        RouteMapLayer,
+        BaseReferences<_$AppDatabase, $RouteMapLayersTable, RouteMapLayer>,
+      ),
+      RouteMapLayer,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2788,4 +3298,6 @@ class $AppDatabaseManager {
       $$IcPositionsTableTableManager(_db, _db.icPositions);
   $$OperatorColorsTableTableManager get operatorColors =>
       $$OperatorColorsTableTableManager(_db, _db.operatorColors);
+  $$RouteMapLayersTableTableManager get routeMapLayers =>
+      $$RouteMapLayersTableTableManager(_db, _db.routeMapLayers);
 }

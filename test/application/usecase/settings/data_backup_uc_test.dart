@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:etc_meisai/domain/entity/route_map_layer_entity.dart';
 import 'package:etc_meisai/application/usecase/settings/delete_all_data_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/export_data_uc.dart';
 import 'package:etc_meisai/application/usecase/settings/import_data_uc.dart';
@@ -27,6 +28,9 @@ AppDataEntity _data({int lines = 2, int mappings = 1, int positions = 3}) =>
       ],
       operatorColors: const [
         OperatorColorEntity(operatorName: 'NEXCO東日本', color: 0xFF112233),
+      ],
+      routeMapLayers: const [
+        RouteMapLayerEntity(layerCode: 'network', visible: false),
       ],
     );
 

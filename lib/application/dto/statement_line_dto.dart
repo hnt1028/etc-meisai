@@ -24,6 +24,8 @@ class StatementLineDTO {
     required this.status,
     required this.discountTypes,
     this.routeNames = const [],
+    this.memo = '',
+    this.tags = const [],
   });
 
   /// The id of the stored line, used to enter its vehicle number. Null for a
@@ -68,4 +70,10 @@ class StatementLineDTO {
 
   /// The routes the line ran on. Empty when they are not known.
   final List<String> routeNames;
+
+  /// The note of the user. Empty when there is none.
+  final String memo;
+
+  /// The tags of the user.
+  final List<String> tags;
 }

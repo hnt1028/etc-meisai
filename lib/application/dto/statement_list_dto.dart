@@ -9,6 +9,7 @@ class StatementListDTO {
     required this.totalPostpaidFare,
     required this.vehicleNumberChoices,
     required this.cardNumberChoices,
+    this.tagChoices = const [],
   });
 
   /// The filtered statement lines, newest exit first.
@@ -25,4 +26,7 @@ class StatementListDTO {
 
   /// The last 4 characters of each card number (never the whole number).
   final List<String> cardNumberChoices;
+
+  /// Every tag of the stored lines (not only the filtered ones), sorted.
+  final List<String> tagChoices;
 }

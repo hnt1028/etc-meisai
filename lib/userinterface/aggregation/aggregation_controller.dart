@@ -1,5 +1,6 @@
 import 'package:etc_meisai/application/dto/aggregation_dto.dart';
 import 'package:etc_meisai/application/dto/aggregation_row_dto.dart';
+import 'package:etc_meisai/application/dto/route_coverage_row_dto.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_providers.dart';
 import 'package:etc_meisai/userinterface/common/data_revision.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_controller.dart';
@@ -17,11 +18,21 @@ final aggregationProvider = FutureProvider<AggregationDTO>((ref) {
         to: filter.to,
         vehicleNumber: filter.vehicleNumber,
         cardNumberSuffix: filter.cardNumberSuffix,
+        tag: filter.tag,
       );
 }, retry: (_, _) => null);
 
 /// What is aggregated.
-enum AggregationKind { period, operator, route, ic, hour, discount }
+enum AggregationKind {
+  period,
+  operator,
+  tag,
+  route,
+  ic,
+  hour,
+  discount,
+  coverage,
+}
 
 /// The unit of the period aggregation.
 enum AggregationUnit { week, month, year }
@@ -66,10 +77,13 @@ List<AggregationRowDTO> rowsOf(
     AggregationUnit.year => data.years,
   },
   AggregationKind.operator => data.operators,
+  AggregationKind.tag => data.tags,
   AggregationKind.route => data.routes,
   AggregationKind.ic => data.ics,
   AggregationKind.hour => data.hours,
   AggregationKind.discount => data.discountTypes,
+  // The coverage has its own list (it is not a table of counts).
+  AggregationKind.coverage => const [],
 };
 
 /// What the user chose on the screen (OP-3 to OP-6).
@@ -124,3 +138,8 @@ class AggregationViewController extends Notifier<AggregationViewState> {
   void setMetric(AggregationMetric metric) =>
       state = state.copyWith(metric: metric);
 }
+
+/// The share of the ICs of a road that were passed, in tenths of a percent
+/// (123 is 12.3%). It rounds down, so that 100% means that all were passed.
+int coverageTenths(RouteCoverageRowDTO row) =>
+    row.totalCount == 0 ? 0 : row.drivenCount * 1000 ~/ row.totalCount;

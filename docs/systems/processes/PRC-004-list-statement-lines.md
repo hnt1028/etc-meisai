@@ -32,6 +32,7 @@
 | `to` | `DateTime?` | 期間の終了日。`null` なら上限なし |
 | `vehicleNumber` | `int?` | 車両番号。`null` なら絞らない |
 | `cardNumberSuffix` | `String?` | ETCカード番号の下4桁。`null` なら絞らない |
+| `tag` | `String?` | タグ。`null` なら絞らない。指定したら、そのタグが付いた明細行だけ |
 
 - `from`、`to` は日付だけを使う（時刻は無視する）
 
@@ -44,6 +45,7 @@
    - 出口日時の日付が、`to` 以前（`to` を含む）
    - 車両番号が `vehicleNumber` と等しい（車両番号が `null` の明細行は、`vehicleNumber` を指定すると除く）
    - ETCカード番号の下4桁が `cardNumberSuffix` と等しい
+   - `tag` が、明細行のタグに入っている
 4. 出口日時の新しい順に並べる（同じ日時は、保存済みの順のまま）
 5. 絞った明細行の、通行料金・還元額適用料金・後納料金を、それぞれ合計する（確認中の明細行も含める）
 6. `Entity` を `StatementLineDTO` に詰め替える。車種の名前は、`VehicleTypeMasterIF` の `findAll` で取得した車種区分と、路線名から決める（[vehicle-types.md](../../vehicle-types.md)）。ETCカード番号は、下4桁にして入れる（元の番号は入れない）。路線名は、`IcLookup` に入口IC・出口ICを渡して決める（規則は [route-map.md](../../route-map.md) の「路線名」）
@@ -88,6 +90,7 @@ sequenceDiagram
 | `totalPostpaidFare` | `int` | 後納料金の合計（円） |
 | `vehicleNumberChoices` | `List<int>` | 絞り込みで選べる車両番号（`null` は含めない） |
 | `cardNumberChoices` | `List<String>` | 絞り込みで選べるETCカード番号（下4桁） |
+| `tagChoices` | `List<String>` | 絞り込みで選べるタグ（絞り込む前の全明細行のタグ。重複なし、文字の順） |
 
 `StatementLineDTO`（一覧・タイムラインの表示と、[SCR-003](../screens/SCR-003-statement-detail.md) の詳細に使う）
 
@@ -106,6 +109,8 @@ sequenceDiagram
 | `vehicleTypeName` | `String` | 車種の名前。事業者の車種区分による（[vehicle-types.md](../../vehicle-types.md)） |
 | `vehicleNumber` | `int?` | 車両番号（個人情報）。CSVで空欄で、利用者がまだ入力していないときは `null` |
 | `cardNumberSuffix` | `String` | ETCカード番号の下4桁 |
+| `memo` | `String` | 利用者のメモ。無いときは空文字 |
+| `tags` | `List<String>` | 利用者のタグ |
 | `status` | `ConfirmationStatusValue` | 状態 |
 | `discountTypes` | `List<String>` | 割引種別（無いときは空） |
 | `routeNames` | `List<String>` | 路線名（通行した高速道路）。決められないときは空 |

@@ -12,6 +12,7 @@ class RouteMapDTO {
     required this.lineCount,
     required this.vehicleNumberChoices,
     required this.cardNumberChoices,
+    this.tagChoices = const [],
   });
 
   /// The lines to draw.
@@ -35,4 +36,7 @@ class RouteMapDTO {
 
   /// The last 4 characters of each card number.
   final List<String> cardNumberChoices;
+
+  /// Every tag of the stored lines, sorted.
+  final List<String> tagChoices;
 }

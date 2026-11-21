@@ -4,6 +4,7 @@ import 'package:etc_meisai/application/usecase/route_map/get_line_route_uc.dart'
 import 'package:etc_meisai/application/usecase/statements/estimate_entrance_at_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/list_entrance_candidates_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_entrance_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/save_line_note_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_vehicle_number_uc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -42,4 +43,9 @@ final listEntranceCandidatesUCProvider = Provider<ListEntranceCandidatesUC>(
 /// lib/main.dart.
 final estimateEntranceAtUCProvider = Provider<EstimateEntranceAtUC>(
   (ref) => throw UnimplementedError('Override estimateEntranceAtUCProvider'),
+);
+
+/// OP-6 of SCR-003 (PRC-027). Also built in lib/main.dart.
+final saveLineNoteUCProvider = Provider<SaveLineNoteUC>(
+  (ref) => throw UnimplementedError('Override saveLineNoteUCProvider'),
 );

@@ -75,6 +75,17 @@ class StatementLineRepo implements StatementLineIF {
   }
 
   @override
+  Future<void> updateNote(
+    String id, {
+    required String memo,
+    required List<String> tags,
+  }) async {
+    await (_db.update(_db.statementLines)..where((t) => t.id.equals(id))).write(
+      StatementLinesCompanion(memo: Value(memo), tags: Value(tags.join(';'))),
+    );
+  }
+
+  @override
   Future<List<StatementLineEntity>> findAll() async {
     final rows = await (_db.select(
       _db.statementLines,
@@ -127,6 +138,8 @@ class StatementLineRepo implements StatementLineIF {
       discountTypes: row.discountTypes.isEmpty
           ? const []
           : row.discountTypes.split(';'),
+      memo: row.memo,
+      tags: row.tags.isEmpty ? const [] : row.tags.split(';'),
     );
   }
 }

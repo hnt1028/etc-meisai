@@ -31,6 +31,7 @@ class ListStatementLinesUC {
     DateTime? to,
     int? vehicleNumber,
     String? cardNumberSuffix,
+    String? tag,
   }) async {
     final all = await statementLines.findAll();
     final divisions = await vehicleTypes.findAll();
@@ -46,6 +47,7 @@ class ListStatementLinesUC {
       to: to,
       vehicleNumber: vehicleNumber,
       cardNumberSuffix: cardNumberSuffix,
+      tag: tag,
     );
 
     return StatementListDTO(
@@ -57,6 +59,7 @@ class ListStatementLinesUC {
       totalPostpaidFare: sorted.fold(0, (sum, l) => sum + l.postpaidFare),
       vehicleNumberChoices: vehicleNumberChoicesOf(all),
       cardNumberChoices: cardNumberChoicesOf(all),
+      tagChoices: tagChoicesOf(all),
     );
   }
 }

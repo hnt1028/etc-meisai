@@ -56,6 +56,7 @@ class StatementListScreen extends ConsumerWidget {
                         filter: filter,
                         vehicleNumberChoices: data.vehicleNumberChoices,
                         cardNumberChoices: data.cardNumberChoices,
+                        tagChoices: data.tagChoices,
                       ),
                       _Totals(data: data),
                     ],
@@ -193,6 +194,9 @@ class _LineTile extends StatelessWidget {
             Text(StatementListStrings.routes(line.routeNames)),
           if (line.discountTypes.isNotEmpty)
             Text(StatementListStrings.discounts(line.discountTypes)),
+          if (line.tags.isNotEmpty) Text(StatementListStrings.tags(line.tags)),
+          if (line.memo.isNotEmpty)
+            Text(line.memo, maxLines: 1, overflow: TextOverflow.ellipsis),
         ],
       ),
       trailing: Column(

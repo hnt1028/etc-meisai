@@ -26,12 +26,17 @@ List<String> cardNumberChoicesOf(List<StatementLineEntity> all) =>
 /// The lines of [all] that meet every condition that is not null, the newest
 /// exit first. [from] and [to] are dates (the time is ignored) and are
 /// included in the period.
+/// Every tag of [all], sorted.
+List<String> tagChoicesOf(List<StatementLineEntity> all) =>
+    {for (final line in all) ...line.tags}.toList()..sort();
+
 List<StatementLineEntity> filterStatementLines(
   List<StatementLineEntity> all, {
   DateTime? from,
   DateTime? to,
   int? vehicleNumber,
   String? cardNumberSuffix,
+  String? tag,
 }) {
   final fromDay = from == null ? null : _day(from);
   final toDay = to == null ? null : _day(to);
@@ -46,6 +51,7 @@ List<StatementLineEntity> filterStatementLines(
         cardNumberSuffixOf(line.cardNumber) != cardNumberSuffix) {
       return false;
     }
+    if (tag != null && !line.tags.contains(tag)) return false;
     return true;
   }).toList();
   // List.sort is not stable, so ties keep their stored order by index.
@@ -85,4 +91,6 @@ StatementLineDTO toStatementLineDTO(
   status: line.status,
   discountTypes: List.unmodifiable(line.discountTypes),
   routeNames: lookup.routeNamesOf(line.entranceIc, line.exitIc),
+  memo: line.memo,
+  tags: List.unmodifiable(line.tags),
 );
