@@ -22,6 +22,8 @@ class StatementLineEntity {
     required this.cardNumber,
     required this.status,
     required this.discountTypes,
+    this.memo = '',
+    this.tags = const [],
   });
 
   /// The id the repository gave when the line was first stored. Null for a
@@ -62,4 +64,10 @@ class StatementLineEntity {
 
   /// Discount names from the CSV note, such as 深夜割引. Not part of [status].
   final List<String> discountTypes;
+
+  /// A note of the user. Empty when there is none.
+  final String memo;
+
+  /// Labels the user put on the line, such as 仕事. Without `;` and line breaks.
+  final List<String> tags;
 }

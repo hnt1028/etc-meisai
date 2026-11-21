@@ -10,19 +10,22 @@ class StatementFilterState {
     this.to,
     this.vehicleNumber,
     this.cardNumberSuffix,
+    this.tag,
   });
 
   final DateTime? from;
   final DateTime? to;
   final int? vehicleNumber;
   final String? cardNumberSuffix;
+  final String? tag;
 
   /// True when at least one condition is set.
   bool get isActive =>
       from != null ||
       to != null ||
       vehicleNumber != null ||
-      cardNumberSuffix != null;
+      cardNumberSuffix != null ||
+      tag != null;
 }
 
 final statementFilterProvider =
@@ -40,6 +43,7 @@ class StatementFilterController extends Notifier<StatementFilterState> {
     to: to,
     vehicleNumber: state.vehicleNumber,
     cardNumberSuffix: state.cardNumberSuffix,
+    tag: state.tag,
   );
 
   void setVehicleNumber(int? vehicleNumber) => state = StatementFilterState(
@@ -47,6 +51,7 @@ class StatementFilterController extends Notifier<StatementFilterState> {
     to: state.to,
     vehicleNumber: vehicleNumber,
     cardNumberSuffix: state.cardNumberSuffix,
+    tag: state.tag,
   );
 
   void setCardNumberSuffix(String? cardNumberSuffix) =>
@@ -55,7 +60,16 @@ class StatementFilterController extends Notifier<StatementFilterState> {
         to: state.to,
         vehicleNumber: state.vehicleNumber,
         cardNumberSuffix: cardNumberSuffix,
+        tag: state.tag,
       );
+
+  void setTag(String? tag) => state = StatementFilterState(
+    from: state.from,
+    to: state.to,
+    vehicleNumber: state.vehicleNumber,
+    cardNumberSuffix: state.cardNumberSuffix,
+    tag: tag,
+  );
 
   /// OP-3: removes every condition.
   void clear() => state = const StatementFilterState();
@@ -102,5 +116,6 @@ final statementListProvider = FutureProvider<StatementListDTO>((ref) {
         to: filter.to,
         vehicleNumber: filter.vehicleNumber,
         cardNumberSuffix: filter.cardNumberSuffix,
+        tag: filter.tag,
       );
 }, retry: (_, _) => null);

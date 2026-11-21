@@ -33,6 +33,13 @@ abstract interface class StatementLineIF {
   });
 
   /// Returns every stored statement line.
+  /// Stores the note of the line [id]: replaces its memo and its tags.
+  Future<void> updateNote(
+    String id, {
+    required String memo,
+    required List<String> tags,
+  });
+
   Future<List<StatementLineEntity>> findAll();
 
   /// Removes every stored statement line.

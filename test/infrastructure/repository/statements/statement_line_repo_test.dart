@@ -399,4 +399,74 @@ void main() {
       expect(line.entranceIc, isNull);
     });
   });
+
+  group('the memo and the tags', () {
+    test('are empty until the user writes them', () async {
+      await repo.save(_statementLine());
+
+      final line = (await repo.findAll()).single;
+
+      expect(line.memo, '');
+      expect(line.tags, isEmpty);
+    });
+
+    test('are stored for one line, and read back', () async {
+      await repo.save(_statementLine());
+      await repo.save(_statementLine(exitIc: 'C-IC'));
+      final id = (await repo.findAll()).first.id!;
+
+      await repo.updateNote(id, memo: '出張', tags: ['仕事', '東京']);
+
+      final line = (await repo.findById(id))!;
+      expect(line.memo, '出張');
+      expect(line.tags, ['仕事', '東京']);
+      final other = (await repo.findAll()).firstWhere((l) => l.id != id);
+      expect(other.memo, '');
+      expect(other.tags, isEmpty);
+
+      await repo.updateNote(id, memo: '', tags: const []);
+      expect((await repo.findById(id))!.tags, isEmpty);
+    });
+
+    test('stay when the same line is imported again', () async {
+      await repo.save(_statementLine());
+      final id = (await repo.findAll()).single.id!;
+      await repo.updateNote(id, memo: '出張', tags: ['仕事']);
+
+      await repo.save(_statementLine(fare: 2000));
+
+      final line = (await repo.findAll()).single;
+      expect(line.fare, 2000);
+      expect(line.id, id);
+      expect(line.memo, '出張');
+      expect(line.tags, ['仕事']);
+    });
+
+    test('do nothing for an id that is not stored', () async {
+      await repo.save(_statementLine());
+
+      await repo.updateNote('none', memo: 'x', tags: ['t']);
+
+      expect((await repo.findAll()).single.memo, '');
+    });
+
+    test('are added by the upgrade from the version 6', () async {
+      await db.customStatement('ALTER TABLE statement_lines DROP COLUMN memo');
+      await db.customStatement('ALTER TABLE statement_lines DROP COLUMN tags');
+
+      await db.migration.onUpgrade(db.createMigrator(), 6, 7);
+      await repo.save(_statementLine());
+      final id = (await repo.findAll()).single.id!;
+      await repo.updateNote(id, memo: 'm', tags: ['t']);
+
+      expect((await repo.findById(id))!.memo, 'm');
+    });
+
+    test('are not added again when the version is already 7', () async {
+      await db.migration.onUpgrade(db.createMigrator(), 6, 7);
+
+      await repo.save(_statementLine());
+      expect(await repo.findAll(), hasLength(1));
+    });
+  });
 }

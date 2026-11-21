@@ -37,6 +37,7 @@ class ListRouteMapUC {
     DateTime? to,
     int? vehicleNumber,
     String? cardNumberSuffix,
+    String? tag,
   }) async {
     final all = await statementLines.findAll();
     final divisions = await vehicleTypes.findAll();
@@ -52,6 +53,7 @@ class ListRouteMapUC {
       to: to,
       vehicleNumber: vehicleNumber,
       cardNumberSuffix: cardNumberSuffix,
+      tag: tag,
     );
 
     final segments = <RouteSegmentDTO>[];
@@ -145,6 +147,7 @@ class ListRouteMapUC {
       lineCount: lines.length,
       vehicleNumberChoices: vehicleNumberChoicesOf(all),
       cardNumberChoices: cardNumberChoicesOf(all),
+      tagChoices: tagChoicesOf(all),
     );
   }
 }

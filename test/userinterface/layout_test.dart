@@ -125,6 +125,9 @@ void main() {
       await openTab(tester, AppStrings.aggregationTab);
       expectFits();
       for (final display in AggregationDisplay.values) {
+        // The coverage (the last kind) has no table or graph: start from the
+        // period.
+        await tapText(AggregationStrings.kind(AggregationKind.period));
         await tapText(AggregationStrings.display(display));
         for (final kind in AggregationKind.values) {
           step = 'the aggregation of ${kind.name} as ${display.name}';

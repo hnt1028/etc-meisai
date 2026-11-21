@@ -22,6 +22,19 @@ abstract final class AggregationStrings {
 
   static const operatorNote = '路線名からの推定です';
 
+  static String coverageSummary(int covered, int total) =>
+      '走った路線: $covered / $total 路線';
+  static const coverageNote =
+      '路線のIC（JCT・スマートICを含む）のうち、通ったICの割合です。入口と出口、その間のICを、通ったと見なします。間は、最短の経路と見なします';
+  static const coverageNone = '走った路線がありません';
+
+  /// [tenths] is the share in tenths of a percent: 123 is 12.3%.
+  static String coveragePercent(int tenths) =>
+      '${tenths ~/ 10}.${tenths % 10}%';
+  static String coverageCount(int driven, int total) => '$driven / $total IC';
+
+  static const tagNote = 'タグが複数ある明細行は、それぞれのタグに数えます（合計は、全体と一致しません）';
+
   /// The slice of the pie for the routes and ICs outside the top 10.
   static const other = 'その他';
   static const noPieValues = '表示できる値がありません';
@@ -33,10 +46,12 @@ abstract final class AggregationStrings {
   static String kind(AggregationKind kind) => switch (kind) {
     AggregationKind.period => '期間',
     AggregationKind.operator => '事業者',
+    AggregationKind.tag => 'タグ',
     AggregationKind.route => '路線',
     AggregationKind.ic => 'IC',
     AggregationKind.hour => '時間帯',
     AggregationKind.discount => '割引',
+    AggregationKind.coverage => '走破率',
   };
 
   static String unit(AggregationUnit unit) => switch (unit) {

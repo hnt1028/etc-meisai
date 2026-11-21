@@ -186,7 +186,64 @@ void main() {
     expect(_text(StatementListStrings.clearFilter), findsNothing);
   });
 
+  testWidgets('shows the tags and the memo of a line', (tester) async {
+    final lines = FakeStatementLineIF()
+      ..stored.addAll([
+        fakeStatementLine(
+          exitIc: 'X-IC',
+          memo: '出張で使った',
+          tags: const ['仕事', '東京'],
+        ),
+        fakeStatementLine(exitIc: 'Y-IC', exitAt: DateTime(2026, 1, 11, 9)),
+      ]);
+
+    await _start(tester, lines);
+
+    expect(_text(StatementListStrings.tags(['仕事', '東京'])), findsOneWidget);
+    expect(_text('出張で使った'), findsOneWidget);
+    // A line without a note has neither.
+    expect(find.textContaining('タグ:'), findsOneWidget);
+  });
+
   group('filter', () {
+    testWidgets('by tag, and has no tag choice without tags', (tester) async {
+      await _start(tester, _linesOfTwoVehicles());
+      expect(find.byKey(const ValueKey('tag-null')), findsNothing);
+    });
+
+    testWidgets('by tag, and clears it', (tester) async {
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final lines = FakeStatementLineIF()
+        ..stored.addAll([
+          fakeStatementLine(
+            exitIc: 'X-IC',
+            exitAt: DateTime(2026, 1, 11, 9),
+            tags: const ['仕事'],
+          ),
+          fakeStatementLine(
+            exitIc: 'Y-IC',
+            exitAt: DateTime(2026, 1, 12, 9),
+            tags: const ['私用'],
+          ),
+        ]);
+      await _start(tester, lines);
+
+      await tester.tap(find.byKey(const ValueKey('tag-null')));
+      await tester.pumpAndSettle();
+      await tester.tap(_text('仕事').last);
+      await tester.pumpAndSettle();
+
+      expect(_text('A-IC → X-IC'), findsOneWidget);
+      expect(_text('A-IC → Y-IC'), findsNothing);
+
+      await tester.tap(_text(StatementListStrings.clearFilter));
+      await tester.pumpAndSettle();
+
+      expect(_text('A-IC → Y-IC'), findsOneWidget);
+    });
+
     testWidgets('by vehicle number, and clears it', (tester) async {
       await _start(tester, _linesOfTwoVehicles());
 

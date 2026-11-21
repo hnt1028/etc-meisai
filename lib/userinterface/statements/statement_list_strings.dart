@@ -10,6 +10,8 @@ abstract final class StatementListStrings {
 
   static const periodLabel = '期間';
   static const periodNone = '指定なし';
+  static const tagLabel = 'タグ';
+  static String tags(List<String> tags) => 'タグ: ${tags.join('・')}';
   static const vehicleNumberLabel = '車両番号';
   static const cardNumberLabel = 'ETCカード番号';
   static const choiceAll = 'すべて';
