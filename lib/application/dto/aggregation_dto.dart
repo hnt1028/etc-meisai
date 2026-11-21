@@ -1,4 +1,5 @@
 import 'package:etc_meisai/application/dto/aggregation_row_dto.dart';
+import 'package:etc_meisai/application/dto/route_coverage_row_dto.dart';
 import 'package:etc_meisai/application/dto/aggregation_summary_dto.dart';
 
 /// What the aggregation screen shows. Design: PRC-013.
@@ -19,6 +20,8 @@ class AggregationDTO {
     required this.cardNumberChoices,
     this.tags = const [],
     this.tagChoices = const [],
+    this.coverage = const [],
+    this.coverageRouteCount = 0,
   });
 
   final AggregationSummaryDTO summary;
@@ -58,4 +61,11 @@ class AggregationDTO {
 
   /// Every tag of the stored lines, sorted.
   final List<String> tagChoices;
+
+  /// The roads that were driven at least a little, and how much of each:
+  /// the most covered first.
+  final List<RouteCoverageRowDTO> coverage;
+
+  /// How many roads the IC master has.
+  final int coverageRouteCount;
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:etc_meisai/application/dto/route_coverage_row_dto.dart';
 import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_pie.dart';
@@ -165,6 +166,52 @@ void main() {
     expect(find.text('1,000円'), findsNWidgets(2));
     expect(find.text('500円'), findsOneWidget);
     expect(find.text('200円'), findsOneWidget);
+  });
+
+  testWidgets('shows how much of each road was driven', (tester) async {
+    await _show(tester, lines: _lines());
+
+    await _tap(tester, AggregationStrings.kind(AggregationKind.coverage));
+
+    expect(find.text(AggregationStrings.coverageSummary(1, 1)), findsOneWidget);
+    expect(find.text(AggregationStrings.coverageNote), findsOneWidget);
+    // 北 - 東 is all of 東名高速道路.
+    expect(find.byKey(const ValueKey('coverage-東名高速道路')), findsOneWidget);
+    expect(find.text('100.0%'), findsOneWidget);
+    expect(find.text('3.0km / 3.0km'), findsOneWidget);
+    // There is no table or graph for it.
+    expect(
+      find.text(AggregationStrings.display(AggregationDisplay.graph)),
+      findsNothing,
+    );
+  });
+
+  testWidgets('says so when no road was driven', (tester) async {
+    // The ICs are not in the master.
+    await _show(
+      tester,
+      lines: [fakeStatementLine(entranceIc: 'X', exitIc: 'Y')],
+    );
+
+    await _tap(tester, AggregationStrings.kind(AggregationKind.coverage));
+
+    expect(find.text(AggregationStrings.coverageSummary(0, 1)), findsOneWidget);
+    expect(find.text(AggregationStrings.coverageNone), findsOneWidget);
+  });
+
+  test('the share of a road is in tenths of a percent, rounded down', () {
+    RouteCoverageRowDTO row(int driven, int total) => RouteCoverageRowDTO(
+      routeName: 'R',
+      totalMeters: total,
+      drivenMeters: driven,
+    );
+
+    expect(coverageTenths(row(1, 3)), 333);
+    expect(coverageTenths(row(3, 3)), 1000);
+    expect(coverageTenths(row(0, 0)), 0);
+    expect(AggregationStrings.coveragePercent(333), '33.3%');
+    expect(AggregationStrings.coveragePercent(1000), '100.0%');
+    expect(AggregationStrings.coveragePercent(5), '0.5%');
   });
 
   testWidgets('draws the distance as bars and as a pie', (tester) async {

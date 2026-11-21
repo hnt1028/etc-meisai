@@ -22,6 +22,18 @@ abstract final class AggregationStrings {
 
   static const operatorNote = '路線名からの推定です';
 
+  static String coverageSummary(int covered, int total) =>
+      '走った路線: $covered / $total 路線';
+  static const coverageNote =
+      '路線の区間（ICの間）のうち、走った区間の道のりの割合です。走った経路は、入口から出口までの最短の経路と見なします';
+  static const coverageNone = '走った路線がありません';
+
+  /// [tenths] is the share in tenths of a percent: 123 is 12.3%.
+  static String coveragePercent(int tenths) =>
+      '${tenths ~/ 10}.${tenths % 10}%';
+  static String coverageDistance(String driven, String total) =>
+      '$driven / $total';
+
   static const tagNote = 'タグが複数ある明細行は、それぞれのタグに数えます（合計は、全体と一致しません）';
 
   /// The slice of the pie for the routes and ICs outside the top 10.
@@ -40,6 +52,7 @@ abstract final class AggregationStrings {
     AggregationKind.ic => 'IC',
     AggregationKind.hour => '時間帯',
     AggregationKind.discount => '割引',
+    AggregationKind.coverage => '走破率',
   };
 
   static String unit(AggregationUnit unit) => switch (unit) {

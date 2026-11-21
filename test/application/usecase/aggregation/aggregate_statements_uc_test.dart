@@ -22,6 +22,31 @@ Map<String, int?> _fares(List<AggregationRowDTO> rows) => {
 
 void main() {
   group('AggregateStatementsUC', () {
+    test('gives the coverage of the roads', () async {
+      final master = FakeIcMasterIF(
+        [
+          fakeIcPoint(name: '北', routeNames: const ['東名高速道路']),
+          fakeIcPoint(name: '東', routeNames: const ['東名高速道路']),
+          fakeIcPoint(name: '南', routeNames: const ['東名高速道路']),
+        ],
+        links: const [
+          IcLinkEntity(fromId: 'id-北', toId: 'id-東', meters: 3000),
+          IcLinkEntity(fromId: 'id-東', toId: 'id-南', meters: 1000),
+        ],
+      );
+      final uc = fakeAggregateUC(
+        _lines([fakeStatementLine(entranceIc: '北', exitIc: '東')]),
+        master: master,
+      );
+
+      final result = await uc.execute();
+
+      expect(result.coverageRouteCount, 1);
+      expect(result.coverage.single.routeName, '東名高速道路');
+      expect(result.coverage.single.totalMeters, 4000);
+      expect(result.coverage.single.drivenMeters, 3000);
+    });
+
     test('is empty when nothing is stored', () async {
       final result = await fakeAggregateUC(FakeStatementLineIF()).execute();
 

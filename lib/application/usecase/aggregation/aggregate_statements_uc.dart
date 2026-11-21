@@ -6,6 +6,7 @@ import 'package:etc_meisai/application/interface/ic_master_if.dart';
 import 'package:etc_meisai/application/interface/ic_position_if.dart';
 import 'package:etc_meisai/application/interface/statement_line_if.dart';
 import 'package:etc_meisai/application/usecase/aggregation/ic_distance.dart';
+import 'package:etc_meisai/application/usecase/aggregation/route_coverage.dart';
 import 'package:etc_meisai/application/usecase/aggregation/route_operators.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
 import 'package:etc_meisai/application/usecase/statements/statement_filter.dart';
@@ -42,12 +43,14 @@ class AggregateStatementsUC {
     String? tag,
   }) async {
     final all = await statementLines.findAll();
+    final points = await icMaster.findAll();
     final lookup = IcLookup(
-      points: await icMaster.findAll(),
+      points: points,
       mappings: await icMappings.findAll(),
       positions: await icPositions.findAll(),
     );
-    final distance = IcDistance(await icMaster.findLinks());
+    final links = await icMaster.findLinks();
+    final distance = IcDistance(links);
     final lines = filterStatementLines(
       all,
       from: from,
@@ -107,6 +110,17 @@ class AggregateStatementsUC {
       }
     }
 
+    final coverage = routeCoverageOf(
+      points: points,
+      links: links,
+      distance: distance,
+      lookup: lookup,
+      trips: [
+        for (final line in lines)
+          (entranceIc: line.entranceIc, exitIc: line.exitIc),
+      ],
+    );
+
     return AggregationDTO(
       summary: AggregationSummaryDTO(
         lineCount: lines.length,
@@ -139,6 +153,8 @@ class AggregateStatementsUC {
       cardNumberChoices: cardNumberChoicesOf(all),
       tags: tags.rows(byFare: true),
       tagChoices: tagChoicesOf(all),
+      coverage: coverage.rows,
+      coverageRouteCount: coverage.routeCount,
     );
   }
 
