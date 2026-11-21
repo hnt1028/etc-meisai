@@ -21,6 +21,19 @@ void main() {
         '山陽自動車道': 'NEXCO西日本',
         '九州横断自動車道長崎大分線': 'NEXCO西日本',
         '西名阪自動車道': 'NEXCO西日本',
+        // Roads of N06 whose names have no word of their company.
+        '安房峠道路': 'NEXCO中日本',
+        '修善寺道路': 'NEXCO中日本',
+        '東駿河湾環状道路': 'NEXCO中日本',
+        '新東京国際空港線': 'NEXCO東日本',
+        '東水戸道路': 'NEXCO東日本',
+        '仙台東部道路': 'NEXCO東日本',
+        '仙台北部道路': 'NEXCO東日本',
+        '沖縄自動車道': 'NEXCO西日本',
+        '関西国際空港線': 'NEXCO西日本',
+        '山陰自動車道': 'NEXCO西日本',
+        '高速横浜環状北西線': '首都高速道路',
+        '大阪府道高速大和川線': '阪神高速道路',
       };
       for (final entry in expected.entries) {
         expect(routeOperatorOf(entry.key), entry.value, reason: entry.key);
