@@ -32,3 +32,10 @@ String formatKm(int meters) {
   }
   return '$buffer.${tenths % 10}km';
 }
+
+/// Shows a size in bytes: `850B`, `12KB` (1KB is 1024 bytes), or `12.3MB`.
+String formatDataSize(int bytes) {
+  if (bytes < 1024) return '${bytes}B';
+  if (bytes < 1024 * 1024) return '${(bytes / 1024).round()}KB';
+  return '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
+}

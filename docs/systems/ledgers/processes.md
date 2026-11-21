@@ -29,3 +29,5 @@
 | PRC-025 | 地図の表示の保存（SaveRouteMapLayerUC） | [PRC-025-save-route-map-layer.md](../processes/PRC-025-save-route-map-layer.md) | 草案 |
 | PRC-026 | 路線図の作成（ListRouteNetworkUC） | [PRC-026-list-route-network.md](../processes/PRC-026-list-route-network.md) | 草案 |
 | PRC-027 | メモとタグの保存（SaveLineNoteUC） | [PRC-027-save-line-note.md](../processes/PRC-027-save-line-note.md) | 草案 |
+| PRC-028 | 保存した地図の大きさの取得（GetTileCacheSizeUC） | [PRC-028-get-tile-cache-size.md](../processes/PRC-028-get-tile-cache-size.md) | 草案 |
+| PRC-029 | 保存した地図の削除（ClearTileCacheUC） | [PRC-029-clear-tile-cache.md](../processes/PRC-029-clear-tile-cache.md) | 草案 |

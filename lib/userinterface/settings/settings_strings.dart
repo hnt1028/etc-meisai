@@ -13,6 +13,17 @@ abstract final class SettingsStrings {
   static String importFailed(String message) => '取り込めませんでした: $message';
   static const importUnexpected = '取り込み中にエラーが発生しました';
 
+  static const tileCacheSection = '保存した地図';
+  static const tileCacheNote = '見た場所の地図を、端末に保存しています。通信できないときも、保存した地図を表示します。';
+  static String tileCacheSize(String size) => '保存している地図: $size';
+  static const tileCacheLoadFailed = '保存した地図の大きさを調べられませんでした';
+  static const tileCacheClear = '保存した地図を消す';
+  static const tileCacheClearConfirm =
+      '保存した地図をすべて消します。通信できないときは、消した場所の地図が表示できなくなります。（もう一度見ると、保存されます）';
+  static const tileCacheClearOk = '消す';
+  static const tileCacheCleared = '保存した地図を消しました';
+  static const tileCacheClearFailed = '消せませんでした';
+
   static const operatorColorSection = '地図の線の色';
   static const operatorColorNote = '道路の事業者ごとに、地図の線の色を変えられます。';
   static const operatorColorDefault = '初期値';
