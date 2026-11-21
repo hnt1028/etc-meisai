@@ -2103,6 +2103,226 @@ class RouteMapLayersCompanion extends UpdateCompanion<RouteMapLayer> {
   }
 }
 
+class $RouteMapOptionsTable extends RouteMapOptions
+    with TableInfo<$RouteMapOptionsTable, RouteMapOption> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RouteMapOptionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _optionCodeMeta = const VerificationMeta(
+    'optionCode',
+  );
+  @override
+  late final GeneratedColumn<String> optionCode = GeneratedColumn<String>(
+    'option_code',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<int> value = GeneratedColumn<int>(
+    'value',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [optionCode, value];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'route_map_options';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RouteMapOption> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('option_code')) {
+      context.handle(
+        _optionCodeMeta,
+        optionCode.isAcceptableOrUnknown(data['option_code']!, _optionCodeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_optionCodeMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+        _valueMeta,
+        value.isAcceptableOrUnknown(data['value']!, _valueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valueMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {optionCode};
+  @override
+  RouteMapOption map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RouteMapOption(
+      optionCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}option_code'],
+      )!,
+      value: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}value'],
+      )!,
+    );
+  }
+
+  @override
+  $RouteMapOptionsTable createAlias(String alias) {
+    return $RouteMapOptionsTable(attachedDatabase, alias);
+  }
+}
+
+class RouteMapOption extends DataClass implements Insertable<RouteMapOption> {
+  /// `RouteMapOptionValue.code`, such as `lineWidth`.
+  final String optionCode;
+
+  /// The number.
+  final int value;
+  const RouteMapOption({required this.optionCode, required this.value});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['option_code'] = Variable<String>(optionCode);
+    map['value'] = Variable<int>(value);
+    return map;
+  }
+
+  RouteMapOptionsCompanion toCompanion(bool nullToAbsent) {
+    return RouteMapOptionsCompanion(
+      optionCode: Value(optionCode),
+      value: Value(value),
+    );
+  }
+
+  factory RouteMapOption.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RouteMapOption(
+      optionCode: serializer.fromJson<String>(json['optionCode']),
+      value: serializer.fromJson<int>(json['value']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'optionCode': serializer.toJson<String>(optionCode),
+      'value': serializer.toJson<int>(value),
+    };
+  }
+
+  RouteMapOption copyWith({String? optionCode, int? value}) => RouteMapOption(
+    optionCode: optionCode ?? this.optionCode,
+    value: value ?? this.value,
+  );
+  RouteMapOption copyWithCompanion(RouteMapOptionsCompanion data) {
+    return RouteMapOption(
+      optionCode: data.optionCode.present
+          ? data.optionCode.value
+          : this.optionCode,
+      value: data.value.present ? data.value.value : this.value,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RouteMapOption(')
+          ..write('optionCode: $optionCode, ')
+          ..write('value: $value')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(optionCode, value);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RouteMapOption &&
+          other.optionCode == this.optionCode &&
+          other.value == this.value);
+}
+
+class RouteMapOptionsCompanion extends UpdateCompanion<RouteMapOption> {
+  final Value<String> optionCode;
+  final Value<int> value;
+  final Value<int> rowid;
+  const RouteMapOptionsCompanion({
+    this.optionCode = const Value.absent(),
+    this.value = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RouteMapOptionsCompanion.insert({
+    required String optionCode,
+    required int value,
+    this.rowid = const Value.absent(),
+  }) : optionCode = Value(optionCode),
+       value = Value(value);
+  static Insertable<RouteMapOption> custom({
+    Expression<String>? optionCode,
+    Expression<int>? value,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (optionCode != null) 'option_code': optionCode,
+      if (value != null) 'value': value,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RouteMapOptionsCompanion copyWith({
+    Value<String>? optionCode,
+    Value<int>? value,
+    Value<int>? rowid,
+  }) {
+    return RouteMapOptionsCompanion(
+      optionCode: optionCode ?? this.optionCode,
+      value: value ?? this.value,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (optionCode.present) {
+      map['option_code'] = Variable<String>(optionCode.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<int>(value.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RouteMapOptionsCompanion(')
+          ..write('optionCode: $optionCode, ')
+          ..write('value: $value, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2111,6 +2331,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $IcPositionsTable icPositions = $IcPositionsTable(this);
   late final $OperatorColorsTable operatorColors = $OperatorColorsTable(this);
   late final $RouteMapLayersTable routeMapLayers = $RouteMapLayersTable(this);
+  late final $RouteMapOptionsTable routeMapOptions = $RouteMapOptionsTable(
+    this,
+  );
   late final Index statementLinesExitAt = Index(
     'statement_lines_exit_at',
     'CREATE INDEX statement_lines_exit_at ON statement_lines (exit_at)',
@@ -2125,6 +2348,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     icPositions,
     operatorColors,
     routeMapLayers,
+    routeMapOptions,
     statementLinesExitAt,
   ];
 }
@@ -3286,6 +3510,166 @@ typedef $$RouteMapLayersTableProcessedTableManager =
       RouteMapLayer,
       PrefetchHooks Function()
     >;
+typedef $$RouteMapOptionsTableCreateCompanionBuilder =
+    RouteMapOptionsCompanion Function({
+      required String optionCode,
+      required int value,
+      Value<int> rowid,
+    });
+typedef $$RouteMapOptionsTableUpdateCompanionBuilder =
+    RouteMapOptionsCompanion Function({
+      Value<String> optionCode,
+      Value<int> value,
+      Value<int> rowid,
+    });
+
+class $$RouteMapOptionsTableFilterComposer
+    extends Composer<_$AppDatabase, $RouteMapOptionsTable> {
+  $$RouteMapOptionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get optionCode => $composableBuilder(
+    column: $table.optionCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RouteMapOptionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RouteMapOptionsTable> {
+  $$RouteMapOptionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get optionCode => $composableBuilder(
+    column: $table.optionCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RouteMapOptionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RouteMapOptionsTable> {
+  $$RouteMapOptionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get optionCode => $composableBuilder(
+    column: $table.optionCode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+}
+
+class $$RouteMapOptionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RouteMapOptionsTable,
+          RouteMapOption,
+          $$RouteMapOptionsTableFilterComposer,
+          $$RouteMapOptionsTableOrderingComposer,
+          $$RouteMapOptionsTableAnnotationComposer,
+          $$RouteMapOptionsTableCreateCompanionBuilder,
+          $$RouteMapOptionsTableUpdateCompanionBuilder,
+          (
+            RouteMapOption,
+            BaseReferences<
+              _$AppDatabase,
+              $RouteMapOptionsTable,
+              RouteMapOption
+            >,
+          ),
+          RouteMapOption,
+          PrefetchHooks Function()
+        > {
+  $$RouteMapOptionsTableTableManager(
+    _$AppDatabase db,
+    $RouteMapOptionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RouteMapOptionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RouteMapOptionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RouteMapOptionsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> optionCode = const Value.absent(),
+                Value<int> value = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RouteMapOptionsCompanion(
+                optionCode: optionCode,
+                value: value,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String optionCode,
+                required int value,
+                Value<int> rowid = const Value.absent(),
+              }) => RouteMapOptionsCompanion.insert(
+                optionCode: optionCode,
+                value: value,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$RouteMapOptionsTable, RouteMapOption>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $RouteMapOptionsTable,
+                    RouteMapOption
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RouteMapOptionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RouteMapOptionsTable,
+      RouteMapOption,
+      $$RouteMapOptionsTableFilterComposer,
+      $$RouteMapOptionsTableOrderingComposer,
+      $$RouteMapOptionsTableAnnotationComposer,
+      $$RouteMapOptionsTableCreateCompanionBuilder,
+      $$RouteMapOptionsTableUpdateCompanionBuilder,
+      (
+        RouteMapOption,
+        BaseReferences<_$AppDatabase, $RouteMapOptionsTable, RouteMapOption>,
+      ),
+      RouteMapOption,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3300,4 +3684,6 @@ class $AppDatabaseManager {
       $$OperatorColorsTableTableManager(_db, _db.operatorColors);
   $$RouteMapLayersTableTableManager get routeMapLayers =>
       $$RouteMapLayersTableTableManager(_db, _db.routeMapLayers);
+  $$RouteMapOptionsTableTableManager get routeMapOptions =>
+      $$RouteMapOptionsTableTableManager(_db, _db.routeMapOptions);
 }

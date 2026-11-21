@@ -5,6 +5,7 @@ import 'package:etc_meisai/infrastructure/repository/database/ic_mappings_table.
 import 'package:etc_meisai/infrastructure/repository/database/ic_positions_table.dart';
 import 'package:etc_meisai/infrastructure/repository/database/operator_colors_table.dart';
 import 'package:etc_meisai/infrastructure/repository/database/route_map_layers_table.dart';
+import 'package:etc_meisai/infrastructure/repository/database/route_map_options_table.dart';
 import 'package:etc_meisai/infrastructure/repository/database/vehicle_type_converter.dart';
 import 'package:etc_meisai/infrastructure/repository/database/statement_lines_table.dart';
 import 'package:uuid/uuid.dart';
@@ -19,13 +20,14 @@ part 'app_database.g.dart';
     IcPositions,
     OperatorColors,
     RouteMapLayers,
+    RouteMapOptions,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -73,6 +75,8 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(statementLines, statementLines.tags);
         }
       }
+      // Version 8 added the numbers of the route map (TBL-006).
+      if (from < 8) await m.createTable(routeMapOptions);
     },
   );
 }

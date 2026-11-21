@@ -56,7 +56,8 @@ ICマスタ（アプリに同梱）、画面の絞り込みは、対象外（保
   "icMappings": [{ "icName": "…", "pointId": "…" }],
   "icPositions": [{ "icName": "…", "latitude": 35.1, "longitude": 139.1 }],
   "operatorColors": [{ "operatorName": "NEXCO東日本", "color": 1193046 }],
-  "routeMapLayers": [{ "layer": "network", "visible": false }]
+  "routeMapLayers": [{ "layer": "network", "visible": false }],
+  "routeMapOptions": [{ "option": "lineWidth", "value": 6 }]
 }
 ```
 
@@ -69,6 +70,8 @@ ICマスタ（アプリに同梱）、画面の絞り込みは、対象外（保
 - `routeMapLayers` の `layer` は、地図の表示の項目の名前（`network`、`networkNames`、`traveled`、`markers`、`pending`、`scaleByCount`）、`visible` は、表示するか（`true`／`false`）。このアプリが知らない項目名があっても、読み込める（無視する）
 - `routeMapLayers` も、あとから足した項目で、版は 1 のまま。この項目が無い古いファイルも、読み込める（読み込むと、いまの選択は消えて、初期値になる）
 - `statementLines` の `memo`（文字）と `tags`（文字の並び。空でない、`;`と改行を含まない）は、あとから足した項目で、版は 1 のまま。**この項目が無い古いファイルも、読み込める**（メモなし・タグなしとして扱う）
+- `routeMapOptions` の `option` は、地図の数値の項目の名前（いまは `lineWidth`）、`value` は整数。このアプリが知らない項目名があっても、読み込める（無視する）。範囲の外の値は、使うときに、範囲に収める
+- `routeMapOptions` も、あとから足した項目で、版は 1 のまま。この項目が無い古いファイルも、読み込める（読み込むと、いまの設定は消えて、初期値になる）
 - 並び順は、意味を持たない（読み込み後は、画面が並べ直す）
 
 ## 読み込みの検査
@@ -76,9 +79,9 @@ ICマスタ（アプリに同梱）、画面の絞り込みは、対象外（保
 読み込むとき、次をすべて確かめる。1つでも合わなければ、何も置き換えない（[PRC-018](systems/processes/PRC-018-import-data.md)）。
 
 - JSON として読めること。`format` と `version` が合うこと
-- `statementLines`、`icMappings`、`icPositions` が、あること（空の並びでよい）。`operatorColors` と `routeMapLayers` は、無くてもよい（あるときは、並びであること）
+- `statementLines`、`icMappings`、`icPositions` が、あること（空の並びでよい）。`operatorColors`、`routeMapLayers`、`routeMapOptions` は、無くてもよい（あるときは、並びであること）
 - 各項目の型（文字・整数・実数・日時・`null`）が合うこと。`vehicleType` と `status` が、決まった値であること
-- `statementLines` の `id` と `duplicateKey`、`icMappings` と `icPositions` の `icName`、`operatorColors` の `operatorName`、`routeMapLayers` の `layer` が、それぞれ重複しないこと
+- `statementLines` の `id` と `duplicateKey`、`icMappings` と `icPositions` の `icName`、`operatorColors` の `operatorName`、`routeMapLayers` の `layer`、`routeMapOptions` の `option` が、それぞれ重複しないこと
 - 緯度は -90〜90、経度は -180〜180。色は 0〜16777215
 
 エラーの文面には、ファイルの値（個人情報を含む）を出さない。何件目の、どの項目かだけを示す。

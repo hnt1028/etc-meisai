@@ -5,6 +5,7 @@ import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/entity/operator_color_entity.dart';
 import 'package:etc_meisai/domain/entity/route_map_layer_entity.dart';
+import 'package:etc_meisai/domain/entity/route_map_option_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_record_entity.dart';
 import 'package:etc_meisai/infrastructure/repository/database/app_database.dart';
 
@@ -34,6 +35,9 @@ class AppDataRepo implements AppDataIF {
     final layers = await (_db.select(
       _db.routeMapLayers,
     )..orderBy([(t) => OrderingTerm.asc(t.layerCode)])).get();
+    final options = await (_db.select(
+      _db.routeMapOptions,
+    )..orderBy([(t) => OrderingTerm.asc(t.optionCode)])).get();
     return AppDataEntity(
       statementLines: [for (final row in lines) _toRecord(row)],
       icMappings: [
@@ -55,6 +59,10 @@ class AppDataRepo implements AppDataIF {
       routeMapLayers: [
         for (final row in layers)
           RouteMapLayerEntity(layerCode: row.layerCode, visible: row.visible),
+      ],
+      routeMapOptions: [
+        for (final row in options)
+          RouteMapOptionEntity(optionCode: row.optionCode, value: row.value),
       ],
     );
   }
@@ -93,6 +101,13 @@ class AppDataRepo implements AppDataIF {
               visible: l.visible,
             ),
         ]);
+        batch.insertAll(_db.routeMapOptions, [
+          for (final o in data.routeMapOptions)
+            RouteMapOptionsCompanion.insert(
+              optionCode: o.optionCode,
+              value: o.value,
+            ),
+        ]);
       });
     });
   }
@@ -106,6 +121,7 @@ class AppDataRepo implements AppDataIF {
     await _db.delete(_db.icPositions).go();
     await _db.delete(_db.operatorColors).go();
     await _db.delete(_db.routeMapLayers).go();
+    await _db.delete(_db.routeMapOptions).go();
   }
 
   StatementLineRecordEntity _toRecord(StatementLine row) {

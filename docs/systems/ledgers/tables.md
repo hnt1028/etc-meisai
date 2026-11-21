@@ -7,3 +7,4 @@
 | TBL-003 | IC位置（ic_positions） | [TBL-003-ic-positions.md](../tables/TBL-003-ic-positions.md) | 草案 |
 | TBL-004 | 事業者の線の色（operator_colors） | [TBL-004-operator-colors.md](../tables/TBL-004-operator-colors.md) | 草案 |
 | TBL-005 | 地図の表示の選択（route_map_layers） | [TBL-005-route-map-layers.md](../tables/TBL-005-route-map-layers.md) | 草案 |
+| TBL-006 | 地図の数値の設定（route_map_options） | [TBL-006-route-map-options.md](../tables/TBL-006-route-map-options.md) | 草案 |
