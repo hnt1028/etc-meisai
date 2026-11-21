@@ -39,6 +39,7 @@ import 'package:etc_meisai/userinterface/app.dart';
 import 'package:etc_meisai/userinterface/ic_mapping/ic_mapping_providers.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_providers.dart';
 import 'package:etc_meisai/userinterface/route_map/route_map_providers.dart';
+import 'package:etc_meisai/userinterface/route_map/tile_cache.dart';
 import 'package:etc_meisai/userinterface/statements/statement_detail_providers.dart';
 import 'package:etc_meisai/userinterface/settings/settings_providers.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_providers.dart';
@@ -46,7 +47,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final tileCache = await createTileCache();
   final database = AppDatabase(driftDatabase(name: 'etc_meisai'));
   final statementLines = StatementLineRepo(database);
   final icMaster = IcMasterRepo(
@@ -64,6 +67,7 @@ void main() {
   runApp(
     ProviderScope(
       overrides: [
+        tileCacheProvider.overrideWithValue(tileCache),
         importStatementUCProvider.overrideWithValue(
           ImportStatementUC(
             statement: const StatementRepo(),

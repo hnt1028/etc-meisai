@@ -53,7 +53,7 @@ ETC利用照会サービスの利用明細CSVを取り込み、明細行の内�
 - 「…本線」（料金所）と、IC名に上り・下りなどが付くもの（「永福上」など）の位置は、初めはIC地点の近似になる（[route-map.md](route-map.md)）。指定で正確にできる
 - 線をタップすると、その明細行の詳細（3.4）を表示する。同じ場所に複数の線があるときは、選んで開く
 - マーカーをタップすると、そのICの情報（名前、路線名、位置の種類）を表示し、位置を指定・解除できる
-- 地図は OpenStreetMap を使う。外部通信は、地図タイルの取得だけ（[privacy.md](privacy.md)）。「© OpenStreetMap contributors」を表示する
+- 地図は OpenStreetMap を使う。外部通信は、地図タイルの取得だけ（[privacy.md](privacy.md)）。見たタイルは端末に保存し、90日間は通信せずに使う。電波が無いときも、一度見た場所の地図は表示できる（[route-map.md](route-map.md) の「保存したタイルの使い方」）。「© OpenStreetMap contributors」を表示する
 
 ### 3.3 設定
 
