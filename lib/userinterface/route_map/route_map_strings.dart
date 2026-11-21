@@ -34,6 +34,17 @@ abstract final class RouteMapStrings {
 
   static const attribution = '© OpenStreetMap contributors';
 
+  static const fitButton = '全体を表示';
+  static const searchButton = 'ICを探す';
+  static const searchTitle = 'ICを探して、地図を動かす';
+  static const searchLabel = 'IC名';
+  static const searchNone = '当てはまるICがありません';
+  static const searchFailed = '探せませんでした';
+  static const openDetail = '詳細を開く';
+  static const openList = '一覧を開く';
+  static const clearSelection = '選択を解除';
+  static String overlapped(int count) => '$count件の明細行が重なっています';
+
   static const layerButton = '地図の表示';
   static const layerSheetTitle = '地図の表示';
   static const layerSaveFailed = '設定を保存できませんでした';
