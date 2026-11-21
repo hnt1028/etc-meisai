@@ -3,7 +3,6 @@ import 'package:etc_meisai/userinterface/aggregation/aggregation_controller.dart
 import 'package:etc_meisai/userinterface/aggregation/aggregation_pie.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_strings.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_views.dart';
-import 'package:etc_meisai/userinterface/common/format.dart';
 import 'package:etc_meisai/userinterface/common/message_text.dart';
 import 'package:etc_meisai/userinterface/statements/statement_filter_bar.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_controller.dart';
@@ -286,9 +285,9 @@ class _CoverageList extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 Text(
-                  AggregationStrings.coverageDistance(
-                    formatKm(row.drivenMeters),
-                    formatKm(row.totalMeters),
+                  AggregationStrings.coverageCount(
+                    row.drivenCount,
+                    row.totalCount,
                   ),
                   style: theme.textTheme.bodySmall,
                 ),

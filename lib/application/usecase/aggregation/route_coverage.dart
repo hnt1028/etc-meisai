@@ -2,8 +2,8 @@ import 'package:etc_meisai/application/dto/route_coverage_row_dto.dart';
 import 'package:etc_meisai/application/usecase/aggregation/ic_distance.dart';
 import 'package:etc_meisai/application/usecase/ic_mapping/ic_lookup.dart';
 import 'package:etc_meisai/application/usecase/route_map/implied_entrance.dart';
-import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
+import 'package:etc_meisai/domain/value/ic_kind_value.dart';
 
 /// What [routeCoverageOf] found.
 class RouteCoverage {
@@ -12,46 +12,38 @@ class RouteCoverage {
   /// The roads that were driven at least a little: the most covered first.
   final List<RouteCoverageRowDTO> rows;
 
-  /// How many roads the IC master has (with a section between two points).
+  /// How many roads the IC master has (with an IC on them).
   final int routeCount;
 }
 
-/// How much of each road the lines cover (docs/aggregation.md, "路線の走破
-/// 率").
+/// How many of the ICs of each road the lines cover (docs/aggregation.md,
+/// "路線の走破率").
 ///
-/// A section is a link of the IC master between two neighboring points that
-/// share a road. A line covers the sections of the shortest way over the links
-/// from its entrance to its exit ([distance]); a blank entrance is the one of
-/// the table of the short roads. A line whose entrance or exit is not a point
-/// of the master (a position the user chose) or has no way covers nothing.
+/// The ICs of a road are the points of the IC master that have the road in
+/// their route names, except the other kind (service areas, toll gates):
+/// general ICs, smart ICs and junctions, counted by name. A line covers the
+/// ICs on the shortest way over the links from its entrance to its exit
+/// ([distance]), the entrance and the exit included; a blank entrance is the
+/// one of the table of the short roads. A line whose entrance or exit is not a
+/// point of the master (a position the user chose) or has no way covers
+/// nothing.
 RouteCoverage routeCoverageOf({
   required List<IcPointEntity> points,
-  required List<IcLinkEntity> links,
   required IcDistance distance,
   required IcLookup lookup,
   required Iterable<({String? entranceIc, String exitIc})> trips,
 }) {
   final byId = {for (final p in points) p.id: p};
 
-  // The sections: the shortest link of a pair of points counts.
-  final sections = <String, ({String route, int meters})>{};
-  for (final link in links) {
-    final from = byId[link.fromId], to = byId[link.toId];
-    if (from == null || to == null) continue;
-    final route = from.routeNames.where(to.routeNames.contains).firstOrNull;
-    if (route == null) continue;
-    final key = _key(link.fromId, link.toId);
-    final known = sections[key];
-    if (known == null || link.meters < known.meters) {
-      sections[key] = (route: route, meters: link.meters);
+  final totals = <String, Set<String>>{};
+  for (final p in points) {
+    if (p.kind == IcKindValue.other) continue;
+    for (final route in p.routeNames) {
+      (totals[route] ??= {}).add(p.name);
     }
   }
-  final totals = <String, int>{};
-  for (final s in sections.values) {
-    totals.update(s.route, (m) => m + s.meters, ifAbsent: () => s.meters);
-  }
 
-  final driven = <String>{};
+  final driven = <String, Set<String>>{};
   for (final trip in trips) {
     final entranceName =
         trip.entranceIc ?? impliedEntranceNameOf(trip.exitIc, lookup);
@@ -61,41 +53,32 @@ RouteCoverage routeCoverageOf({
     if (from == null || to == null) continue;
     final ids = distance.roadRouteBetween(from, to)?.pointIds;
     if (ids == null) continue;
-    for (var i = 0; i + 1 < ids.length; i++) {
-      driven.add(_key(ids[i], ids[i + 1]));
+    for (final id in ids) {
+      final p = byId[id];
+      if (p == null || p.kind == IcKindValue.other) continue;
+      for (final route in p.routeNames) {
+        (driven[route] ??= {}).add(p.name);
+      }
     }
-  }
-  final drivenTotals = <String, int>{};
-  for (final key in driven) {
-    final section = sections[key];
-    if (section == null) continue;
-    drivenTotals.update(
-      section.route,
-      (m) => m + section.meters,
-      ifAbsent: () => section.meters,
-    );
   }
 
   final rows = [
-    for (final entry in drivenTotals.entries)
-      if (entry.value > 0)
+    for (final entry in driven.entries)
+      if (entry.value.isNotEmpty)
         RouteCoverageRowDTO(
           routeName: entry.key,
-          totalMeters: totals[entry.key]!,
-          drivenMeters: entry.value,
+          totalCount: totals[entry.key]!.length,
+          drivenCount: entry.value.length,
         ),
   ];
   rows.sort((a, b) {
     // The share, compared without division: a/b against c/d.
-    final byShare = (b.drivenMeters * a.totalMeters).compareTo(
-      a.drivenMeters * b.totalMeters,
+    final byShare = (b.drivenCount * a.totalCount).compareTo(
+      a.drivenCount * b.totalCount,
     );
     if (byShare != 0) return byShare;
-    final byLength = b.drivenMeters.compareTo(a.drivenMeters);
-    return byLength != 0 ? byLength : a.routeName.compareTo(b.routeName);
+    final byCount = b.drivenCount.compareTo(a.drivenCount);
+    return byCount != 0 ? byCount : a.routeName.compareTo(b.routeName);
   });
   return RouteCoverage(rows: rows, routeCount: totals.length);
 }
-
-String _key(String a, String b) =>
-    a.compareTo(b) <= 0 ? '$a\u0000$b' : '$b\u0000$a';

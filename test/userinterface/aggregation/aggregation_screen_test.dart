@@ -175,10 +175,10 @@ void main() {
 
     expect(find.text(AggregationStrings.coverageSummary(1, 1)), findsOneWidget);
     expect(find.text(AggregationStrings.coverageNote), findsOneWidget);
-    // 北 - 東 is all of 東名高速道路.
+    // 北 and 東 are the two ICs of 東名高速道路.
     expect(find.byKey(const ValueKey('coverage-東名高速道路')), findsOneWidget);
     expect(find.text('100.0%'), findsOneWidget);
-    expect(find.text('3.0km / 3.0km'), findsOneWidget);
+    expect(find.text(AggregationStrings.coverageCount(2, 2)), findsOneWidget);
     // There is no table or graph for it.
     expect(
       find.text(AggregationStrings.display(AggregationDisplay.graph)),
@@ -202,8 +202,8 @@ void main() {
   test('the share of a road is in tenths of a percent, rounded down', () {
     RouteCoverageRowDTO row(int driven, int total) => RouteCoverageRowDTO(
       routeName: 'R',
-      totalMeters: total,
-      drivenMeters: driven,
+      totalCount: total,
+      drivenCount: driven,
     );
 
     expect(coverageTenths(row(1, 3)), 333);

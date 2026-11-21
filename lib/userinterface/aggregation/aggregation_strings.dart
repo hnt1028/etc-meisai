@@ -25,14 +25,13 @@ abstract final class AggregationStrings {
   static String coverageSummary(int covered, int total) =>
       '走った路線: $covered / $total 路線';
   static const coverageNote =
-      '路線の区間（ICの間）のうち、走った区間の道のりの割合です。走った経路は、入口から出口までの最短の経路と見なします';
+      '路線のIC（JCT・スマートICを含む）のうち、通ったICの割合です。入口と出口、その間のICを、通ったと見なします。間は、最短の経路と見なします';
   static const coverageNone = '走った路線がありません';
 
   /// [tenths] is the share in tenths of a percent: 123 is 12.3%.
   static String coveragePercent(int tenths) =>
       '${tenths ~/ 10}.${tenths % 10}%';
-  static String coverageDistance(String driven, String total) =>
-      '$driven / $total';
+  static String coverageCount(int driven, int total) => '$driven / $total IC';
 
   static const tagNote = 'タグが複数ある明細行は、それぞれのタグに数えます（合計は、全体と一致しません）';
 

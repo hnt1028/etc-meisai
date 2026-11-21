@@ -43,8 +43,9 @@ void main() {
 
       expect(result.coverageRouteCount, 1);
       expect(result.coverage.single.routeName, '東名高速道路');
-      expect(result.coverage.single.totalMeters, 4000);
-      expect(result.coverage.single.drivenMeters, 3000);
+      // 北 and 東 of the three ICs 北, 東 and 南.
+      expect(result.coverage.single.totalCount, 3);
+      expect(result.coverage.single.drivenCount, 2);
     });
 
     test('is empty when nothing is stored', () async {

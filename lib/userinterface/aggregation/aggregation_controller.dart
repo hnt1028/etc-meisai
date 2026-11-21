@@ -139,7 +139,7 @@ class AggregationViewController extends Notifier<AggregationViewState> {
       state = state.copyWith(metric: metric);
 }
 
-/// The share of a road that was driven, in tenths of a percent (123 is
-/// 12.3%). It rounds down, so that 100% means that all of it was driven.
+/// The share of the ICs of a road that were passed, in tenths of a percent
+/// (123 is 12.3%). It rounds down, so that 100% means that all were passed.
 int coverageTenths(RouteCoverageRowDTO row) =>
-    row.totalMeters == 0 ? 0 : row.drivenMeters * 1000 ~/ row.totalMeters;
+    row.totalCount == 0 ? 0 : row.drivenCount * 1000 ~/ row.totalCount;

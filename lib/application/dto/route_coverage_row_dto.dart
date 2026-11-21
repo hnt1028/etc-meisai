@@ -1,17 +1,19 @@
-/// How much of one road the user has driven. Design: PRC-013.
+/// How many of the ICs of one road the user has passed. Design: PRC-013.
 class RouteCoverageRowDTO {
   const RouteCoverageRowDTO({
     required this.routeName,
-    required this.totalMeters,
-    required this.drivenMeters,
+    required this.totalCount,
+    required this.drivenCount,
   });
 
   final String routeName;
 
-  /// The length of every section of the road in the IC master, in meters.
-  final int totalMeters;
+  /// How many ICs the road has in the IC master (general ICs, smart ICs and
+  /// junctions, counted by name).
+  final int totalCount;
 
-  /// The length of the sections the user has driven, in meters. Each section
-  /// counts once, however often it was driven.
-  final int drivenMeters;
+  /// How many of them the user has passed, the entrance and the exit of a line
+  /// and the ICs between them included. Each IC counts once, however often it
+  /// was passed.
+  final int drivenCount;
 }

@@ -112,7 +112,6 @@ class AggregateStatementsUC {
 
     final coverage = routeCoverageOf(
       points: points,
-      links: links,
       distance: distance,
       lookup: lookup,
       trips: [
