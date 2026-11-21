@@ -15,6 +15,7 @@ Map<String, Object?> buildIcMaster({
   required String jointJson,
   required String sectionJson,
   String? osmJson,
+  String? osmRoadsJson,
   required String source,
 }) {
   final joints = _features(
@@ -23,6 +24,7 @@ Map<String, Object?> buildIcMaster({
   final sections = [
     for (final f in _features(sectionJson))
       if (_props(f)['N06_003'] == 9999) _Section.of(f),
+    if (osmRoadsJson != null) ..._osmRoadSections(osmRoadsJson),
   ];
 
   final usedIds = <String>{};
@@ -134,6 +136,29 @@ List<Map<String, Object?>> _osmPoints(
   }
   return points;
 }
+
+/// Roads that N06 does not have (the Tokyo Bay Aqua-Line), from OpenStreetMap
+/// (`out tags geom` of Overpass): every way is a section of the route
+/// [osmRoadRouteName]. The ways are chosen by the query (docs/route-map.md).
+List<_Section> _osmRoadSections(String osmRoadsJson) {
+  return [
+    for (final element in (jsonDecode(osmRoadsJson) as Map)['elements'] as List)
+      if ((element as Map)['type'] == 'way' && element['geometry'] is List)
+        _Section(osmRoadRouteName, [
+          [
+            for (final c in element['geometry'] as List)
+              [
+                ((c as Map)['lon'] as num).toDouble(),
+                (c['lat'] as num).toDouble(),
+              ],
+          ],
+        ]),
+  ];
+}
+
+/// The route name of the roads from OpenStreetMap. It is the one of
+/// docs/aggregation.md (road operator) and of `ic_route_supplements.dart`.
+const osmRoadRouteName = '東京湾アクアライン';
 
 /// Points of one name farther apart than this are not one toll gate.
 const osmGroupMeters = 1500.0;

@@ -30,6 +30,10 @@ const _rules = [
     routeName: '安房峠道路',
     bothWays: true,
   ),
+  // The Tokyo Bay Aqua-Line starts at this junction (a point of N06; the road
+  // is from OpenStreetMap). The exit may be written with the number of the
+  // toll gate ("木更津金田第一"), which the lookup completes.
+  _ImpliedEntrance(exit: '木更津金田', entrance: '浮島/川崎浮島JCT'),
 ];
 
 /// The IC name that is the entrance of a line with a blank entrance and the

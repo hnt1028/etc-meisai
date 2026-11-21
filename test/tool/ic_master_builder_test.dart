@@ -566,4 +566,55 @@ void main() {
       ]);
     });
   });
+
+  group('roads of OpenStreetMap', () {
+    // A road from (139.0, 36.0) to (140.0, 36.0), with a bend, that N06 does not have.
+    final roads = jsonEncode({
+      'elements': [
+        {
+          'type': 'way',
+          'id': 1,
+          'tags': {'name': '東京湾アクアライン'},
+          'geometry': [
+            {'lat': 36.0, 'lon': 139.0},
+            {'lat': 36.01, 'lon': 139.5},
+            {'lat': 36.0, 'lon': 140.0},
+          ],
+        },
+        // Not a way, and a way without a shape: both are left out.
+        {'type': 'node', 'id': 2, 'lat': 36.0, 'lon': 139.0},
+        {'type': 'way', 'id': 3, 'tags': {}},
+      ],
+    });
+
+    Map<String, Object?> buildWithRoads() => buildIcMaster(
+      jointJson: _collection([
+        _joint('EA03_1', '甲甲', '1', 139.0, 36.0),
+        _joint('EA03_2', '乙乙', '1', 140.0, 36.0),
+        _joint('EA03_3', '丙丙', '1', 139.5, 35.0),
+      ]),
+      sectionJson: _collection([east]),
+      osmRoadsJson: roads,
+      source: 'test',
+    );
+
+    test('give their route name to the points on the road', () {
+      final byName = {for (final p in points(buildWithRoads())) p['name']: p};
+
+      expect(byName['甲甲']!['routes'], ['東京湾アクアライン']);
+      expect(byName['乙乙']!['routes'], ['東京湾アクアライン']);
+      expect(byName['丙丙']!['routes'], ['東西線']);
+    });
+
+    test('join the points on the road, with its shape', () {
+      final links = (buildWithRoads()['links'] as List)
+          .cast<List<Object?>>()
+          .where((l) => (l[0] as String).startsWith('EA03_1'))
+          .toList();
+
+      expect(links.map((l) => '${l[0]}-${l[1]}'), ['EA03_1:甲甲-EA03_2:乙乙']);
+      // The road bends between the two points.
+      expect(links.single[3], isNotEmpty);
+    });
+  });
 }
