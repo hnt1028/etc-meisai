@@ -3,8 +3,10 @@
 ///
 /// It is an estimate: N06 and the CSV have no operator.
 const _operators = <(List<String>, String)>[
-  (['首都高速'], '首都高速道路'),
-  (['阪神高速'], '阪神高速道路'),
+  // The routes of the other expressway of the same company are N06 names
+  // without the company's word (横浜環状 is run by 首都高速道路).
+  (['首都高速', '横浜環状'], '首都高速道路'),
+  (['阪神高速', '大和川線'], '阪神高速道路'),
   (['名古屋高速'], '名古屋高速道路公社'),
   (['福岡高速', '北九州高速'], '福岡北九州高速道路公社'),
   (['広島高速'], '広島高速道路公社'),
@@ -32,6 +34,10 @@ const _operators = <(List<String>, String)>[
       '京葉',
       '圏央道',
       '首都圏中央',
+      '新東京国際空港',
+      '東水戸',
+      '仙台東部',
+      '仙台北部',
     ],
     'NEXCO東日本',
   ),
@@ -52,6 +58,9 @@ const _operators = <(List<String>, String)>[
       '北陸',
       '名神',
       '新名神',
+      '安房峠',
+      '修善寺',
+      '東駿河湾環状',
     ],
     'NEXCO中日本',
   ),
@@ -78,6 +87,9 @@ const _operators = <(List<String>, String)>[
       '舞鶴若狭',
       '西名阪',
       '第二神明',
+      '沖縄自動車道',
+      '関西国際空港',
+      '山陰',
     ],
     'NEXCO西日本',
   ),
