@@ -56,7 +56,7 @@
 |---|---|---|---|
 | 絞り込み | 入力 | [SCR-002](SCR-002-statement-list.md) と同じ部品 | 「絞り込み」の見出しをタップして開閉する（初めは閉じる）。期間・車両番号・ETCカード番号・タグ・解除ボタンは SCR-002 と同じ。条件も SCR-002 と共通 |
 | 地図の表示ボタン | 入力 | ボタン | 地図の右上に重ねる丸いボタン（重ねたものの印）。タップすると、「地図の表示」のシートを開く（OP-10） |
-| 地図の表示のシート | 入力 | シート | 「地図の表示」の見出しと、チェックボックス6つ（路線図（すべての路線）、路線図の路線名、走行した路線図、ICのマーカー（名前つき）、確認中の線、走行回数で線の太さを変える）。各項目に、短い説明。初期値は [route-map.md](../../route-map.md) の「ルートマップの表示」 |
+| 地図の表示のシート | 入力 | シート | 「地図の表示」の見出しと、チェックボックス6つ（路線図（すべての路線）、路線図の路線名、走行した路線図、ICのマーカー（名前つき）、確認中の線、走行回数で線の太さを変える）。各項目に、短い説明。チェックボックスの下に、「走行した線の太さ」のスライダー（2〜10。いまの値を右に表示。指を離したときに、保存し、地図に反映する）。初期値は [route-map.md](../../route-map.md) の「ルートマップの表示」 |
 | 路線図 | 出力 | `RouteNetworkDTO` | ICマスタのすべての道路を、薄い灰色の細い線で。タップできない。「路線図の路線名」を選んだときは、拡大したときに、路線名の文字も |
 | 全体を表示ボタン | 入力 | ボタン | 地図の右上、「地図の表示」ボタンの下。「全体を表示」。タップで OP-11 |
 | ICを探すボタン | 入力 | ボタン | 地図の右上、「全体を表示」ボタンの下。「ICを探す」。タップで OP-12 |
@@ -115,6 +115,8 @@
 | OP-12 | ICの検索（`SearchIcPointsUC`） | [PRC-006](../processes/PRC-006-search-ic-points.md)（[SCR-004](SCR-004-ic-mapping.md) と共通） |
 | OP-5 | ICの位置の登録（`SaveIcPositionUC`） | [PRC-010](../processes/PRC-010-save-ic-position.md) |
 | 地図の描き方、OP-10 のシート | 地図の表示の取得（`ListRouteMapLayersUC`） | [PRC-024](../processes/PRC-024-list-route-map-layers.md) |
+| 地図の描き方、OP-10 のシート | 地図の数値の取得（`ListRouteMapOptionsUC`） | [PRC-030](../processes/PRC-030-list-route-map-options.md) |
+| OP-10（スライダー） | 地図の数値の保存（`SaveRouteMapOptionUC`） | [PRC-031](../processes/PRC-031-save-route-map-option.md) |
 | OP-10 | 地図の表示の保存（`SaveRouteMapLayerUC`） | [PRC-025](../processes/PRC-025-save-route-map-layer.md) |
 | 地図の描き方 | 路線図の作成（`ListRouteNetworkUC`） | [PRC-026](../processes/PRC-026-list-route-network.md) |
 | OP-7（指定を解除） | ICの位置の解除（`DeleteIcPositionUC`） | [PRC-011](../processes/PRC-011-delete-ic-position.md) |

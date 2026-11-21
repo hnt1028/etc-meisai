@@ -278,6 +278,7 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
     final scheme = Theme.of(context).colorScheme;
     final operatorColors = ref.watch(operatorColorsProvider).value;
     final shown = shownLayers(ref.watch(routeMapLayersProvider).value);
+    final lineWidth = lineWidthOf(ref.watch(routeMapOptionsProvider).value);
     final network =
         shown.contains(RouteMapLayerValue.network) ||
             shown.contains(RouteMapLayerValue.networkNames)
@@ -356,7 +357,7 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
                         for (final v in line.points)
                           LatLng(v.latitude, v.longitude),
                       ],
-                      strokeWidth: 2,
+                      strokeWidth: networkWidthOf(lineWidth.toDouble()),
                       color: Colors.grey.withValues(alpha: 0.45),
                     ),
                 ],
@@ -377,9 +378,10 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
                         ],
                         strokeWidth:
                             (counts == null
-                                ? segmentBaseWidth
+                                ? lineWidth.toDouble()
                                 : segmentWidth(
                                     counts[segmentRoadKey(segment)] ?? 1,
+                                    base: lineWidth.toDouble(),
                                   )) +
                             (_selected.contains(segment)
                                 ? selectedExtraWidth

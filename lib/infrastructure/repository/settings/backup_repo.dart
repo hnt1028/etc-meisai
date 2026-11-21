@@ -7,6 +7,7 @@ import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/entity/operator_color_entity.dart';
 import 'package:etc_meisai/domain/entity/route_map_layer_entity.dart';
+import 'package:etc_meisai/domain/entity/route_map_option_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_record_entity.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/domain/value/vehicle_type_value.dart';
@@ -77,6 +78,10 @@ class BackupRepo implements BackupIF {
         for (final l in data.routeMapLayers)
           <String, Object?>{'layer': l.layerCode, 'visible': l.visible},
       ],
+      'routeMapOptions': [
+        for (final o in data.routeMapOptions)
+          <String, Object?>{'option': o.optionCode, 'value': o.value},
+      ],
     };
     return Uint8List.fromList(utf8.encode(jsonEncode(json)));
   }
@@ -124,6 +129,12 @@ class BackupRepo implements BackupIF {
         _layer(_Row(item, _Messages.layer, i + 1)),
     ];
 
+    // A file written before the numbers were added has none: the defaults.
+    final options = [
+      for (final (i, item) in _optionalList(root, 'routeMapOptions').indexed)
+        _option(_Row(item, _Messages.option, i + 1)),
+    ];
+
     _checkUnique(lines.map((l) => l.id), _Messages.line, 'id');
     _checkUnique(
       lines.map((l) => l.duplicateKey),
@@ -138,6 +149,7 @@ class BackupRepo implements BackupIF {
       'operatorName',
     );
     _checkUnique(layers.map((l) => l.layerCode), _Messages.layer, 'layer');
+    _checkUnique(options.map((o) => o.optionCode), _Messages.option, 'option');
 
     return AppDataEntity(
       statementLines: lines,
@@ -145,6 +157,7 @@ class BackupRepo implements BackupIF {
       icPositions: positions,
       operatorColors: colors,
       routeMapLayers: layers,
+      routeMapOptions: options,
     );
   }
 
@@ -229,6 +242,11 @@ class BackupRepo implements BackupIF {
     visible: row.boolean('visible'),
   );
 
+  RouteMapOptionEntity _option(_Row row) => RouteMapOptionEntity(
+    optionCode: row.text('option'),
+    value: row.integer('value'),
+  );
+
   void _checkUnique(Iterable<String> values, String what, String key) {
     final seen = <String>{};
     for (final value in values) {
@@ -307,6 +325,7 @@ class _Messages {
   static const position = 'ICの位置の指定';
   static const color = '線の色';
   static const layer = '地図の表示';
+  static const option = '地図の数値';
 
   static const notBackup = 'このアプリのバックアップのファイルではありません';
   static const tooNew = '新しい版のアプリで書き出したファイルです。このアプリでは読み込めません';

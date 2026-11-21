@@ -2,6 +2,7 @@ import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/entity/operator_color_entity.dart';
 import 'package:etc_meisai/domain/entity/route_map_layer_entity.dart';
+import 'package:etc_meisai/domain/entity/route_map_option_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_record_entity.dart';
 
 /// Everything the app stores on the device: the data of the backup
@@ -13,6 +14,7 @@ class AppDataEntity {
     required this.icPositions,
     required this.operatorColors,
     required this.routeMapLayers,
+    this.routeMapOptions = const [],
   });
 
   final List<StatementLineRecordEntity> statementLines;
@@ -20,4 +22,5 @@ class AppDataEntity {
   final List<IcPositionEntity> icPositions;
   final List<OperatorColorEntity> operatorColors;
   final List<RouteMapLayerEntity> routeMapLayers;
+  final List<RouteMapOptionEntity> routeMapOptions;
 }

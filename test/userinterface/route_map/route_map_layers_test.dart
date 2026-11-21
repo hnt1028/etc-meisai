@@ -1,5 +1,8 @@
 import 'package:etc_meisai/application/dto/route_segment_dto.dart';
 import 'package:etc_meisai/application/usecase/route_map/list_route_map_layers_uc.dart';
+import 'package:etc_meisai/application/usecase/route_map/list_route_map_options_uc.dart';
+import 'package:etc_meisai/application/usecase/route_map/save_route_map_option_uc.dart';
+import 'package:etc_meisai/domain/entity/route_map_option_entity.dart';
 import 'package:etc_meisai/application/usecase/route_map/list_route_network_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/save_route_map_layer_uc.dart';
 import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
@@ -26,6 +29,7 @@ class _World {
   final lines = FakeStatementLineIF();
   final positions = FakeIcPositionIF();
   final layers = FakeRouteMapLayerIF();
+  final options = FakeRouteMapOptionIF();
 
   /// When set, the use case that makes the network throws it.
   Object? networkError;
@@ -72,6 +76,12 @@ class _World {
       ),
       listRouteMapUCProvider.overrideWithValue(
         fakeRouteMapUC(lines, master: master, positions: positions),
+      ),
+      listRouteMapOptionsUCProvider.overrideWithValue(
+        ListRouteMapOptionsUC(routeMapOptions: options),
+      ),
+      saveRouteMapOptionUCProvider.overrideWithValue(
+        SaveRouteMapOptionUC(routeMapOptions: options),
       ),
       listRouteMapLayersUCProvider.overrideWithValue(
         ListRouteMapLayersUC(routeMapLayers: layers),
@@ -228,16 +238,138 @@ void main() {
       ..line('北', '東', day: 12);
 
     await _open(tester, world);
-    expect(_lines(tester).map((p) => p.strokeWidth).toSet(), {
-      segmentBaseWidth,
-    });
+    expect(_lines(tester).map((p) => p.strokeWidth).toSet(), {4.0});
 
     await _openSheet(tester);
     await tester.tap(_checkbox(RouteMapLayerValue.scaleByCount));
     await tester.pumpAndSettle();
 
     // Three times, in either direction: 2 more for each time after the first.
-    expect(_lines(tester).map((p) => p.strokeWidth).toSet(), {segmentWidth(3)});
+    expect(_lines(tester).map((p) => p.strokeWidth).toSet(), {
+      segmentWidth(3, base: 4),
+    });
+  });
+
+  group('the width of the lines', () {
+    double networkWidth(WidgetTester tester) => tester
+        .widget<PolylineLayer<Object>>(_network)
+        .polylines
+        .single
+        .strokeWidth;
+
+    testWidgets('draws the network three quarters as thick as the roads', (
+      tester,
+    ) async {
+      final world = _World()..line('北', '東');
+
+      await _open(tester, world);
+
+      expect(_lines(tester).single.strokeWidth, 4);
+      expect(networkWidth(tester), 3);
+    });
+
+    testWidgets('has a slider, and the lines follow what is stored', (
+      tester,
+    ) async {
+      final world = _World()
+        ..line('北', '東')
+        ..options.stored.add(
+          const RouteMapOptionEntity(optionCode: 'lineWidth', value: 8),
+        );
+
+      await _open(tester, world);
+
+      expect(_lines(tester).single.strokeWidth, 8);
+      expect(networkWidth(tester), 6);
+      await _openSheet(tester);
+      expect(
+        tester
+            .widget<Slider>(find.byKey(const ValueKey('line-width-slider')))
+            .value,
+        8,
+      );
+      expect(find.text(RouteMapStrings.lineWidthLabel), findsOneWidget);
+    });
+
+    testWidgets('changes the width with the slider, and keeps it', (
+      tester,
+    ) async {
+      final world = _World()..line('北', '東');
+      await _open(tester, world);
+      await _openSheet(tester);
+      final slider = find.byKey(const ValueKey('line-width-slider'));
+
+      // The value is shown while the finger is on the slider.
+      tester.widget<Slider>(slider).onChanged!(6);
+      await tester.pump();
+      expect(
+        tester
+            .widget<Text>(find.byKey(const ValueKey('line-width-value')))
+            .data,
+        '6',
+      );
+      expect(world.options.stored, isEmpty);
+      tester.widget<Slider>(slider).onChangeEnd!(6);
+      await tester.pumpAndSettle();
+
+      expect(world.options.stored.single.optionCode, 'lineWidth');
+      expect(world.options.stored.single.value, 6);
+      expect(_lines(tester).single.strokeWidth, 6);
+      expect(networkWidth(tester), 4.5);
+    });
+
+    testWidgets('thickens the roads that were driven often from the width', (
+      tester,
+    ) async {
+      final world = _World()
+        ..line('北', '東')
+        ..line('東', '北', day: 11)
+        ..choose(RouteMapLayerValue.scaleByCount, true)
+        ..options.stored.add(
+          const RouteMapOptionEntity(optionCode: 'lineWidth', value: 3),
+        );
+
+      await _open(tester, world);
+
+      expect(_lines(tester).map((p) => p.strokeWidth).toSet(), {
+        segmentWidth(2, base: 3),
+      });
+    });
+
+    testWidgets('says so when the width could not be stored', (tester) async {
+      final world = _World()..line('北', '東');
+      await _open(tester, world);
+      await _openSheet(tester);
+      world.options.error = StateError('x');
+
+      tester
+          .widget<Slider>(find.byKey(const ValueKey('line-width-slider')))
+          .onChangeEnd!(7);
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text(RouteMapStrings.layerSaveFailed), findsOneWidget);
+      expect(_lines(tester).single.strokeWidth, 4);
+    });
+
+    testWidgets('uses the default when the numbers cannot be read', (
+      tester,
+    ) async {
+      final world = _World()..line('北', '東');
+      world.options.error = StateError('x');
+
+      await _open(tester, world);
+
+      expect(_lines(tester).single.strokeWidth, 4);
+    });
+
+    test('the widths of the lines', () {
+      expect(networkWidthOf(4), 3);
+      expect(networkWidthOf(10), 7.5);
+      expect(segmentWidth(1, base: 5), 5);
+      expect(segmentWidth(5, base: 5), 13);
+      expect(segmentWidth(9, base: 5), 13);
+    });
   });
 
   testWidgets('writes the names of the roads when the map is zoomed in', (
@@ -302,6 +434,14 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
+    expect(
+      () => container.read(listRouteMapOptionsUCProvider),
+      throwsA(isA<Object>()),
+    );
+    expect(
+      () => container.read(saveRouteMapOptionUCProvider),
+      throwsA(isA<Object>()),
+    );
     expect(
       () => container.read(listRouteMapLayersUCProvider),
       throwsA(isA<Object>()),

@@ -3,6 +3,8 @@
 // so it is checked by the integration test, not by unit tests.
 import 'package:etc_meisai/application/usecase/route_map/list_operator_colors_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/list_route_map_layers_uc.dart';
+import 'package:etc_meisai/application/usecase/route_map/list_route_map_options_uc.dart';
+import 'package:etc_meisai/application/usecase/route_map/save_route_map_option_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/list_route_network_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/save_route_map_layer_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/reset_operator_colors_uc.dart';
@@ -36,6 +38,7 @@ import 'package:etc_meisai/infrastructure/repository/ic_mapping/vehicle_type_mas
 import 'package:etc_meisai/infrastructure/repository/ic_position/ic_position_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/operator_color/operator_color_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/route_map_layer/route_map_layer_repo.dart';
+import 'package:etc_meisai/infrastructure/repository/route_map_option/route_map_option_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/app_data_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/backup_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/statement_repo.dart';
@@ -78,6 +81,7 @@ Future<void> main() async {
   final icPositions = IcPositionRepo(database);
   final operatorColors = OperatorColorRepo(database);
   final routeMapLayers = RouteMapLayerRepo(database);
+  final routeMapOptions = RouteMapOptionRepo(database);
   final appData = AppDataRepo(database);
   final backup = const BackupRepo();
 
@@ -117,6 +121,12 @@ Future<void> main() async {
             icPositions: icPositions,
             vehicleTypes: vehicleTypes,
           ),
+        ),
+        listRouteMapOptionsUCProvider.overrideWithValue(
+          ListRouteMapOptionsUC(routeMapOptions: routeMapOptions),
+        ),
+        saveRouteMapOptionUCProvider.overrideWithValue(
+          SaveRouteMapOptionUC(routeMapOptions: routeMapOptions),
         ),
         listRouteMapLayersUCProvider.overrideWithValue(
           ListRouteMapLayersUC(routeMapLayers: routeMapLayers),

@@ -48,6 +48,7 @@ abstract final class RouteMapStrings {
   static const layerButton = '地図の表示';
   static const layerSheetTitle = '地図の表示';
   static const layerSaveFailed = '設定を保存できませんでした';
+  static const lineWidthLabel = '走行した線の太さ';
 
   static String layerTitle(RouteMapLayerValue layer) => switch (layer) {
     RouteMapLayerValue.network => '路線図（すべての路線）',

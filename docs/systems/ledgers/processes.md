@@ -31,3 +31,5 @@
 | PRC-027 | メモとタグの保存（SaveLineNoteUC） | [PRC-027-save-line-note.md](../processes/PRC-027-save-line-note.md) | 草案 |
 | PRC-028 | 保存した地図の大きさの取得（GetTileCacheSizeUC） | [PRC-028-get-tile-cache-size.md](../processes/PRC-028-get-tile-cache-size.md) | 草案 |
 | PRC-029 | 保存した地図の削除（ClearTileCacheUC） | [PRC-029-clear-tile-cache.md](../processes/PRC-029-clear-tile-cache.md) | 草案 |
+| PRC-030 | 地図の数値の取得（ListRouteMapOptionsUC） | [PRC-030-list-route-map-options.md](../processes/PRC-030-list-route-map-options.md) | 草案 |
+| PRC-031 | 地図の数値の保存（SaveRouteMapOptionUC） | [PRC-031-save-route-map-option.md](../processes/PRC-031-save-route-map-option.md) | 草案 |
