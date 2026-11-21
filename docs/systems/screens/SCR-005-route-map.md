@@ -121,7 +121,7 @@
 
 - OP-3、OP-4、OP-6、OP-8 は、画面の中で完結する（OP-10 は、保存の処理を呼ぶ）（処理を呼ばない）
 - 画面は `StatementLineEntity`、`IcPointEntity` を扱わない。結果は `RouteMapDTO` で受け取る
-- 地図タイルは、`flutter_map` が OpenStreetMap のタイルサーバーから取得する。このとき、アプリの識別名（`jp.mtrk.etc_meisai`）だけを送る。明細・位置は送らない
+- 地図タイルは、`flutter_map` が OpenStreetMap のタイルサーバーから取得する。このとき、アプリの識別名（`jp.mtrk.etc_meisai`）だけを送る。明細・位置は送らない。取得したタイルは、端末に保存し、90日間は、通信せずに使う。通信できないときは、古くても、保存したタイルを使う（[route-map.md](../../route-map.md) の「保存したタイルの使い方」）
 - OP-8 は、選んだ線の `RouteSegmentDTO.line` を、ルート `/route-map/detail` に渡して開く（選ぶこと自体は、画面の中で完結する）
 - OP-11 は、`MapController` の `fitCamera`（無いときは `move`）で、地図を動かす。OP-12 の移動は `move`。どちらも、画面の中で完結する
 
