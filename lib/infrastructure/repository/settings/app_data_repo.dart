@@ -4,6 +4,7 @@ import 'package:etc_meisai/domain/entity/app_data_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/entity/operator_color_entity.dart';
+import 'package:etc_meisai/domain/entity/route_map_layer_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_record_entity.dart';
 import 'package:etc_meisai/infrastructure/repository/database/app_database.dart';
 
@@ -30,6 +31,9 @@ class AppDataRepo implements AppDataIF {
     final colors = await (_db.select(
       _db.operatorColors,
     )..orderBy([(t) => OrderingTerm.asc(t.operatorName)])).get();
+    final layers = await (_db.select(
+      _db.routeMapLayers,
+    )..orderBy([(t) => OrderingTerm.asc(t.layerCode)])).get();
     return AppDataEntity(
       statementLines: [for (final row in lines) _toRecord(row)],
       icMappings: [
@@ -47,6 +51,10 @@ class AppDataRepo implements AppDataIF {
       operatorColors: [
         for (final row in colors)
           OperatorColorEntity(operatorName: row.operatorName, color: row.color),
+      ],
+      routeMapLayers: [
+        for (final row in layers)
+          RouteMapLayerEntity(layerCode: row.layerCode, visible: row.visible),
       ],
     );
   }
@@ -78,6 +86,13 @@ class AppDataRepo implements AppDataIF {
               color: c.color,
             ),
         ]);
+        batch.insertAll(_db.routeMapLayers, [
+          for (final l in data.routeMapLayers)
+            RouteMapLayersCompanion.insert(
+              layerCode: l.layerCode,
+              visible: l.visible,
+            ),
+        ]);
       });
     });
   }
@@ -90,6 +105,7 @@ class AppDataRepo implements AppDataIF {
     await _db.delete(_db.icMappings).go();
     await _db.delete(_db.icPositions).go();
     await _db.delete(_db.operatorColors).go();
+    await _db.delete(_db.routeMapLayers).go();
   }
 
   StatementLineRecordEntity _toRecord(StatementLine row) {

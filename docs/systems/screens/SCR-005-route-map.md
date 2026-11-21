@@ -12,6 +12,9 @@
 | 地図とシート | `lib/userinterface/route_map/route_map_sheets.dart` | `showUnlocatedSheet`、`showPlaceSheet`、`showSegmentSheet`（画面下から出るシート） |
 | 画面の状態と操作 | `lib/userinterface/route_map/route_map_controller.dart` | `routeMapProvider`、`IcPickingController`、`RouteMapActions` |
 | 画面の文言 | `lib/userinterface/route_map/route_map_strings.dart` | `RouteMapStrings` |
+| 地図の表示のシート | `lib/userinterface/route_map/route_map_layer_sheet.dart` | `showRouteMapLayerSheet` |
+| 地図の表示の状態 | `lib/userinterface/route_map/route_map_layer_providers.dart` | `routeMapLayersProvider`、`routeNetworkProvider`、`shownLayers`（実体の処理は `lib/main.dart` で渡す） |
+| 線の太さなど | `lib/userinterface/route_map/route_map_display.dart` | `segmentCounts`、`segmentWidth` |
 | 依存の受け口 | `lib/userinterface/route_map/route_map_providers.dart` | 各 `Provider`（実体は `lib/main.dart` で渡す）、`tileLayerProvider`（地図タイルの取得。テストで差し替える） |
 | 絞り込みの部品 | `lib/userinterface/statements/statement_filter_bar.dart` | `StatementFilterBar`（[SCR-002](SCR-002-statement-list.md) と共通。絞り込みの状態も共通） |
 | 更新の通知 | `lib/userinterface/common/data_revision.dart` | `dataRevisionProvider` |
@@ -36,6 +39,10 @@
 
 ![SCR-005 位置を決めているときの画面イメージ](images/SCR-005-route-map-picking.drawio.png)
 
+地図の表示を選ぶシート（地図の右上のボタンから開く）:
+
+![SCR-005 地図の表示の画面イメージ](images/SCR-005-route-map-layers.drawio.png)
+
 破線の枠は、状況によって表示する項目（位置不明の通知、位置を決める操作）。
 
 ### 入出力項目一覧
@@ -43,6 +50,9 @@
 | 項目 | 入力/出力 | 型 | 表示形式 |
 |---|---|---|---|
 | 絞り込み | 入力 | [SCR-002](SCR-002-statement-list.md) と同じ部品 | 「絞り込み」の見出しをタップして開閉する（初めは閉じる）。期間・車両番号・ETCカード番号・解除ボタンは SCR-002 と同じ。条件も SCR-002 と共通 |
+| 地図の表示ボタン | 入力 | ボタン | 地図の右上に重ねる丸いボタン（重ねたものの印）。タップすると、「地図の表示」のシートを開く（OP-10） |
+| 地図の表示のシート | 入力 | シート | 「地図の表示」の見出しと、チェックボックス6つ（路線図（すべての路線）、路線図の路線名、走行した路線図、ICのマーカー（名前つき）、確認中の線、走行回数で線の太さを変える）。各項目に、短い説明。初期値は [route-map.md](../../route-map.md) の「ルートマップの表示」 |
+| 路線図 | 出力 | `RouteNetworkDTO` | ICマスタのすべての道路を、薄い灰色の細い線で。タップできない。「路線図の路線名」を選んだときは、拡大したときに、路線名の文字も |
 | 区間（線） | 出力 | `RouteSegmentDTO` | 明細行ごとに、入口ICから出口ICまで、間のICを通り、道路の形に沿った折れ線（経路が分からないときは、入口と出口の直線。[route-map.md](../../route-map.md) の「地図に描く経路」）。確定は実線、確認中は破線。同じ区間は重ねて描く。タップできる |
 | マーカー | 出力 | `RoutePlaceDTO` | 位置に印と、IC名（近似のときは「IC名（近似）」）。タップできる |
 | 位置不明の通知 | 出力 | `UnlocatedIcDTO`、`undrawnLineCount` | 「位置不明のICが N 件あります（M 件の明細行は描けません）」と「位置を指定」ボタン。N が 0 のときは、描けない明細行があっても表示しない（入口が空欄の行だけのとき）。M は、描けない明細行の数 |
@@ -65,6 +75,7 @@
 | OP-6 | 位置を決める操作をやめる | 「キャンセル」のタップ | ピンを消して、通常の表示に戻る。何も登録しない | なし |
 | OP-7 | マーカーを開く | マーカーのタップ | そのICの情報（IC名、路線名、位置の種類（「指定した位置」「マスタの位置」。近似のときは「（近似）」）、明細行の数）をシートで表示する。「位置を指定し直す」で、位置を決める操作（OP-4）を始める。位置を指定しているときだけ、「指定を解除」を表示する。押すと、指定を解除して、読み込み直す。一覧・詳細の路線名も更新させる | なし |
 | OP-8 | 線を開く | 線のタップ（位置を決める操作の間は、無効） | 線が1本ならその明細行の詳細を開く。重なっているときは、明細行の一覧（IC、日時、通行料金）をシートで開き、選んだ明細行の詳細を開く | [SCR-003](SCR-003-statement-detail.md) |
+| OP-10 | 地図の表示を切り替える | 右上のボタンのタップ → シートのチェックボックスのタップ | シートを開く。チェックを変えるたびに、すぐ地図に反映し、選択を保存する（[PRC-025](../processes/PRC-025-save-route-map-layer.md)）。シートは、地図の外をタップするか、下に動かして閉じる | なし |
 | OP-9 | 再読み込みする | 「再読み込み」のタップ（ER-1 のとき） | 現在の条件で、読み込み直す | なし |
 
 ### エラー一覧
@@ -74,8 +85,10 @@
 | ER-1 | OP-1、OP-2 で、読み込みに失敗 | `RouteMapStrings.loadFailed` | OP-9 で、もう一度読み込む |
 | ER-2 | OP-5 で、登録に失敗 | `RouteMapStrings.saveFailed`（画面下のメッセージで表示する） | ピンはそのまま。もう一度登録する |
 | ER-3 | OP-7 の「指定を解除」で、解除に失敗 | `RouteMapStrings.deleteFailed`（画面下のメッセージで表示する） | もう一度解除する |
+| ER-4 | OP-10 で、選択の保存に失敗 | `RouteMapStrings.layerSaveFailed`（画面下のメッセージで表示する） | もう一度チェックを切り替える。表示は、保存済みの選択に戻る |
 
-- ER-1〜3 には、失敗の詳細（例外の内容）を出さない。個人情報が含まれることがあるため（[privacy.md](../../privacy.md)）
+- 地図の表示の選択を読めないときは、メッセージを出さず、初期値で描く。路線図を作れないときも、メッセージを出さず、路線図だけ描かない
+- ER-1〜4 には、失敗の詳細（例外の内容）を出さない。個人情報が含まれることがあるため（[privacy.md](../../privacy.md)）
 
 ## 詳細設計
 
@@ -87,9 +100,12 @@
 |---|---|---|
 | OP-1、OP-2、OP-9 | ルートマップの取得（`ListRouteMapUC`） | [PRC-009](../processes/PRC-009-list-route-map.md) |
 | OP-5 | ICの位置の登録（`SaveIcPositionUC`） | [PRC-010](../processes/PRC-010-save-ic-position.md) |
+| 地図の描き方、OP-10 のシート | 地図の表示の取得（`ListRouteMapLayersUC`） | [PRC-024](../processes/PRC-024-list-route-map-layers.md) |
+| OP-10 | 地図の表示の保存（`SaveRouteMapLayerUC`） | [PRC-025](../processes/PRC-025-save-route-map-layer.md) |
+| 地図の描き方 | 路線図の作成（`ListRouteNetworkUC`） | [PRC-026](../processes/PRC-026-list-route-network.md) |
 | OP-7（指定を解除） | ICの位置の解除（`DeleteIcPositionUC`） | [PRC-011](../processes/PRC-011-delete-ic-position.md) |
 
-- OP-3、OP-4、OP-6、OP-8 は、画面の中で完結する（処理を呼ばない）
+- OP-3、OP-4、OP-6、OP-8 は、画面の中で完結する（OP-10 は、保存の処理を呼ぶ）（処理を呼ばない）
 - 画面は `StatementLineEntity`、`IcPointEntity` を扱わない。結果は `RouteMapDTO` で受け取る
 - 地図タイルは、`flutter_map` が OpenStreetMap のタイルサーバーから取得する。このとき、アプリの識別名（`jp.mtrk.etc_meisai`）だけを送る。明細・位置は送らない
 - OP-8 は、タップした線の `RouteSegmentDTO.line` を、ルート `/route-map/detail` に渡して開く
@@ -97,5 +113,6 @@
 ## 関連するテスト
 
 - ウィジェット: `test/userinterface/route_map/route_map_screen_test.dart`（線とマーカー、確定・確認中の線の見た目、位置不明の通知、位置を決める操作と登録、マーカーのシートと解除、線のタップで詳細、重なった線の選択、0件の文言、絞り込み、読み込み中、ER-1〜3）
+- ウィジェット: `test/userinterface/route_map/route_map_layers_test.dart`（初期値の表示、シートの項目、路線図・走行した路線図・マーカー・確認中の線の出し入れ、走行回数による太さ、路線名の表示と、全国表示のときの非表示、路線図を作れないとき、保存の失敗、選択を読めないとき）
 - ウィジェット: `test/userinterface/app_shell_test.dart`（ナビゲーションバーに「ルートマップ」があり、切り替えられること）
 - 結合: `integration_test/route_map_test.dart`（画面からDBまで。位置不明のICに位置を指定すると、区間が描かれること。解除すると戻ること）

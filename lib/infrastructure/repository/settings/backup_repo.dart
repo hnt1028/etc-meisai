@@ -6,6 +6,7 @@ import 'package:etc_meisai/domain/entity/app_data_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/entity/operator_color_entity.dart';
+import 'package:etc_meisai/domain/entity/route_map_layer_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_record_entity.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/domain/value/vehicle_type_value.dart';
@@ -70,6 +71,10 @@ class BackupRepo implements BackupIF {
             'color': c.color & 0xFFFFFF,
           },
       ],
+      'routeMapLayers': [
+        for (final l in data.routeMapLayers)
+          <String, Object?>{'layer': l.layerCode, 'visible': l.visible},
+      ],
     };
     return Uint8List.fromList(utf8.encode(jsonEncode(json)));
   }
@@ -111,6 +116,12 @@ class BackupRepo implements BackupIF {
         _color(_Row(item, _Messages.color, i + 1)),
     ];
 
+    // A file written before the layers were added has none: the defaults.
+    final layers = [
+      for (final (i, item) in _optionalList(root, 'routeMapLayers').indexed)
+        _layer(_Row(item, _Messages.layer, i + 1)),
+    ];
+
     _checkUnique(lines.map((l) => l.id), _Messages.line, 'id');
     _checkUnique(
       lines.map((l) => l.duplicateKey),
@@ -124,12 +135,14 @@ class BackupRepo implements BackupIF {
       _Messages.color,
       'operatorName',
     );
+    _checkUnique(layers.map((l) => l.layerCode), _Messages.layer, 'layer');
 
     return AppDataEntity(
       statementLines: lines,
       icMappings: mappings,
       icPositions: positions,
       operatorColors: colors,
+      routeMapLayers: layers,
     );
   }
 
@@ -196,6 +209,11 @@ class BackupRepo implements BackupIF {
     );
   }
 
+  RouteMapLayerEntity _layer(_Row row) => RouteMapLayerEntity(
+    layerCode: row.text('layer'),
+    visible: row.boolean('visible'),
+  );
+
   void _checkUnique(Iterable<String> values, String what, String key) {
     final seen = <String>{};
     for (final value in values) {
@@ -231,6 +249,12 @@ class _Row {
 
   String? optionalText(String key) => _value(key) == null ? null : text(key);
 
+  bool boolean(String key) {
+    final value = _value(key);
+    if (value is! bool) throw wrong(key);
+    return value;
+  }
+
   int integer(String key) {
     final value = _value(key);
     if (value is! int) throw wrong(key);
@@ -265,6 +289,7 @@ class _Messages {
   static const mapping = 'ICの対応づけ';
   static const position = 'ICの位置の指定';
   static const color = '線の色';
+  static const layer = '地図の表示';
 
   static const notBackup = 'このアプリのバックアップのファイルではありません';
   static const tooNew = '新しい版のアプリで書き出したファイルです。このアプリでは読み込めません';

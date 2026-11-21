@@ -48,6 +48,7 @@ class _World {
     icMappings: const [IcMappingEntity(icName: '北', pointId: 'p')],
     icPositions: const [],
     operatorColors: const [],
+    routeMapLayers: const [],
   );
 
   Widget app() {
@@ -211,6 +212,7 @@ void main() {
             icMappings: const [],
             icPositions: const [],
             operatorColors: const [],
+            routeMapLayers: const [],
           ),
         ),
       );

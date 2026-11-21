@@ -45,7 +45,7 @@ abstract final class SettingsStrings {
   static const exportNote = '書き出したファイルには、車両番号とETCカード番号が含まれます。保管に注意してください。';
   static const restoreButton = 'データを読み込む（すべて置き換え）';
   static const restoreConfirmMessage =
-      '読み込むファイルの内容で、いまのすべてのデータ（明細行・ICの対応づけ・位置の指定・線の色）を置き換えます。'
+      '読み込むファイルの内容で、いまのすべてのデータ（明細行・ICの対応づけ・位置の指定・線の色・地図の表示）を置き換えます。'
       'いまのデータはすべて消え、元に戻せません。';
   static const restoreConfirmOk = '置き換える';
 
@@ -74,7 +74,7 @@ abstract final class SettingsStrings {
 
   static const deleteAllButton = 'すべてのデータを削除する';
   static const deleteAllConfirmMessage =
-      'すべてのデータ（明細行・ICの対応づけ・位置の指定・線の色）を削除します。元に戻せません。';
+      'すべてのデータ（明細行・ICの対応づけ・位置の指定・線の色・地図の表示）を削除します。元に戻せません。';
   static const deletedAll = 'すべてのデータを削除しました';
   static const deleteAllFailed = '削除できませんでした。データは変わっていません';
 

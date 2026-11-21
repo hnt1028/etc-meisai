@@ -7,6 +7,7 @@ import 'package:etc_meisai/application/interface/ic_master_if.dart';
 import 'package:etc_meisai/application/interface/ic_position_if.dart';
 import 'package:etc_meisai/application/interface/statement_if.dart';
 import 'package:etc_meisai/application/interface/operator_color_if.dart';
+import 'package:etc_meisai/application/interface/route_map_layer_if.dart';
 import 'package:etc_meisai/application/interface/statement_line_if.dart';
 import 'package:etc_meisai/application/interface/vehicle_type_master_if.dart';
 import 'package:etc_meisai/application/usecase/aggregation/aggregate_statements_uc.dart';
@@ -20,6 +21,7 @@ import 'package:etc_meisai/domain/entity/statement_line_record_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/entity/operator_color_entity.dart';
+import 'package:etc_meisai/domain/entity/route_map_layer_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
 import 'package:etc_meisai/domain/entity/vehicle_type_division_entity.dart';
 import 'package:etc_meisai/domain/value/ic_kind_value.dart';
@@ -383,6 +385,7 @@ AppDataEntity emptyAppData() => const AppDataEntity(
   icMappings: [],
   icPositions: [],
   operatorColors: [],
+  routeMapLayers: [],
 );
 
 /// A backup format for tests: the bytes are a marker, and [decode] gives what
@@ -469,6 +472,33 @@ class FakeOperatorColorIF implements OperatorColorIF {
   Future<void> delete(String operatorName) async {
     if (error != null) throw error!;
     stored.removeWhere((c) => c.operatorName == operatorName);
+  }
+
+  @override
+  Future<void> deleteAll() async {
+    if (error != null) throw error!;
+    stored.clear();
+  }
+}
+
+/// The choices about the route map on memory.
+class FakeRouteMapLayerIF implements RouteMapLayerIF {
+  final List<RouteMapLayerEntity> stored = [];
+
+  /// When set, every method throws it.
+  Object? error;
+
+  @override
+  Future<List<RouteMapLayerEntity>> findAll() async {
+    if (error != null) throw error!;
+    return List.of(stored);
+  }
+
+  @override
+  Future<void> save(RouteMapLayerEntity layer) async {
+    if (error != null) throw error!;
+    stored.removeWhere((l) => l.layerCode == layer.layerCode);
+    stored.add(layer);
   }
 
   @override

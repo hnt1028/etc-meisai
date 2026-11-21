@@ -1,4 +1,5 @@
 import 'package:drift/native.dart';
+import 'package:etc_meisai/domain/entity/route_map_layer_entity.dart';
 import 'package:etc_meisai/domain/entity/app_data_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
@@ -194,6 +195,9 @@ void main() {
           operatorColors: const [
             OperatorColorEntity(operatorName: 'NEXCO東日本', color: 0xFF0A0B0C),
           ],
+          routeMapLayers: const [
+            RouteMapLayerEntity(layerCode: 'markers', visible: false),
+          ],
         ),
       );
 
@@ -233,6 +237,7 @@ void main() {
             icMappings: const [IcMappingEntity(icName: '南', pointId: 'x')],
             icPositions: const [],
             operatorColors: const [],
+            routeMapLayers: const [],
           ),
         ),
         throwsA(anything),

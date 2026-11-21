@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:etc_meisai/domain/entity/route_map_layer_entity.dart';
 import 'package:etc_meisai/domain/entity/app_data_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
@@ -40,6 +41,10 @@ AppDataEntity _data() => AppDataEntity(
     OperatorColorEntity(operatorName: 'NEXCO東日本', color: 0xFF112233),
     OperatorColorEntity(operatorName: '首都高速道路', color: 0xFFFFFFFF),
   ],
+  routeMapLayers: const [
+    RouteMapLayerEntity(layerCode: 'network', visible: false),
+    RouteMapLayerEntity(layerCode: 'markers', visible: true),
+  ],
 );
 
 /// A valid file as a map, for a test to break in one place.
@@ -48,6 +53,7 @@ Map<String, Object?> _file({
   List<Object?>? mappings,
   List<Object?>? positions,
   Object? colors,
+  Object? layers,
 }) => {
   'format': 'etc-meisai-backup',
   'version': 1,
@@ -56,6 +62,7 @@ Map<String, Object?> _file({
   'icMappings': mappings ?? [],
   'icPositions': positions ?? [],
   'operatorColors': ?colors,
+  'routeMapLayers': ?layers,
 };
 
 Map<String, Object?> _line([Map<String, Object?>? changes]) => {
@@ -142,6 +149,7 @@ void main() {
         icMappings: const [],
         icPositions: const [],
         operatorColors: const [],
+        routeMapLayers: const [],
       );
 
       final line = repo
@@ -171,6 +179,7 @@ void main() {
             icMappings: [],
             icPositions: [],
             operatorColors: [],
+            routeMapLayers: [],
           ),
           DateTime.now(),
         ),
@@ -343,6 +352,43 @@ void main() {
         _decodeError(_file(colors: 'x')).message,
         contains('operatorColors'),
       );
+    });
+
+    test('keeps the layers of the route map', () {
+      final back = repo.decode(repo.encode(_data(), DateTime.now()));
+
+      expect(back.routeMapLayers.map((l) => (l.layerCode, l.visible)), [
+        ('network', false),
+        ('markers', true),
+      ]);
+    });
+
+    test('reads a file without layers as having none', () {
+      expect(repo.decode(_bytes(_file())).routeMapLayers, isEmpty);
+    });
+
+    test('rejects a wrong layer, and the same layer twice', () {
+      for (final bad in [
+        {'layer': 'network', 'visible': 1},
+        {'layer': 'network', 'visible': null},
+        {'layer': 5, 'visible': true},
+      ]) {
+        final error = _decodeError(_file(layers: [bad]));
+        expect(error.message, contains('地図の表示'));
+      }
+      expect(
+        _decodeError(_file(layers: 'x')).message,
+        contains('routeMapLayers'),
+      );
+      final twice = _decodeError(
+        _file(
+          layers: [
+            {'layer': 'network', 'visible': true},
+            {'layer': 'network', 'visible': false},
+          ],
+        ),
+      );
+      expect(twice.message, contains('layer'));
     });
 
     test('rejects the same operator twice', () {

@@ -1,8 +1,13 @@
 import 'dart:math' as math;
 
 import 'package:etc_meisai/application/dto/route_map_dto.dart';
+import 'package:etc_meisai/application/dto/route_network_dto.dart';
 import 'package:etc_meisai/application/dto/route_segment_dto.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
+import 'package:etc_meisai/domain/value/route_map_layer_value.dart';
+import 'package:etc_meisai/userinterface/route_map/route_map_display.dart';
+import 'package:etc_meisai/userinterface/route_map/route_map_layer_providers.dart';
+import 'package:etc_meisai/userinterface/route_map/route_map_layer_sheet.dart';
 import 'package:etc_meisai/userinterface/route_map/operator_color_providers.dart';
 import 'package:etc_meisai/userinterface/route_map/operator_colors.dart';
 import 'package:etc_meisai/userinterface/common/message_text.dart';
@@ -84,11 +89,22 @@ class RouteMapScreen extends ConsumerWidget {
                 child: Stack(
                   children: [
                     _RouteMap(data: data, picking: picking),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: FloatingActionButton.small(
+                        key: const ValueKey('layer-button'),
+                        heroTag: null,
+                        tooltip: RouteMapStrings.layerButton,
+                        onPressed: () => showRouteMapLayerSheet(context),
+                        child: const Icon(Icons.layers),
+                      ),
+                    ),
                     if (data.lineCount == 0)
                       Positioned(
                         top: 8,
                         left: 8,
-                        right: 8,
+                        right: 64,
                         child: Card(
                           child: Padding(
                             padding: const EdgeInsets.all(12),
@@ -236,6 +252,21 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
     final data = widget.data;
     final scheme = Theme.of(context).colorScheme;
     final operatorColors = ref.watch(operatorColorsProvider).value;
+    final shown = shownLayers(ref.watch(routeMapLayersProvider).value);
+    final network =
+        shown.contains(RouteMapLayerValue.network) ||
+            shown.contains(RouteMapLayerValue.networkNames)
+        ? ref.watch(routeNetworkProvider).value
+        : null;
+    final segments = [
+      for (final s in data.segments)
+        if (shown.contains(RouteMapLayerValue.pending) ||
+            s.line.status != ConfirmationStatusValue.pending)
+          s,
+    ];
+    final counts = shown.contains(RouteMapLayerValue.scaleByCount)
+        ? segmentCounts(segments)
+        : null;
     final points = [
       for (final p in data.places) LatLng(p.latitude, p.longitude),
     ];
@@ -271,68 +302,89 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
         ),
         children: [
           ref.watch(tileLayerProvider),
-          PolylineLayer<RouteSegmentDTO>(
-            hitNotifier: _hit,
-            polylines: [
-              for (final segment in data.segments)
-                for (final run in segmentRuns(segment))
-                  Polyline<RouteSegmentDTO>(
+          if (network != null && shown.contains(RouteMapLayerValue.network))
+            PolylineLayer(
+              polylines: [
+                for (final line in network.lines)
+                  Polyline(
                     points: [
-                      for (final v in run.points)
+                      for (final v in line.points)
                         LatLng(v.latitude, v.longitude),
                     ],
-                    strokeWidth: 4,
-                    color: runColor(context, run, scheme, operatorColors),
-                    pattern:
-                        segment.line.status == ConfirmationStatusValue.pending
-                        ? StrokePattern.dashed(segments: const [10, 8])
-                        : const StrokePattern.solid(),
-                    hitValue: segment,
+                    strokeWidth: 2,
+                    color: Colors.grey.withValues(alpha: 0.45),
                   ),
-            ],
-          ),
-          MarkerLayer(
-            markers: [
-              for (final place in data.places)
-                Marker(
-                  point: LatLng(place.latitude, place.longitude),
-                  width: 40,
-                  height: 40,
-                  child: GestureDetector(
-                    key: ValueKey('marker-${place.icName}'),
-                    behavior: HitTestBehavior.opaque,
-                    onTap: widget.picking.icName != null
-                        ? null
-                        : () => showPlaceSheet(context, ref, place),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      alignment: Alignment.center,
-                      children: [
-                        Icon(Icons.circle, size: 14, color: scheme.primary),
-                        Positioned(
-                          top: 36,
-                          left: -50,
-                          width: 140,
-                          child: Text(
-                            RouteMapStrings.markerLabel(
-                              place.icName,
-                              approximate: place.approximate,
-                            ),
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  backgroundColor: scheme.surface.withValues(
-                                    alpha: 0.8,
-                                  ),
-                                ),
-                          ),
-                        ),
+              ],
+            ),
+          if (network != null &&
+              shown.contains(RouteMapLayerValue.networkNames))
+            _NetworkNames(network: network),
+          if (shown.contains(RouteMapLayerValue.traveled))
+            PolylineLayer<RouteSegmentDTO>(
+              hitNotifier: _hit,
+              polylines: [
+                for (final segment in segments)
+                  for (final run in segmentRuns(segment))
+                    Polyline<RouteSegmentDTO>(
+                      points: [
+                        for (final v in run.points)
+                          LatLng(v.latitude, v.longitude),
                       ],
+                      strokeWidth: counts == null
+                          ? segmentBaseWidth
+                          : segmentWidth(counts[segmentRoadKey(segment)] ?? 1),
+                      color: runColor(context, run, scheme, operatorColors),
+                      pattern:
+                          segment.line.status == ConfirmationStatusValue.pending
+                          ? StrokePattern.dashed(segments: const [10, 8])
+                          : const StrokePattern.solid(),
+                      hitValue: segment,
+                    ),
+              ],
+            ),
+          if (shown.contains(RouteMapLayerValue.markers))
+            MarkerLayer(
+              markers: [
+                for (final place in data.places)
+                  Marker(
+                    point: LatLng(place.latitude, place.longitude),
+                    width: 40,
+                    height: 40,
+                    child: GestureDetector(
+                      key: ValueKey('marker-${place.icName}'),
+                      behavior: HitTestBehavior.opaque,
+                      onTap: widget.picking.icName != null
+                          ? null
+                          : () => showPlaceSheet(context, ref, place),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        alignment: Alignment.center,
+                        children: [
+                          Icon(Icons.circle, size: 14, color: scheme.primary),
+                          Positioned(
+                            top: 36,
+                            left: -50,
+                            width: 140,
+                            child: Text(
+                              RouteMapStrings.markerLabel(
+                                place.icName,
+                                approximate: place.approximate,
+                              ),
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    backgroundColor: scheme.surface.withValues(
+                                      alpha: 0.8,
+                                    ),
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-            ],
-          ),
+              ],
+            ),
           if (pin != null)
             MarkerLayer(
               markers: [
@@ -357,6 +409,46 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The names of the roads of the network, written at one place of each road.
+/// Only the ones in view are made, and only when the map is zoomed in.
+class _NetworkNames extends StatelessWidget {
+  const _NetworkNames({required this.network});
+
+  final RouteNetworkDTO network;
+
+  @override
+  Widget build(BuildContext context) {
+    final camera = MapCamera.of(context);
+    if (camera.zoom < networkNamesMinZoom) return const SizedBox.shrink();
+    final style = Theme.of(context).textTheme.labelSmall;
+    final surface = Theme.of(context).colorScheme.surface;
+    final bounds = camera.visibleBounds;
+    return MarkerLayer(
+      markers: [
+        for (final label in network.labels)
+          if (bounds.contains(LatLng(label.latitude, label.longitude)))
+            Marker(
+              point: LatLng(label.latitude, label.longitude),
+              width: 160,
+              height: 20,
+              child: IgnorePointer(
+                child: Center(
+                  child: Text(
+                    label.routeName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: style?.copyWith(
+                      backgroundColor: surface.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+      ],
     );
   }
 }

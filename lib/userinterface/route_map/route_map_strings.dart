@@ -1,3 +1,5 @@
+import 'package:etc_meisai/domain/value/route_map_layer_value.dart';
+
 /// Every text of the route map screen.
 /// Design: docs/systems/screens/SCR-005-route-map.md
 abstract final class RouteMapStrings {
@@ -31,6 +33,28 @@ abstract final class RouteMapStrings {
   static const segmentSheetTitle = '重なっている明細行';
 
   static const attribution = '© OpenStreetMap contributors';
+
+  static const layerButton = '地図の表示';
+  static const layerSheetTitle = '地図の表示';
+  static const layerSaveFailed = '設定を保存できませんでした';
+
+  static String layerTitle(RouteMapLayerValue layer) => switch (layer) {
+    RouteMapLayerValue.network => '路線図（すべての路線）',
+    RouteMapLayerValue.networkNames => '路線図の路線名',
+    RouteMapLayerValue.traveled => '走行した路線図',
+    RouteMapLayerValue.markers => 'ICのマーカー（名前つき）',
+    RouteMapLayerValue.pending => '確認中の線',
+    RouteMapLayerValue.scaleByCount => '走行回数で線の太さを変える',
+  };
+
+  static String layerNote(RouteMapLayerValue layer) => switch (layer) {
+    RouteMapLayerValue.network => 'すべての路線を、薄い灰色の線で結びます',
+    RouteMapLayerValue.networkNames => '地図を拡大したときに、路線の名前を表示します',
+    RouteMapLayerValue.traveled => '走行した区間を、路線の色の線で結びます',
+    RouteMapLayerValue.markers => 'IC・料金所の印と名前を表示します。タップで位置を指定できます',
+    RouteMapLayerValue.pending => '確認中の明細行の線（破線）を表示します',
+    RouteMapLayerValue.scaleByCount => '何度も走った区間ほど、太い線で描きます',
+  };
 
   static const loadFailed = '読み込めませんでした';
   static const retry = '再読み込み';

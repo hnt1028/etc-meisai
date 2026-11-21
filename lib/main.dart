@@ -2,6 +2,9 @@
 // The only place that wires the layers together. It opens the real database,
 // so it is checked by the integration test, not by unit tests.
 import 'package:etc_meisai/application/usecase/route_map/list_operator_colors_uc.dart';
+import 'package:etc_meisai/application/usecase/route_map/list_route_map_layers_uc.dart';
+import 'package:etc_meisai/application/usecase/route_map/list_route_network_uc.dart';
+import 'package:etc_meisai/application/usecase/route_map/save_route_map_layer_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/reset_operator_colors_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/save_operator_color_uc.dart';
 import 'package:etc_meisai/userinterface/route_map/operator_color_providers.dart';
@@ -31,6 +34,7 @@ import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_master_repo.d
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/vehicle_type_master_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_position/ic_position_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/operator_color/operator_color_repo.dart';
+import 'package:etc_meisai/infrastructure/repository/route_map_layer/route_map_layer_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/app_data_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/backup_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/statement_repo.dart';
@@ -38,6 +42,7 @@ import 'package:etc_meisai/infrastructure/repository/statements/statement_line_r
 import 'package:etc_meisai/userinterface/app.dart';
 import 'package:etc_meisai/userinterface/ic_mapping/ic_mapping_providers.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_providers.dart';
+import 'package:etc_meisai/userinterface/route_map/route_map_layer_providers.dart';
 import 'package:etc_meisai/userinterface/route_map/route_map_providers.dart';
 import 'package:etc_meisai/userinterface/statements/statement_detail_providers.dart';
 import 'package:etc_meisai/userinterface/settings/settings_providers.dart';
@@ -58,6 +63,7 @@ void main() {
   final icMappings = IcMappingRepo(database);
   final icPositions = IcPositionRepo(database);
   final operatorColors = OperatorColorRepo(database);
+  final routeMapLayers = RouteMapLayerRepo(database);
   final appData = AppDataRepo(database);
   final backup = const BackupRepo();
 
@@ -90,6 +96,15 @@ void main() {
             icPositions: icPositions,
             vehicleTypes: vehicleTypes,
           ),
+        ),
+        listRouteMapLayersUCProvider.overrideWithValue(
+          ListRouteMapLayersUC(routeMapLayers: routeMapLayers),
+        ),
+        saveRouteMapLayerUCProvider.overrideWithValue(
+          SaveRouteMapLayerUC(routeMapLayers: routeMapLayers),
+        ),
+        listRouteNetworkUCProvider.overrideWithValue(
+          ListRouteNetworkUC(icMaster: icMaster),
         ),
         listOperatorColorsUCProvider.overrideWithValue(
           ListOperatorColorsUC(operatorColors: operatorColors),
