@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/native.dart';
+import 'package:etc_meisai/application/usecase/aggregation/ic_distance.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/value/ic_kind_value.dart';
 import 'package:etc_meisai/infrastructure/repository/database/app_database.dart';
@@ -168,6 +169,26 @@ void main() {
       expect(l.meters, lessThan(500000));
     }
   });
+
+  test(
+    'the bundled IC master has the Tokyo Bay Aqua-Line, from OpenStreetMap',
+    () async {
+      final text = File('assets/ic_master.json').readAsStringSync();
+      final repo = IcMasterRepo(loadJson: () async => text);
+      final points = {for (final p in await repo.findAll()) p.name: p};
+      final start = points['浮島/川崎浮島JCT']!;
+      final end = points['木更津金田']!;
+
+      expect(end.routeNames, contains('東京湾アクアライン'));
+      // The road is about 15 km long (Kawasaki to Kisarazu), over Umihotaru.
+      final route = IcDistance(
+        await repo.findLinks(),
+      ).roadRouteBetween(start, end);
+      expect(route, isNotNull);
+      expect(route!.meters, inInclusiveRange(14000, 17000));
+      expect(route.pointIds.any((id) => points['木更津方面']!.id == id), isTrue);
+    },
+  );
 
   group('IcMappingRepo', () {
     late AppDatabase db;

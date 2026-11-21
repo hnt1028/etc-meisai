@@ -121,7 +121,11 @@ void main() {
     test('draws a blank entrance of the Aqua-Line from its start', () async {
       final uc = GetLineRouteUC(
         icMaster: FakeIcMasterIF([
-          fakeIcPoint(name: '川崎浮島JCT', latitude: 35.5159, longitude: 139.7887),
+          fakeIcPoint(
+            name: '浮島/川崎浮島JCT',
+            latitude: 35.5159,
+            longitude: 139.7887,
+          ),
           fakeIcPoint(name: '木更津金田', latitude: 35.4322, longitude: 139.9233),
         ]),
         icMappings: FakeIcMappingIF(),
@@ -132,10 +136,10 @@ void main() {
         _line(entranceIc: null, exitIc: '木更津金田第一'),
       );
 
-      expect(route.segment!.fromIcName, '川崎浮島JCT');
+      expect(route.segment!.fromIcName, '浮島/川崎浮島JCT');
       expect(route.segment!.toIcName, '木更津金田第一');
       expect(route.segment!.toLongitude, 139.9233);
-      expect(route.places.map((p) => p.icName), ['川崎浮島JCT', '木更津金田第一']);
+      expect(route.places.map((p) => p.icName), ['浮島/川崎浮島JCT', '木更津金田第一']);
     });
 
     test('does not report an implied entrance that has no position', () async {
