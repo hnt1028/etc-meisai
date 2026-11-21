@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:etc_meisai/domain/entity/route_map_layer_entity.dart';
+import 'package:etc_meisai/domain/entity/route_map_option_entity.dart';
 import 'package:etc_meisai/domain/entity/app_data_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
@@ -54,6 +55,7 @@ Map<String, Object?> _file({
   List<Object?>? positions,
   Object? colors,
   Object? layers,
+  Object? options,
 }) => {
   'format': 'etc-meisai-backup',
   'version': 1,
@@ -63,6 +65,7 @@ Map<String, Object?> _file({
   'icPositions': positions ?? [],
   'operatorColors': ?colors,
   'routeMapLayers': ?layers,
+  'routeMapOptions': ?options,
 };
 
 Map<String, Object?> _line([Map<String, Object?>? changes]) => {
@@ -361,6 +364,53 @@ void main() {
         ('network', false),
         ('markers', true),
       ]);
+    });
+
+    test('keeps the numbers of the route map', () {
+      final data = AppDataEntity(
+        statementLines: const [],
+        icMappings: const [],
+        icPositions: const [],
+        operatorColors: const [],
+        routeMapLayers: const [],
+        routeMapOptions: const [
+          RouteMapOptionEntity(optionCode: 'lineWidth', value: 7),
+        ],
+      );
+
+      final back = repo.decode(repo.encode(data, DateTime.now()));
+
+      expect(back.routeMapOptions.single.optionCode, 'lineWidth');
+      expect(back.routeMapOptions.single.value, 7);
+    });
+
+    test('reads a file without numbers as having none', () {
+      expect(repo.decode(_bytes(_file())).routeMapOptions, isEmpty);
+    });
+
+    test('rejects a wrong number, and the same option twice', () {
+      for (final bad in [
+        {'option': 'lineWidth', 'value': 'x'},
+        {'option': 'lineWidth', 'value': null},
+        {'option': 5, 'value': 1},
+      ]) {
+        expect(_decodeError(_file(options: [bad])).message, contains('地図の数値'));
+      }
+      expect(
+        _decodeError(_file(options: 'x')).message,
+        contains('routeMapOptions'),
+      );
+      expect(
+        _decodeError(
+          _file(
+            options: [
+              {'option': 'a', 'value': 1},
+              {'option': 'a', 'value': 2},
+            ],
+          ),
+        ).message,
+        contains('option'),
+      );
     });
 
     test('reads a file without layers as having none', () {

@@ -16,13 +16,17 @@ Map<String, int> segmentCounts(Iterable<RouteSegmentDTO> segments) {
   return counts;
 }
 
-/// The usual width of a line.
-const segmentBaseWidth = 4.0;
+/// The width of a line driven [count] times, when a line driven once has
+/// [base]: 2 more for each time, up to the fifth.
+double segmentWidth(int count, {required double base}) =>
+    base + 2 * (count - 1).clamp(0, 4);
 
-/// The width of a line driven [count] times: 2 more for each time, up to the
-/// fifth.
-double segmentWidth(int count) =>
-    segmentBaseWidth + 2 * (count - 1).clamp(0, 4);
+/// A line of the network is this much of the width of a driven line.
+const networkWidthRatio = 0.75;
+
+/// The width of the lines of the network, when the lines of the driven roads
+/// have [lineWidth].
+double networkWidthOf(double lineWidth) => lineWidth * networkWidthRatio;
 
 /// The names of roads are written from this zoom: below it, they would cover
 /// the map.

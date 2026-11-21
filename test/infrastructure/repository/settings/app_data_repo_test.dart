@@ -1,5 +1,6 @@
 import 'package:drift/native.dart';
 import 'package:etc_meisai/domain/entity/route_map_layer_entity.dart';
+import 'package:etc_meisai/domain/entity/route_map_option_entity.dart';
 import 'package:etc_meisai/domain/entity/app_data_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_mapping_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
@@ -12,6 +13,7 @@ import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_mapping_repo.
 import 'package:etc_meisai/infrastructure/repository/ic_position/ic_position_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/operator_color/operator_color_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/route_map_layer/route_map_layer_repo.dart';
+import 'package:etc_meisai/infrastructure/repository/route_map_option/route_map_option_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/app_data_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/statements/statement_line_repo.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -63,6 +65,9 @@ void main() {
     );
     await lines.updateVehicleNumber(blank.id!, 4321);
     await lines.updateNote(blank.id!, memo: '出張', tags: ['仕事', '東京']);
+    await RouteMapOptionRepo(
+      db,
+    ).save(const RouteMapOptionEntity(optionCode: 'lineWidth', value: 7));
     await RouteMapLayerRepo(
       db,
     ).save(const RouteMapLayerEntity(layerCode: 'network', visible: false));
@@ -86,6 +91,7 @@ void main() {
       expect(data.icPositions, isEmpty);
       expect(data.operatorColors, isEmpty);
       expect(data.routeMapLayers, isEmpty);
+      expect(data.routeMapOptions, isEmpty);
     });
 
     test(
@@ -116,6 +122,8 @@ void main() {
         expect(data.operatorColors.single.color, 0xFF123456);
         expect(data.routeMapLayers.single.layerCode, 'network');
         expect(data.routeMapLayers.single.visible, isFalse);
+        expect(data.routeMapOptions.single.optionCode, 'lineWidth');
+        expect(data.routeMapOptions.single.value, 7);
         // The note of the user, and none for a line without one.
         expect(blank.memo, '出張');
         expect(blank.tags, ['仕事', '東京']);
@@ -174,6 +182,7 @@ void main() {
         expect(back.tags, line.tags);
         // The layers are back too.
         expect(after.routeMapLayers.single.layerCode, 'network');
+        expect(after.routeMapOptions.single.value, 7);
         expect(back.status, line.status);
         expect(back.discountTypes, line.discountTypes);
       }
@@ -222,6 +231,9 @@ void main() {
           routeMapLayers: const [
             RouteMapLayerEntity(layerCode: 'markers', visible: false),
           ],
+          routeMapOptions: const [
+            RouteMapOptionEntity(optionCode: 'lineWidth', value: 9),
+          ],
         ),
       );
 
@@ -235,6 +247,7 @@ void main() {
       expect(data.operatorColors.single.operatorName, 'NEXCO東日本');
       expect(data.operatorColors.single.color, 0xFF0A0B0C);
       expect(data.routeMapLayers.single.layerCode, 'markers');
+      expect(data.routeMapOptions.single.value, 9);
       expect(data.routeMapLayers.single.visible, isFalse);
     });
 
