@@ -30,6 +30,10 @@ const _rules = [
     routeName: '安房峠道路',
     bothWays: true,
   ),
+  // The Tokyo Bay Aqua-Line has no section in the road network, so the line is
+  // straight; it is close to the road. The exit may be written with the number
+  // of the toll gate ("木更津金田第一"), which the lookup completes.
+  _ImpliedEntrance(exit: '木更津金田', entrance: '川崎浮島JCT'),
 ];
 
 /// The IC name that is the entrance of a line with a blank entrance and the

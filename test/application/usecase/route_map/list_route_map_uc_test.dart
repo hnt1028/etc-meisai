@@ -100,6 +100,24 @@ void main() {
       },
     );
 
+    test('draws a blank entrance of the Aqua-Line from its start', () async {
+      final lines = FakeStatementLineIF()
+        ..stored.add(
+          fakeStatementLine(exitIc: '木更津金田第一', withoutEntrance: true),
+        );
+      final result = await fakeRouteMapUC(
+        lines,
+        master: FakeIcMasterIF([
+          fakeIcPoint(name: '川崎浮島JCT', latitude: 35.5159, longitude: 139.7887),
+          fakeIcPoint(name: '木更津金田', latitude: 35.4322, longitude: 139.9233),
+        ]),
+      ).execute();
+
+      expect(result.segments.single.fromIcName, '川崎浮島JCT');
+      expect(result.segments.single.toIcName, '木更津金田第一');
+      expect(result.undrawnLineCount, 0);
+    });
+
     test('makes one marker for an IC name, with the number of lines', () async {
       final lines = FakeStatementLineIF()
         ..stored.addAll([
