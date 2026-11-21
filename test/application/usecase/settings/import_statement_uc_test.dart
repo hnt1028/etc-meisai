@@ -52,6 +52,13 @@ class _FakeStatementLineIF implements StatementLineIF {
   }) async {}
 
   @override
+  Future<void> updateNote(
+    String id, {
+    required String memo,
+    required List<String> tags,
+  }) async {}
+
+  @override
   Future<List<StatementLineEntity>> findAll() async => stored.values.toList();
 
   @override

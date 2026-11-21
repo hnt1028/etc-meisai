@@ -32,7 +32,7 @@
 
 ## 入力
 
-[PRC-004](PRC-004-list-statement-lines.md) と同じ（`from`、`to`、`vehicleNumber`、`cardNumberSuffix`）。
+[PRC-004](PRC-004-list-statement-lines.md) と同じ（`from`、`to`、`vehicleNumber`、`cardNumberSuffix`、`tag`）。
 
 ## 手順
 
@@ -85,6 +85,7 @@ sequenceDiagram
 | `undrawnLineCount` | `int` | 区間にできなかった明細行の数 |
 | `vehicleNumberChoices` | `List<int>` | 絞り込みで選べる車両番号 |
 | `cardNumberChoices` | `List<String>` | 絞り込みで選べるカード番号（下4桁） |
+| `tagChoices` | `List<String>` | 絞り込みで選べるタグ（PRC-004 と同じ） |
 
 `RouteSegmentDTO`: `line`（`StatementLineDTO`）、`fromIcName`、`toIcName`、`fromLatitude`、`fromLongitude`、`toLatitude`、`toLongitude`、`via`（`List<RouteVertexDTO>`。入口から出口までの間の点（間の地点と、道路の形の点）を、順に。`RouteVertexDTO` は `latitude`、`longitude`）、`runs`（`List<RouteRunDTO>`。同じ線を、事業者が変わるところで区切ったもの。`RouteRunDTO` は `operator`（事業者名、不明は「不明」）と `points`（入口側から、終わりまでの点。端を含む。終わりは、次の区間の始まり））
 

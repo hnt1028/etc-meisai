@@ -24,7 +24,7 @@
 
 ## 入力
 
-[PRC-004](PRC-004-list-statement-lines.md) と同じ（`from`、`to`、`vehicleNumber`、`cardNumberSuffix`）。
+[PRC-004](PRC-004-list-statement-lines.md) と同じ（`from`、`to`、`vehicleNumber`、`cardNumberSuffix`、`tag`）。
 
 ## 手順
 
@@ -36,6 +36,7 @@
 6. 明細行ごとに路線名を `IcLookup` で決め、事業者を `operatorOfRoutes` で決めて、事業者別を求める。利用額の多い順（同額は名前順）
 7. 路線別、IC別を求める。回数の多い順（同数は名前順）で、上位10件。上位10件に入らなかった行の回数の合計を、`routesOtherCount`、`icsOtherCount` として添える（円グラフの「その他」用）
 8. 時間帯別（出口の時刻の「時」。0〜23のすべて）、割引種別別（回数の多い順、同数は名前順）を求める
+9. 路線の走破率を求める（`routeCoverageOf`。[aggregation.md](../../aggregation.md) の「路線の走破率」）。絞り込んだ明細行ごとに、入口から出口までの最短の経路（`IcDistance`）が通る地点（入口と出口を含む）を集め、路線ごとに、通ったIC（種別が「その他」を除く。同じ名前は1つ）の数と、路線のICの数を出す。少しでも通った路線を、走破率の高い順に `coverage` に入れる。ICマスタの路線の数を、`coverageRouteCount` に入れる
 
 ## シーケンス図
 
@@ -76,7 +77,10 @@ sequenceDiagram
 | `routesOtherCount`、`icsOtherCount` | `int` | 上位10件に入らなかった路線・ICの回数の合計（なければ 0） |
 | `hours` | `List<AggregationRowDTO>` | 時間帯別。`label` は「0」〜「23」 |
 | `discountTypes` | `List<AggregationRowDTO>` | 割引種別別。`fare` は `null` |
-| `vehicleNumberChoices`、`cardNumberChoices` | `List<int>`、`List<String>` | 絞り込みで選べる値 |
+| `vehicleNumberChoices`、`cardNumberChoices`、`tagChoices` | `List<int>`、`List<String>`、`List<String>` | 絞り込みで選べる値 |
+| `coverage` | `List<RouteCoverageRowDTO>` | 少しでも通った路線の、走破率（`routeName`、路線のICの数 `totalCount`、通ったICの数 `drivenCount`）。走破率の高い順 |
+| `coverageRouteCount` | `int` | ICマスタの路線の数 |
+| `tags` | `List<AggregationRowDTO>` | タグ別の行（回数、利用額、割引額、距離）。タグが複数ある明細行は、それぞれのタグに入る。タグが無い明細行は、「タグなし」の行に入る。利用額の多い順 |
 
 `AggregationRowDTO`: `label`（`String`）、`count`（`int`）、`fare`（`int?`）、`discount`（`int?`）、`distance`（`int?`。メートル）。`null` は、その集計では出さない値。距離は、期間別・事業者別・時間帯別に付く
 
@@ -87,5 +91,6 @@ sequenceDiagram
 ## 関連するテスト
 
 - 単体: `test/application/usecase/aggregation/aggregate_statements_uc_test.dart`（0件、合計（距離を含む）、距離が分からない明細行、週・月・年の境界、割引なしの割引額、事業者別（1つ・複数・不明）、路線別・IC別の上位10件と同数の並び、入口が空欄の行、時間帯別が24行そろうこと、割引種別別、絞り込みと選択肢、取得の失敗）
+- 単体: `test/application/usecase/aggregation/route_coverage_test.dart`（入口・出口とその間のIC、同じICは1回、順序、PA・料金所を数えないこと、スマートIC・JCT、同じ名前の地点、入口が空欄の道路、IC・経路が無いとき、路線が出会うIC）
 - 単体: `test/application/usecase/aggregation/ic_distance_test.dart`（最短経路、乗り換え、つながらないとき、直線距離への切り替え、同じ地点）
 - 単体: `test/application/usecase/aggregation/route_operators_test.dart`（推定の表、複数の事業者、不明）

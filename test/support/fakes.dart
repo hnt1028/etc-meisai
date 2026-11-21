@@ -7,6 +7,7 @@ import 'package:etc_meisai/application/interface/ic_master_if.dart';
 import 'package:etc_meisai/application/interface/ic_position_if.dart';
 import 'package:etc_meisai/application/interface/statement_if.dart';
 import 'package:etc_meisai/application/interface/operator_color_if.dart';
+import 'package:etc_meisai/application/interface/route_map_layer_if.dart';
 import 'package:etc_meisai/application/interface/statement_line_if.dart';
 import 'package:etc_meisai/application/interface/vehicle_type_master_if.dart';
 import 'package:etc_meisai/application/usecase/aggregation/aggregate_statements_uc.dart';
@@ -20,6 +21,7 @@ import 'package:etc_meisai/domain/entity/statement_line_record_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/entity/operator_color_entity.dart';
+import 'package:etc_meisai/domain/entity/route_map_layer_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
 import 'package:etc_meisai/domain/entity/vehicle_type_division_entity.dart';
 import 'package:etc_meisai/domain/value/ic_kind_value.dart';
@@ -47,6 +49,8 @@ StatementLineEntity fakeStatementLine({
   int? etcDiscount,
   VehicleTypeValue vehicleType = VehicleTypeValue.standard,
   List<String> discountTypes = const [],
+  String memo = '',
+  List<String> tags = const [],
 }) {
   return StatementLineEntity(
     id: id ?? 'line-${_fakeIdCounter++}',
@@ -66,6 +70,8 @@ StatementLineEntity fakeStatementLine({
     cardNumber: cardNumber,
     status: status,
     discountTypes: discountTypes,
+    memo: memo,
+    tags: tags,
   );
 }
 
@@ -155,6 +161,20 @@ class FakeStatementLineIF implements StatementLineIF {
         entranceAt: entranceAt,
         entranceIc: entranceIc,
       );
+    }
+  }
+
+  @override
+  Future<void> updateNote(
+    String id, {
+    required String memo,
+    required List<String> tags,
+  }) async {
+    await gate;
+    if (error != null) throw error!;
+    final index = stored.indexWhere((s) => s.id == id);
+    if (index >= 0) {
+      stored[index] = copyWithNote(stored[index], memo: memo, tags: tags);
     }
   }
 
@@ -383,6 +403,7 @@ AppDataEntity emptyAppData() => const AppDataEntity(
   icMappings: [],
   icPositions: [],
   operatorColors: [],
+  routeMapLayers: [],
 );
 
 /// A backup format for tests: the bytes are a marker, and [decode] gives what
@@ -422,6 +443,8 @@ StatementLineRecordEntity fakeRecord({
   int? vehicleNumber = 1234,
   ConfirmationStatusValue status = ConfirmationStatusValue.confirmed,
   List<String> discountTypes = const [],
+  String memo = '',
+  List<String> tags = const [],
 }) {
   return StatementLineRecordEntity(
     id: id,
@@ -442,6 +465,8 @@ StatementLineRecordEntity fakeRecord({
     cardNumber: '0000-****-0001',
     status: status,
     discountTypes: discountTypes,
+    memo: memo,
+    tags: tags,
   );
 }
 
@@ -469,6 +494,33 @@ class FakeOperatorColorIF implements OperatorColorIF {
   Future<void> delete(String operatorName) async {
     if (error != null) throw error!;
     stored.removeWhere((c) => c.operatorName == operatorName);
+  }
+
+  @override
+  Future<void> deleteAll() async {
+    if (error != null) throw error!;
+    stored.clear();
+  }
+}
+
+/// The choices about the route map on memory.
+class FakeRouteMapLayerIF implements RouteMapLayerIF {
+  final List<RouteMapLayerEntity> stored = [];
+
+  /// When set, every method throws it.
+  Object? error;
+
+  @override
+  Future<List<RouteMapLayerEntity>> findAll() async {
+    if (error != null) throw error!;
+    return List.of(stored);
+  }
+
+  @override
+  Future<void> save(RouteMapLayerEntity layer) async {
+    if (error != null) throw error!;
+    stored.removeWhere((l) => l.layerCode == layer.layerCode);
+    stored.add(layer);
   }
 
   @override

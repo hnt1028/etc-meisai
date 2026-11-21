@@ -47,6 +47,13 @@ class StatementLines extends Table {
   /// Discount types joined with `;`, like the CSV note. Empty when none.
   TextColumn get discountTypes => text()();
 
+  /// A note of the user. Empty when there is none. The import does not touch
+  /// it, so that a line that is imported again keeps its note.
+  TextColumn get memo => text().withDefault(const Constant(''))();
+
+  /// Tags of the user joined with `;`. Empty when none.
+  TextColumn get tags => text().withDefault(const Constant(''))();
+
   @override
   Set<Column> get primaryKey => {id};
 }

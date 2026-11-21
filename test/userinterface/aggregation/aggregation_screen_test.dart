@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:etc_meisai/application/dto/route_coverage_row_dto.dart';
 import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
 import 'package:etc_meisai/domain/entity/statement_line_entity.dart';
 import 'package:etc_meisai/userinterface/aggregation/aggregation_pie.dart';
@@ -136,6 +137,81 @@ void main() {
     expect(find.text(AggregationStrings.distanceNote), findsOneWidget);
     await _tap(tester, AggregationStrings.kind(AggregationKind.hour));
     expect(find.text(AggregationStrings.distanceNote), findsOneWidget);
+  });
+
+  testWidgets('aggregates by tag, with a row for the lines without one', (
+    tester,
+  ) async {
+    await _show(
+      tester,
+      lines: [
+        fakeStatementLine(fare: 1000, tags: const ['仕事', '東京']),
+        fakeStatementLine(
+          fare: 500,
+          exitAt: DateTime(2026, 1, 11, 9),
+          tags: const ['私用'],
+        ),
+        fakeStatementLine(fare: 200, exitAt: DateTime(2026, 1, 12, 9)),
+      ],
+    );
+
+    await _tap(tester, AggregationStrings.kind(AggregationKind.tag));
+
+    // A line with two tags counts for both.
+    expect(find.text('仕事'), findsOneWidget);
+    expect(find.text('東京'), findsOneWidget);
+    expect(find.text('私用'), findsOneWidget);
+    expect(find.text('タグなし'), findsOneWidget);
+    expect(find.text(AggregationStrings.tagNote), findsOneWidget);
+    expect(find.text('1,000円'), findsNWidgets(2));
+    expect(find.text('500円'), findsOneWidget);
+    expect(find.text('200円'), findsOneWidget);
+  });
+
+  testWidgets('shows how much of each road was driven', (tester) async {
+    await _show(tester, lines: _lines());
+
+    await _tap(tester, AggregationStrings.kind(AggregationKind.coverage));
+
+    expect(find.text(AggregationStrings.coverageSummary(1, 1)), findsOneWidget);
+    expect(find.text(AggregationStrings.coverageNote), findsOneWidget);
+    // 北 and 東 are the two ICs of 東名高速道路.
+    expect(find.byKey(const ValueKey('coverage-東名高速道路')), findsOneWidget);
+    expect(find.text('100.0%'), findsOneWidget);
+    expect(find.text(AggregationStrings.coverageCount(2, 2)), findsOneWidget);
+    // There is no table or graph for it.
+    expect(
+      find.text(AggregationStrings.display(AggregationDisplay.graph)),
+      findsNothing,
+    );
+  });
+
+  testWidgets('says so when no road was driven', (tester) async {
+    // The ICs are not in the master.
+    await _show(
+      tester,
+      lines: [fakeStatementLine(entranceIc: 'X', exitIc: 'Y')],
+    );
+
+    await _tap(tester, AggregationStrings.kind(AggregationKind.coverage));
+
+    expect(find.text(AggregationStrings.coverageSummary(0, 1)), findsOneWidget);
+    expect(find.text(AggregationStrings.coverageNone), findsOneWidget);
+  });
+
+  test('the share of a road is in tenths of a percent, rounded down', () {
+    RouteCoverageRowDTO row(int driven, int total) => RouteCoverageRowDTO(
+      routeName: 'R',
+      totalCount: total,
+      drivenCount: driven,
+    );
+
+    expect(coverageTenths(row(1, 3)), 333);
+    expect(coverageTenths(row(3, 3)), 1000);
+    expect(coverageTenths(row(0, 0)), 0);
+    expect(AggregationStrings.coveragePercent(333), '33.3%');
+    expect(AggregationStrings.coveragePercent(1000), '100.0%');
+    expect(AggregationStrings.coveragePercent(5), '0.5%');
   });
 
   testWidgets('draws the distance as bars and as a pie', (tester) async {

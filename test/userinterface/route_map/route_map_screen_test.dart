@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:etc_meisai/application/dto/route_segment_dto.dart';
 import 'package:etc_meisai/application/usecase/route_map/delete_ic_position_uc.dart';
 import 'package:etc_meisai/application/usecase/route_map/save_ic_position_uc.dart';
+import 'package:etc_meisai/application/usecase/ic_mapping/search_ic_points_uc.dart';
+import 'package:etc_meisai/userinterface/ic_mapping/ic_mapping_providers.dart';
 import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
+import 'package:etc_meisai/domain/entity/ic_point_entity.dart';
 import 'package:etc_meisai/domain/entity/ic_position_entity.dart';
 import 'package:etc_meisai/domain/value/confirmation_status_value.dart';
 import 'package:etc_meisai/userinterface/app.dart';
@@ -24,6 +27,14 @@ import 'package:latlong2/latlong.dart';
 
 import '../../support/fakes.dart';
 
+/// An IC master whose points cannot be read.
+class _BrokenMaster extends FakeIcMasterIF {
+  _BrokenMaster() : super(const []);
+
+  @override
+  Future<List<IcPointEntity>> findAll() async => throw StateError('x');
+}
+
 /// Everything the screen reads, kept in memory so that a test can change it.
 class _World {
   final lines = FakeStatementLineIF();
@@ -31,6 +42,9 @@ class _World {
 
   /// The links of the IC master, which a test can set (a road through ICs).
   final links = <IcLinkEntity>[];
+
+  /// The master the search reads, when a test needs another one.
+  FakeIcMasterIF? searchMaster;
 
   FakeIcMasterIF get master => FakeIcMasterIF([
     fakeIcPoint(
@@ -80,6 +94,9 @@ class _World {
       ),
       saveIcPositionUCProvider.overrideWithValue(
         SaveIcPositionUC(icPositions: positions),
+      ),
+      searchIcPointsUCProvider.overrideWithValue(
+        SearchIcPointsUC(icMaster: searchMaster ?? master),
       ),
       deleteIcPositionUCProvider.overrideWithValue(
         DeleteIcPositionUC(icPositions: positions),
@@ -429,13 +446,21 @@ void main() {
   });
 
   group('line', () {
-    testWidgets('opens the detail of the tapped line and comes back', (
+    testWidgets('chooses the tapped line, then opens its detail', (
       tester,
     ) async {
       final world = _World()..line('北', '東');
       await _open(tester, world);
 
       await _tapMap(tester, _center(tester));
+
+      // The line is chosen: a card says which one, and nothing is opened.
+      expect(find.byKey(const ValueKey('selected-lines')), findsOneWidget);
+      expect(_text(StatementListStrings.route('北', '東')), findsOneWidget);
+      expect(_text(StatementDetailStrings.title), findsNothing);
+
+      await tester.tap(find.byKey(const ValueKey('open-selected')));
+      await tester.pumpAndSettle();
 
       expect(_text(StatementDetailStrings.title), findsOneWidget);
       expect(_text('東'), findsWidgets);
@@ -455,6 +480,12 @@ void main() {
 
       await _tapMap(tester, _center(tester));
 
+      // Both lines are chosen, and the list is opened from the card.
+      expect(_text(RouteMapStrings.overlapped(2)), findsOneWidget);
+      expect(_text(RouteMapStrings.segmentSheetTitle), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('open-selected')));
+      await tester.pumpAndSettle();
+
       expect(_text(RouteMapStrings.segmentSheetTitle), findsOneWidget);
       expect(_text(StatementListStrings.route('北', '東')), findsNWidgets(2));
 
@@ -473,6 +504,200 @@ void main() {
 
       expect(_text(StatementDetailStrings.title), findsNothing);
       expect(_text(RouteMapStrings.segmentSheetTitle), findsNothing);
+      expect(find.byKey(const ValueKey('selected-lines')), findsNothing);
+    });
+
+    testWidgets('draws the chosen line out, and the others paler', (
+      tester,
+    ) async {
+      final world = _World()
+        ..line('北', '東')
+        ..line('東', '南', day: 11);
+      await _open(tester, world);
+      // The middle of the line from 北 to 東 (a straight line here).
+      final map = tester.getTopLeft(find.byType(FlutterMap));
+      final camera = MapCamera.of(
+        tester.element(find.byType(PolylineLayer<RouteSegmentDTO>)),
+      );
+      final onLine =
+          map + camera.latLngToScreenOffset(const LatLng(35.15, 139.2));
+      double width(WidgetTester t, String to) => _polylines(
+        t,
+      ).firstWhere((p) => p.hitValue!.toIcName == to).strokeWidth;
+      double alpha(WidgetTester t, String to) =>
+          _polylines(t).firstWhere((p) => p.hitValue!.toIcName == to).color.a;
+      final before = width(tester, '東');
+      final opaque = alpha(tester, '南');
+
+      await _tapMap(tester, onLine);
+
+      expect(width(tester, '東'), before + selectedExtraWidth);
+      expect(alpha(tester, '東'), opaque);
+      expect(width(tester, '南'), before);
+      expect(alpha(tester, '南'), lessThan(opaque));
+    });
+
+    testWidgets('lets go of the line with the close button or another tap', (
+      tester,
+    ) async {
+      final world = _World()..line('北', '東');
+      await _open(tester, world);
+
+      await _tapMap(tester, _center(tester));
+      await tester.tap(find.byKey(const ValueKey('clear-selected')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('selected-lines')), findsNothing);
+
+      await _tapMap(tester, _center(tester));
+      expect(find.byKey(const ValueKey('selected-lines')), findsOneWidget);
+      // Away from the line, and from the card at the bottom.
+      await _tapMap(tester, _center(tester) + const Offset(0, -100));
+      expect(find.byKey(const ValueKey('selected-lines')), findsNothing);
+    });
+
+    testWidgets('forgets the chosen line when the lines are read again', (
+      tester,
+    ) async {
+      final world = _World()..line('北', '東');
+      await _open(tester, world);
+      await _tapMap(tester, _center(tester));
+      expect(find.byKey(const ValueKey('selected-lines')), findsOneWidget);
+
+      _container(
+        tester,
+      ).read(statementFilterProvider.notifier).setVehicleNumber(1234);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('selected-lines')), findsNothing);
+    });
+  });
+
+  group('map tools', () {
+    MapCamera camera(WidgetTester tester) => MapCamera.of(
+      tester.element(find.byType(PolylineLayer<RouteSegmentDTO>)),
+    );
+
+    testWidgets('shows everything again with the fit button', (tester) async {
+      final world = _World()..line('北', '東');
+      await _open(tester, world);
+      final first = camera(tester).center;
+      final firstZoom = camera(tester).zoom;
+
+      await tester.drag(find.byType(FlutterMap), const Offset(200, 0));
+      await tester.pumpAndSettle();
+      expect(
+        camera(tester).center.longitude,
+        isNot(closeTo(first.longitude, 1e-6)),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('fit-button')));
+      await tester.pumpAndSettle();
+
+      expect(camera(tester).center.longitude, closeTo(first.longitude, 1e-3));
+      expect(camera(tester).center.latitude, closeTo(first.latitude, 1e-3));
+      expect(camera(tester).zoom, closeTo(firstZoom, 1e-3));
+    });
+
+    testWidgets('shows the whole country with the fit button without lines', (
+      tester,
+    ) async {
+      await _open(tester, _World());
+
+      await tester.drag(find.byType(FlutterMap), const Offset(200, 0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('fit-button')));
+      await tester.pumpAndSettle();
+
+      final c = MapCamera.of(tester.element(find.byType(MarkerLayer).first));
+      expect(c.center.latitude, closeTo(36.2, 1e-6));
+      expect(c.zoom, 5);
+    });
+
+    Future<void> search(WidgetTester tester, String text) async {
+      await tester.tap(find.byKey(const ValueKey('search-button')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('map-search-field')),
+        text,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('moves the map to the IC that is chosen', (tester) async {
+      final world = _World()..line('北', '東');
+      await _open(tester, world);
+
+      await search(tester, '南');
+      expect(
+        find.byKey(const ValueKey('map-search-result-id-南')),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const ValueKey('map-search-result-id-南')));
+      await tester.pumpAndSettle();
+
+      expect(camera(tester).center.latitude, closeTo(35.0, 1e-3));
+      expect(camera(tester).center.longitude, closeTo(139.4, 1e-3));
+      expect(camera(tester).zoom, foundZoom);
+      expect(find.byKey(const ValueKey('found')), findsOneWidget);
+
+      // The mark goes away with the fit button.
+      await tester.tap(find.byKey(const ValueKey('fit-button')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('found')), findsNothing);
+    });
+
+    testWidgets('says so when no IC has the name', (tester) async {
+      await _open(tester, _World()..line('北', '東'));
+
+      await search(tester, 'ない名前');
+
+      expect(_text(RouteMapStrings.searchNone), findsOneWidget);
+    });
+
+    testWidgets('lists nothing before a name is typed, and can be closed', (
+      tester,
+    ) async {
+      final world = _World()..line('北', '東');
+      await _open(tester, world);
+
+      await tester.tap(find.byKey(const ValueKey('search-button')));
+      await tester.pumpAndSettle();
+      expect(_text(RouteMapStrings.searchTitle), findsOneWidget);
+      expect(
+        find.byWidgetPredicate((w) => '${w.key}'.contains('map-search-result')),
+        findsNothing,
+      );
+
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+      expect(_text(RouteMapStrings.searchTitle), findsNothing);
+      expect(find.byKey(const ValueKey('found')), findsNothing);
+    });
+
+    testWidgets('says so when the search fails', (tester) async {
+      final world = _World()
+        ..line('北', '東')
+        ..searchMaster = _BrokenMaster();
+      await _open(tester, world);
+
+      await search(tester, '北');
+
+      expect(_text(RouteMapStrings.searchFailed), findsOneWidget);
+    });
+
+    testWidgets('leaves the chosen line when the map moves to an IC', (
+      tester,
+    ) async {
+      final world = _World()..line('北', '東');
+      await _open(tester, world);
+      await _tapMap(tester, _center(tester));
+      expect(find.byKey(const ValueKey('selected-lines')), findsOneWidget);
+
+      await search(tester, '南');
+      await tester.tap(find.byKey(const ValueKey('map-search-result-id-南')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('selected-lines')), findsNothing);
     });
   });
 
