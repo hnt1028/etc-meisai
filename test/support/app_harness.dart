@@ -23,6 +23,7 @@ import 'package:etc_meisai/application/usecase/statements/list_entrance_candidat
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/estimate_entrance_at_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_entrance_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/save_line_note_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_vehicle_number_uc.dart';
 import 'package:etc_meisai/infrastructure/repository/database/app_database.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_mapping_repo.dart';
@@ -62,6 +63,11 @@ Future<void> pumpApp(
   BackupPicker? backupPicker,
   BackupSaver? backupSaver,
 }) async {
+  // The settings screen and the detail screen are long lists: a tall window
+  // builds every item, so that a test finds it without scrolling.
+  tester.view.physicalSize = const Size(800, 1600);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
   final statementLines = StatementLineRepo(database);
   final icMaster = IcMasterRepo(loadJson: () async => icMasterFixtureJson());
   final icMappings = IcMappingRepo(database);
@@ -153,6 +159,9 @@ Future<void> pumpApp(
         ),
         saveVehicleNumberUCProvider.overrideWithValue(
           SaveVehicleNumberUC(statementLines: statementLines),
+        ),
+        saveLineNoteUCProvider.overrideWithValue(
+          SaveLineNoteUC(statementLines: statementLines),
         ),
         listEntranceCandidatesUCProvider.overrideWithValue(
           ListEntranceCandidatesUC(

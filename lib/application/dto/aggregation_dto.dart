@@ -17,6 +17,8 @@ class AggregationDTO {
     this.icsOtherCount = 0,
     required this.vehicleNumberChoices,
     required this.cardNumberChoices,
+    this.tags = const [],
+    this.tagChoices = const [],
   });
 
   final AggregationSummaryDTO summary;
@@ -50,4 +52,10 @@ class AggregationDTO {
 
   /// The last 4 characters of each card number.
   final List<String> cardNumberChoices;
+
+  /// The rows for each tag, and for the lines without a tag.
+  final List<AggregationRowDTO> tags;
+
+  /// Every tag of the stored lines, sorted.
+  final List<String> tagChoices;
 }

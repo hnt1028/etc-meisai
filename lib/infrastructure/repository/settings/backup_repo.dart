@@ -49,6 +49,8 @@ class BackupRepo implements BackupIF {
             'cardNumber': l.cardNumber,
             'status': l.status.name,
             'discountTypes': l.discountTypes,
+            'memo': l.memo,
+            'tags': l.tags,
           },
       ],
       'icMappings': [
@@ -182,7 +184,20 @@ class BackupRepo implements BackupIF {
       cardNumber: row.text('cardNumber'),
       status: status,
       discountTypes: row.textList('discountTypes'),
+      // A file written before the notes were added has none.
+      memo: row.has('memo') ? row.text('memo') : '',
+      tags: row.has('tags') ? _tags(row) : const [],
     );
+  }
+
+  /// The tags of a line: not empty, without `;` or line breaks (they are
+  /// stored joined with `;`).
+  List<String> _tags(_Row row) {
+    final tags = row.textList('tags');
+    if (tags.any((t) => t.isEmpty || t.contains(RegExp(r'[;\r\n]')))) {
+      throw row.wrong('tags');
+    }
+    return tags;
   }
 
   IcMappingEntity _mapping(_Row row) =>
@@ -246,6 +261,8 @@ class _Row {
     if (value is! String) throw wrong(key);
     return value;
   }
+
+  bool has(String key) => _map!.containsKey(key);
 
   String? optionalText(String key) => _value(key) == null ? null : text(key);
 

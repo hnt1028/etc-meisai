@@ -25,6 +25,8 @@ class StatementLineRecordEntity {
     required this.cardNumber,
     required this.status,
     required this.discountTypes,
+    this.memo = '',
+    this.tags = const [],
   });
 
   final String id;
@@ -53,4 +55,10 @@ class StatementLineRecordEntity {
   final String cardNumber;
   final ConfirmationStatusValue status;
   final List<String> discountTypes;
+
+  /// A note of the user. Empty when there is none.
+  final String memo;
+
+  /// Labels the user put on the line.
+  final List<String> tags;
 }

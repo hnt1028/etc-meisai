@@ -25,7 +25,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -44,6 +44,10 @@ class AppDatabase extends _$AppDatabase {
             newColumns: [
               statementLines.enteredEntranceAt,
               statementLines.enteredEntranceIc,
+              // The rebuild gives the table its current columns, so the ones
+              // of the later versions have to be new here too.
+              statementLines.memo,
+              statementLines.tags,
             ],
           ),
         );
@@ -52,6 +56,23 @@ class AppDatabase extends _$AppDatabase {
       if (from < 5) await m.createTable(operatorColors);
       // Version 6 added what the user chose to show on the route map (TBL-005).
       if (from < 6) await m.createTable(routeMapLayers);
+      // Version 7 added the memo and the tags of a statement line (TBL-001).
+      // The database of version 3 or older got them with the rebuild of
+      // version 4, so they may be there.
+      if (from < 7) {
+        final columns = {
+          for (final row in await customSelect(
+            'PRAGMA table_info(statement_lines)',
+          ).get())
+            row.read<String>('name'),
+        };
+        if (!columns.contains('memo')) {
+          await m.addColumn(statementLines, statementLines.memo);
+        }
+        if (!columns.contains('tags')) {
+          await m.addColumn(statementLines, statementLines.tags);
+        }
+      }
     },
   );
 }

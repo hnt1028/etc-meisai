@@ -5,6 +5,7 @@ import 'package:etc_meisai/application/usecase/route_map/get_line_route_uc.dart'
 import 'package:etc_meisai/application/usecase/statements/estimate_entrance_at_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/list_entrance_candidates_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_entrance_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/save_line_note_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_vehicle_number_uc.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_providers.dart';
 import 'package:etc_meisai/domain/entity/ic_link_entity.dart';
@@ -17,6 +18,7 @@ import 'package:etc_meisai/userinterface/route_map/route_map_providers.dart';
 import 'package:etc_meisai/userinterface/statements/statement_detail_providers.dart';
 import 'package:etc_meisai/userinterface/statements/statement_detail_screen.dart';
 import 'package:etc_meisai/userinterface/statements/statement_detail_strings.dart';
+import 'package:etc_meisai/userinterface/statements/line_note_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,6 +40,8 @@ StatementLineDTO _line({
   bool withoutVehicleNumber = false,
   bool blankEntranceAt = false,
   String vehicleTypeName = '普通車',
+  String memo = '',
+  List<String> tags = const [],
 }) {
   return StatementLineDTO(
     id: id,
@@ -59,6 +63,8 @@ StatementLineDTO _line({
     status: status,
     discountTypes: discountTypes,
     routeNames: routeNames,
+    memo: memo,
+    tags: tags,
   );
 }
 
@@ -127,6 +133,9 @@ Future<void> _show(
         ),
         saveVehicleNumberUCProvider.overrideWithValue(
           SaveVehicleNumberUC(statementLines: lines ?? FakeStatementLineIF()),
+        ),
+        saveLineNoteUCProvider.overrideWithValue(
+          SaveLineNoteUC(statementLines: lines ?? FakeStatementLineIF()),
         ),
         listEntranceCandidatesUCProvider.overrideWithValue(
           ListEntranceCandidatesUC(
@@ -256,10 +265,11 @@ void main() {
     );
     await _show(tester, line);
 
-    // Entrance date and time, entrance IC, route names, distance, gross fare
-    // and ETC discount.
-    expect(find.text(StatementDetailStrings.blank), findsNWidgets(6));
-    expect(find.text(StatementDetailStrings.none), findsOneWidget);
+    // Entrance date and time, entrance IC, route names, distance, gross fare,
+    // ETC discount and the memo.
+    expect(find.text(StatementDetailStrings.blank), findsNWidgets(7));
+    // No discount type, and no tag.
+    expect(find.text(StatementDetailStrings.none), findsNWidgets(2));
   });
 
   testWidgets('shows a pending statement line as pending', (tester) async {
@@ -1144,6 +1154,200 @@ void main() {
 
       // The lines were read again: with the entrance, both routes.
       expect(find.text('北の路線・東の路線'), findsOneWidget);
+    });
+  });
+
+  group('memo and tags', () {
+    final edit = find.byKey(const ValueKey('edit-note'));
+    final memoField = find.byKey(const ValueKey('note-memo'));
+    final tagField = find.byKey(const ValueKey('note-tag-input'));
+    final addButton = find.byKey(const ValueKey('note-tag-add'));
+
+    /// A stored line, and the screen for it. [others] are the tags of other
+    /// stored lines (they are offered).
+    Future<FakeStatementLineIF> showStored(
+      WidgetTester tester, {
+      String memo = '',
+      List<String> tags = const [],
+      List<List<String>> others = const [],
+    }) async {
+      final lines = FakeStatementLineIF()
+        ..stored.add(fakeStatementLine(id: 'a', memo: memo, tags: tags));
+      for (final (i, t) in others.indexed) {
+        lines.stored.add(fakeStatementLine(id: 'o$i', exitIc: 'X$i', tags: t));
+      }
+      await _show(
+        tester,
+        _line(id: 'a', memo: memo, tags: tags),
+        lines: lines,
+      );
+      return lines;
+    }
+
+    Future<void> save(WidgetTester tester) async {
+      await tester.tap(find.text(StatementDetailStrings.save));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('shows the tags and the memo of the line', (tester) async {
+      await showStored(tester, memo: '出張で使った', tags: ['仕事', '東京']);
+
+      expect(find.text('仕事・東京'), findsOneWidget);
+      expect(find.text('出張で使った'), findsOneWidget);
+      expect(edit, findsOneWidget);
+    });
+
+    testWidgets('has no edit button for a line that is not stored', (
+      tester,
+    ) async {
+      await _show(tester, _line());
+
+      expect(edit, findsNothing);
+    });
+
+    testWidgets('writes a memo and tags, and shows them', (tester) async {
+      final lines = await showStored(tester);
+
+      await tester.tap(edit);
+      await tester.pumpAndSettle();
+      await tester.enterText(memoField, '出張');
+      await tester.enterText(tagField, '仕事');
+      await tester.tap(addButton);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('note-tag-仕事')), findsOneWidget);
+      // A tag is added with the enter key too, and the same one only once.
+      await tester.enterText(tagField, '東京');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      await tester.enterText(tagField, '東京');
+      await tester.tap(addButton);
+      await tester.pumpAndSettle();
+      await save(tester);
+
+      expect(lines.stored.first.memo, '出張');
+      expect(lines.stored.first.tags, ['仕事', '東京']);
+      // The screen shows what was saved.
+      expect(find.text('仕事・東京'), findsOneWidget);
+      expect(find.text('出張'), findsOneWidget);
+    });
+
+    testWidgets('starts with the note, and a tag can be taken off', (
+      tester,
+    ) async {
+      final lines = await showStored(tester, memo: 'x', tags: ['仕事', '東京']);
+
+      await tester.tap(edit);
+      await tester.pumpAndSettle();
+      expect(tester.widget<TextField>(memoField).controller!.text, 'x');
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const ValueKey('note-tag-仕事')),
+          matching: find.byIcon(Icons.clear),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await save(tester);
+
+      expect(lines.stored.first.tags, ['東京']);
+    });
+
+    testWidgets('offers the tags of the other lines', (tester) async {
+      final lines = await showStored(
+        tester,
+        tags: ['仕事'],
+        others: [
+          ['私用', '仕事'],
+          ['旅行'],
+        ],
+      );
+
+      await tester.tap(edit);
+      await tester.pumpAndSettle();
+      // The tag the line has is not offered again.
+      expect(find.byKey(const ValueKey('note-choice-仕事')), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('note-choice-旅行')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('note-choice-旅行')), findsNothing);
+      await save(tester);
+
+      expect(lines.stored.first.tags, ['仕事', '旅行']);
+    });
+
+    testWidgets('does not take a tag with a semicolon', (tester) async {
+      final lines = await showStored(tester);
+
+      await tester.tap(edit);
+      await tester.pumpAndSettle();
+      await tester.enterText(tagField, 'a;b');
+      await tester.tap(addButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text(StatementDetailStrings.tagInvalid), findsOneWidget);
+      await save(tester);
+      expect(lines.stored.first.tags, isEmpty);
+    });
+
+    testWidgets('does not take more tags than the most', (tester) async {
+      final lines = await showStored(
+        tester,
+        tags: [for (var i = 0; i < SaveLineNoteUC.tagMaxCount; i++) 't$i'],
+      );
+
+      await tester.tap(edit);
+      await tester.pumpAndSettle();
+      await tester.enterText(tagField, '多すぎ');
+      await tester.tap(addButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text(StatementDetailStrings.tagTooMany), findsOneWidget);
+      await save(tester);
+      expect(lines.stored.first.tags, hasLength(SaveLineNoteUC.tagMaxCount));
+    });
+
+    testWidgets('ignores an empty tag', (tester) async {
+      final lines = await showStored(tester);
+
+      await tester.tap(edit);
+      await tester.pumpAndSettle();
+      await tester.enterText(tagField, '  ');
+      await tester.tap(addButton);
+      await tester.pumpAndSettle();
+      await save(tester);
+
+      expect(lines.stored.first.tags, isEmpty);
+    });
+
+    testWidgets('saves nothing when cancelled', (tester) async {
+      final lines = await showStored(tester);
+
+      await tester.tap(edit);
+      await tester.pumpAndSettle();
+      await tester.enterText(memoField, '消える');
+      await tester.tap(find.text(StatementDetailStrings.cancel));
+      await tester.pumpAndSettle();
+
+      expect(lines.stored.first.memo, '');
+    });
+
+    testWidgets('says so when the note could not be saved', (tester) async {
+      final lines = await showStored(tester);
+
+      await tester.tap(edit);
+      await tester.pumpAndSettle();
+      await tester.enterText(memoField, 'x');
+      lines.error = StateError('x');
+      await tester.tap(find.text(StatementDetailStrings.save));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text(StatementDetailStrings.saveNoteFailed), findsOneWidget);
+    });
+
+    test('the input of the dialog holds the memo and the tags', () {
+      const input = LineNoteInput(memo: 'm', tags: ['t']);
+
+      expect(input.memo, 'm');
+      expect(input.tags, ['t']);
     });
   });
 }

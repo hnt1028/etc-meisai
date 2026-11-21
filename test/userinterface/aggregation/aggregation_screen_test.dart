@@ -138,6 +138,35 @@ void main() {
     expect(find.text(AggregationStrings.distanceNote), findsOneWidget);
   });
 
+  testWidgets('aggregates by tag, with a row for the lines without one', (
+    tester,
+  ) async {
+    await _show(
+      tester,
+      lines: [
+        fakeStatementLine(fare: 1000, tags: const ['仕事', '東京']),
+        fakeStatementLine(
+          fare: 500,
+          exitAt: DateTime(2026, 1, 11, 9),
+          tags: const ['私用'],
+        ),
+        fakeStatementLine(fare: 200, exitAt: DateTime(2026, 1, 12, 9)),
+      ],
+    );
+
+    await _tap(tester, AggregationStrings.kind(AggregationKind.tag));
+
+    // A line with two tags counts for both.
+    expect(find.text('仕事'), findsOneWidget);
+    expect(find.text('東京'), findsOneWidget);
+    expect(find.text('私用'), findsOneWidget);
+    expect(find.text('タグなし'), findsOneWidget);
+    expect(find.text(AggregationStrings.tagNote), findsOneWidget);
+    expect(find.text('1,000円'), findsNWidgets(2));
+    expect(find.text('500円'), findsOneWidget);
+    expect(find.text('200円'), findsOneWidget);
+  });
+
   testWidgets('draws the distance as bars and as a pie', (tester) async {
     await _show(tester, lines: _lines());
     await _tap(tester, AggregationStrings.display(AggregationDisplay.graph));

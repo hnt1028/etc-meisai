@@ -21,6 +21,9 @@ class AggregateStatementsUC {
     required this.icPositions,
   });
 
+  /// The label of the lines without a tag, in the rows of the tags.
+  static const untaggedLabel = 'タグなし';
+
   /// How many routes and ICs are listed.
   static const topCount = 10;
 
@@ -36,6 +39,7 @@ class AggregateStatementsUC {
     DateTime? to,
     int? vehicleNumber,
     String? cardNumberSuffix,
+    String? tag,
   }) async {
     final all = await statementLines.findAll();
     final lookup = IcLookup(
@@ -50,11 +54,13 @@ class AggregateStatementsUC {
       to: to,
       vehicleNumber: vehicleNumber,
       cardNumberSuffix: cardNumberSuffix,
+      tag: tag,
     );
 
     final weeks = _Tally(), months = _Tally(), years = _Tally();
     final operators = _Tally(), hours = _Tally();
     final routes = _Tally(), ics = _Tally(), discountTypes = _Tally();
+    final tags = _Tally();
     var fareTotal = 0, discountTotal = 0, distanceTotal = 0, unknown = 0;
 
     for (final line in lines) {
@@ -92,6 +98,10 @@ class AggregateStatementsUC {
       for (final name in {?line.entranceIc, line.exitIc}) {
         ics.add(name);
       }
+      // A line counts for each of its tags, or for "no tag".
+      for (final name in line.tags.isEmpty ? [untaggedLabel] : line.tags) {
+        tags.add(name, line.fare, discount, m);
+      }
       for (final type in line.discountTypes.toSet()) {
         discountTypes.add(type, null, discount);
       }
@@ -127,6 +137,8 @@ class AggregateStatementsUC {
       discountTypes: discountTypes.rows(),
       vehicleNumberChoices: vehicleNumberChoicesOf(all),
       cardNumberChoices: cardNumberChoicesOf(all),
+      tags: tags.rows(byFare: true),
+      tagChoices: tagChoicesOf(all),
     );
   }
 

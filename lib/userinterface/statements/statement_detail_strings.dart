@@ -19,6 +19,8 @@ abstract final class StatementDetailStrings {
   static const cardNumber = 'ETCカード番号';
   static const status = '状態';
   static const discountTypes = '割引種別';
+  static const memo = 'メモ';
+  static const tags = 'タグ';
 
   static const blank = '-';
   static const none = 'なし';
@@ -55,6 +57,16 @@ abstract final class StatementDetailStrings {
   static const cancel = 'キャンセル';
   static const save = '保存';
   static const saveVehicleNumberFailed = '保存できませんでした';
+
+  static const noteEdit = 'メモ・タグを編集';
+  static const noteDialogTitle = 'メモとタグ';
+  static const memoInputLabel = 'メモ（200文字まで）';
+  static const tagInputLabel = 'タグを追加（20文字まで）';
+  static const tagAdd = '追加';
+  static const tagChoicesHeader = 'これまでに使ったタグ';
+  static const tagInvalid = 'タグに「;」や改行は使えません';
+  static const tagTooMany = 'タグは10個までです';
+  static const saveNoteFailed = '保存できませんでした';
 
   /// Above the map, when a position is not known.
   static String unlocatedNotice(List<String> icNames) =>

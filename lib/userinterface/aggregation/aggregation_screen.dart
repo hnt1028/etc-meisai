@@ -50,6 +50,7 @@ class AggregationScreen extends ConsumerWidget {
                   filter: filter,
                   vehicleNumberChoices: data.vehicleNumberChoices,
                   cardNumberChoices: data.cardNumberChoices,
+                  tagChoices: data.tagChoices,
                 ),
               ],
             ),
@@ -173,6 +174,14 @@ class _Body extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: Text(
               AggregationStrings.operatorNote,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        if (view.kind == AggregationKind.tag)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Text(
+              AggregationStrings.tagNote,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),

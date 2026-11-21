@@ -24,7 +24,7 @@
 
 ## 入力
 
-[PRC-004](PRC-004-list-statement-lines.md) と同じ（`from`、`to`、`vehicleNumber`、`cardNumberSuffix`）。
+[PRC-004](PRC-004-list-statement-lines.md) と同じ（`from`、`to`、`vehicleNumber`、`cardNumberSuffix`、`tag`）。
 
 ## 手順
 
@@ -76,7 +76,8 @@ sequenceDiagram
 | `routesOtherCount`、`icsOtherCount` | `int` | 上位10件に入らなかった路線・ICの回数の合計（なければ 0） |
 | `hours` | `List<AggregationRowDTO>` | 時間帯別。`label` は「0」〜「23」 |
 | `discountTypes` | `List<AggregationRowDTO>` | 割引種別別。`fare` は `null` |
-| `vehicleNumberChoices`、`cardNumberChoices` | `List<int>`、`List<String>` | 絞り込みで選べる値 |
+| `vehicleNumberChoices`、`cardNumberChoices`、`tagChoices` | `List<int>`、`List<String>`、`List<String>` | 絞り込みで選べる値 |
+| `tags` | `List<AggregationRowDTO>` | タグ別の行（回数、利用額、割引額、距離）。タグが複数ある明細行は、それぞれのタグに入る。タグが無い明細行は、「タグなし」の行に入る。利用額の多い順 |
 
 `AggregationRowDTO`: `label`（`String`）、`count`（`int`）、`fare`（`int?`）、`discount`（`int?`）、`distance`（`int?`。メートル）。`null` は、その集計では出さない値。距離は、期間別・事業者別・時間帯別に付く
 

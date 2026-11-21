@@ -49,6 +49,8 @@ StatementLineEntity fakeStatementLine({
   int? etcDiscount,
   VehicleTypeValue vehicleType = VehicleTypeValue.standard,
   List<String> discountTypes = const [],
+  String memo = '',
+  List<String> tags = const [],
 }) {
   return StatementLineEntity(
     id: id ?? 'line-${_fakeIdCounter++}',
@@ -68,6 +70,8 @@ StatementLineEntity fakeStatementLine({
     cardNumber: cardNumber,
     status: status,
     discountTypes: discountTypes,
+    memo: memo,
+    tags: tags,
   );
 }
 
@@ -157,6 +161,20 @@ class FakeStatementLineIF implements StatementLineIF {
         entranceAt: entranceAt,
         entranceIc: entranceIc,
       );
+    }
+  }
+
+  @override
+  Future<void> updateNote(
+    String id, {
+    required String memo,
+    required List<String> tags,
+  }) async {
+    await gate;
+    if (error != null) throw error!;
+    final index = stored.indexWhere((s) => s.id == id);
+    if (index >= 0) {
+      stored[index] = copyWithNote(stored[index], memo: memo, tags: tags);
     }
   }
 
@@ -425,6 +443,8 @@ StatementLineRecordEntity fakeRecord({
   int? vehicleNumber = 1234,
   ConfirmationStatusValue status = ConfirmationStatusValue.confirmed,
   List<String> discountTypes = const [],
+  String memo = '',
+  List<String> tags = const [],
 }) {
   return StatementLineRecordEntity(
     id: id,
@@ -445,6 +465,8 @@ StatementLineRecordEntity fakeRecord({
     cardNumber: '0000-****-0001',
     status: status,
     discountTypes: discountTypes,
+    memo: memo,
+    tags: tags,
   );
 }
 

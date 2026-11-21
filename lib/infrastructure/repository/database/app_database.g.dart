@@ -202,6 +202,26 @@ class $StatementLinesTable extends StatementLines
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _memoMeta = const VerificationMeta('memo');
+  @override
+  late final GeneratedColumn<String> memo = GeneratedColumn<String>(
+    'memo',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _tagsMeta = const VerificationMeta('tags');
+  @override
+  late final GeneratedColumn<String> tags = GeneratedColumn<String>(
+    'tags',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -222,6 +242,8 @@ class $StatementLinesTable extends StatementLines
     cardNumber,
     status,
     discountTypes,
+    memo,
+    tags,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -368,6 +390,18 @@ class $StatementLinesTable extends StatementLines
     } else if (isInserting) {
       context.missing(_discountTypesMeta);
     }
+    if (data.containsKey('memo')) {
+      context.handle(
+        _memoMeta,
+        memo.isAcceptableOrUnknown(data['memo']!, _memoMeta),
+      );
+    }
+    if (data.containsKey('tags')) {
+      context.handle(
+        _tagsMeta,
+        tags.isAcceptableOrUnknown(data['tags']!, _tagsMeta),
+      );
+    }
     return context;
   }
 
@@ -453,6 +487,14 @@ class $StatementLinesTable extends StatementLines
         DriftSqlType.string,
         data['${effectivePrefix}discount_types'],
       )!,
+      memo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}memo'],
+      )!,
+      tags: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tags'],
+      )!,
     );
   }
 
@@ -505,6 +547,13 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
 
   /// Discount types joined with `;`, like the CSV note. Empty when none.
   final String discountTypes;
+
+  /// A note of the user. Empty when there is none. The import does not touch
+  /// it, so that a line that is imported again keeps its note.
+  final String memo;
+
+  /// Tags of the user joined with `;`. Empty when none.
+  final String tags;
   const StatementLine({
     required this.id,
     required this.duplicateKey,
@@ -524,6 +573,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
     required this.cardNumber,
     required this.status,
     required this.discountTypes,
+    required this.memo,
+    required this.tags,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -568,6 +619,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
       );
     }
     map['discount_types'] = Variable<String>(discountTypes);
+    map['memo'] = Variable<String>(memo);
+    map['tags'] = Variable<String>(tags);
     return map;
   }
 
@@ -605,6 +658,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
       cardNumber: Value(cardNumber),
       status: Value(status),
       discountTypes: Value(discountTypes),
+      memo: Value(memo),
+      tags: Value(tags),
     );
   }
 
@@ -638,6 +693,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
         serializer.fromJson<int>(json['status']),
       ),
       discountTypes: serializer.fromJson<String>(json['discountTypes']),
+      memo: serializer.fromJson<String>(json['memo']),
+      tags: serializer.fromJson<String>(json['tags']),
     );
   }
   @override
@@ -664,6 +721,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
         $StatementLinesTable.$converterstatus.toJson(status),
       ),
       'discountTypes': serializer.toJson<String>(discountTypes),
+      'memo': serializer.toJson<String>(memo),
+      'tags': serializer.toJson<String>(tags),
     };
   }
 
@@ -686,6 +745,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
     String? cardNumber,
     ConfirmationStatusValue? status,
     String? discountTypes,
+    String? memo,
+    String? tags,
   }) => StatementLine(
     id: id ?? this.id,
     duplicateKey: duplicateKey ?? this.duplicateKey,
@@ -711,6 +772,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
     cardNumber: cardNumber ?? this.cardNumber,
     status: status ?? this.status,
     discountTypes: discountTypes ?? this.discountTypes,
+    memo: memo ?? this.memo,
+    tags: tags ?? this.tags,
   );
   StatementLine copyWithCompanion(StatementLinesCompanion data) {
     return StatementLine(
@@ -756,6 +819,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
       discountTypes: data.discountTypes.present
           ? data.discountTypes.value
           : this.discountTypes,
+      memo: data.memo.present ? data.memo.value : this.memo,
+      tags: data.tags.present ? data.tags.value : this.tags,
     );
   }
 
@@ -779,7 +844,9 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
           ..write('enteredEntranceIc: $enteredEntranceIc, ')
           ..write('cardNumber: $cardNumber, ')
           ..write('status: $status, ')
-          ..write('discountTypes: $discountTypes')
+          ..write('discountTypes: $discountTypes, ')
+          ..write('memo: $memo, ')
+          ..write('tags: $tags')
           ..write(')'))
         .toString();
   }
@@ -804,6 +871,8 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
     cardNumber,
     status,
     discountTypes,
+    memo,
+    tags,
   );
   @override
   bool operator ==(Object other) =>
@@ -826,7 +895,9 @@ class StatementLine extends DataClass implements Insertable<StatementLine> {
           other.enteredEntranceIc == this.enteredEntranceIc &&
           other.cardNumber == this.cardNumber &&
           other.status == this.status &&
-          other.discountTypes == this.discountTypes);
+          other.discountTypes == this.discountTypes &&
+          other.memo == this.memo &&
+          other.tags == this.tags);
 }
 
 class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
@@ -848,6 +919,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
   final Value<String> cardNumber;
   final Value<ConfirmationStatusValue> status;
   final Value<String> discountTypes;
+  final Value<String> memo;
+  final Value<String> tags;
   final Value<int> rowid;
   const StatementLinesCompanion({
     this.id = const Value.absent(),
@@ -868,6 +941,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
     this.cardNumber = const Value.absent(),
     this.status = const Value.absent(),
     this.discountTypes = const Value.absent(),
+    this.memo = const Value.absent(),
+    this.tags = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   StatementLinesCompanion.insert({
@@ -889,6 +964,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
     required String cardNumber,
     required ConfirmationStatusValue status,
     required String discountTypes,
+    this.memo = const Value.absent(),
+    this.tags = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : duplicateKey = Value(duplicateKey),
        exitAt = Value(exitAt),
@@ -919,6 +996,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
     Expression<String>? cardNumber,
     Expression<int>? status,
     Expression<String>? discountTypes,
+    Expression<String>? memo,
+    Expression<String>? tags,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -940,6 +1019,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
       if (cardNumber != null) 'card_number': cardNumber,
       if (status != null) 'status': status,
       if (discountTypes != null) 'discount_types': discountTypes,
+      if (memo != null) 'memo': memo,
+      if (tags != null) 'tags': tags,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -963,6 +1044,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
     Value<String>? cardNumber,
     Value<ConfirmationStatusValue>? status,
     Value<String>? discountTypes,
+    Value<String>? memo,
+    Value<String>? tags,
     Value<int>? rowid,
   }) {
     return StatementLinesCompanion(
@@ -984,6 +1067,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
       cardNumber: cardNumber ?? this.cardNumber,
       status: status ?? this.status,
       discountTypes: discountTypes ?? this.discountTypes,
+      memo: memo ?? this.memo,
+      tags: tags ?? this.tags,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1049,6 +1134,12 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
     if (discountTypes.present) {
       map['discount_types'] = Variable<String>(discountTypes.value);
     }
+    if (memo.present) {
+      map['memo'] = Variable<String>(memo.value);
+    }
+    if (tags.present) {
+      map['tags'] = Variable<String>(tags.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1076,6 +1167,8 @@ class StatementLinesCompanion extends UpdateCompanion<StatementLine> {
           ..write('cardNumber: $cardNumber, ')
           ..write('status: $status, ')
           ..write('discountTypes: $discountTypes, ')
+          ..write('memo: $memo, ')
+          ..write('tags: $tags, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2056,6 +2149,8 @@ typedef $$StatementLinesTableCreateCompanionBuilder =
       required String cardNumber,
       required ConfirmationStatusValue status,
       required String discountTypes,
+      Value<String> memo,
+      Value<String> tags,
       Value<int> rowid,
     });
 typedef $$StatementLinesTableUpdateCompanionBuilder =
@@ -2078,6 +2173,8 @@ typedef $$StatementLinesTableUpdateCompanionBuilder =
       Value<String> cardNumber,
       Value<ConfirmationStatusValue> status,
       Value<String> discountTypes,
+      Value<String> memo,
+      Value<String> tags,
       Value<int> rowid,
     });
 
@@ -2185,6 +2282,16 @@ class $$StatementLinesTableFilterComposer
     column: $table.discountTypes,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get memo => $composableBuilder(
+    column: $table.memo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tags => $composableBuilder(
+    column: $table.tags,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$StatementLinesTableOrderingComposer
@@ -2285,6 +2392,16 @@ class $$StatementLinesTableOrderingComposer
     column: $table.discountTypes,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get memo => $composableBuilder(
+    column: $table.memo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tags => $composableBuilder(
+    column: $table.tags,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$StatementLinesTableAnnotationComposer
@@ -2374,6 +2491,12 @@ class $$StatementLinesTableAnnotationComposer
     column: $table.discountTypes,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get memo =>
+      $composableBuilder(column: $table.memo, builder: (column) => column);
+
+  GeneratedColumn<String> get tags =>
+      $composableBuilder(column: $table.tags, builder: (column) => column);
 }
 
 class $$StatementLinesTableTableManager
@@ -2427,6 +2550,8 @@ class $$StatementLinesTableTableManager
                 Value<String> cardNumber = const Value.absent(),
                 Value<ConfirmationStatusValue> status = const Value.absent(),
                 Value<String> discountTypes = const Value.absent(),
+                Value<String> memo = const Value.absent(),
+                Value<String> tags = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => StatementLinesCompanion(
                 id: id,
@@ -2447,6 +2572,8 @@ class $$StatementLinesTableTableManager
                 cardNumber: cardNumber,
                 status: status,
                 discountTypes: discountTypes,
+                memo: memo,
+                tags: tags,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2469,6 +2596,8 @@ class $$StatementLinesTableTableManager
                 required String cardNumber,
                 required ConfirmationStatusValue status,
                 required String discountTypes,
+                Value<String> memo = const Value.absent(),
+                Value<String> tags = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => StatementLinesCompanion.insert(
                 id: id,
@@ -2489,6 +2618,8 @@ class $$StatementLinesTableTableManager
                 cardNumber: cardNumber,
                 status: status,
                 discountTypes: discountTypes,
+                memo: memo,
+                tags: tags,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

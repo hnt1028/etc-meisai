@@ -11,11 +11,13 @@ class StatementFilterBar extends ConsumerWidget {
     required this.filter,
     required this.vehicleNumberChoices,
     required this.cardNumberChoices,
+    this.tagChoices = const [],
   });
 
   final StatementFilterState filter;
   final List<int> vehicleNumberChoices;
   final List<String> cardNumberChoices;
+  final List<String> tagChoices;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -101,6 +103,27 @@ class StatementFilterBar extends ConsumerWidget {
               ),
             ],
           ),
+          if (tagChoices.isNotEmpty || filter.tag != null) ...[
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String?>(
+              key: ValueKey('tag-${filter.tag}'),
+              initialValue: filter.tag,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: StatementListStrings.tagLabel,
+                border: OutlineInputBorder(),
+              ),
+              items: [
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text(StatementListStrings.choiceAll),
+                ),
+                for (final tag in tagChoices)
+                  DropdownMenuItem<String?>(value: tag, child: Text(tag)),
+              ],
+              onChanged: controller.setTag,
+            ),
+          ],
           if (filter.isActive)
             Align(
               alignment: Alignment.centerLeft,

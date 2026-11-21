@@ -72,6 +72,7 @@ class RouteMapScreen extends ConsumerWidget {
                             filter: filter,
                             vehicleNumberChoices: data.vehicleNumberChoices,
                             cardNumberChoices: data.cardNumberChoices,
+                            tagChoices: data.tagChoices,
                           ),
                         ],
                       ),

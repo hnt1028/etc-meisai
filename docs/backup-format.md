@@ -48,7 +48,9 @@ ICマスタ（アプリに同梱）、画面の絞り込みは、対象外（保
       "enteredEntranceIc": null,
       "cardNumber": "…",
       "status": "confirmed",
-      "discountTypes": ["深夜割引"]
+      "discountTypes": ["深夜割引"],
+      "memo": "出張",
+      "tags": ["仕事"]
     }
   ],
   "icMappings": [{ "icName": "…", "pointId": "…" }],
@@ -66,6 +68,7 @@ ICマスタ（アプリに同梱）、画面の絞り込みは、対象外（保
 - `operatorColors` は、あとから足した項目で、版は 1 のまま。**この項目が無い古いファイルも、読み込める**（色なしとして扱う。読み込むと、いまの色はすべて消える）
 - `routeMapLayers` の `layer` は、地図の表示の項目の名前（`network`、`networkNames`、`traveled`、`markers`、`pending`、`scaleByCount`）、`visible` は、表示するか（`true`／`false`）。このアプリが知らない項目名があっても、読み込める（無視する）
 - `routeMapLayers` も、あとから足した項目で、版は 1 のまま。この項目が無い古いファイルも、読み込める（読み込むと、いまの選択は消えて、初期値になる）
+- `statementLines` の `memo`（文字）と `tags`（文字の並び。空でない、`;`と改行を含まない）は、あとから足した項目で、版は 1 のまま。**この項目が無い古いファイルも、読み込める**（メモなし・タグなしとして扱う）
 - 並び順は、意味を持たない（読み込み後は、画面が並べ直す）
 
 ## 読み込みの検査

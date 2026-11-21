@@ -17,6 +17,7 @@ final routeMapProvider = FutureProvider<RouteMapDTO>((ref) {
         to: filter.to,
         vehicleNumber: filter.vehicleNumber,
         cardNumberSuffix: filter.cardNumberSuffix,
+        tag: filter.tag,
       );
 }, retry: (_, _) => null);
 

@@ -11,6 +11,7 @@ import 'package:etc_meisai/infrastructure/repository/database/app_database.dart'
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_mapping_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_position/ic_position_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/operator_color/operator_color_repo.dart';
+import 'package:etc_meisai/infrastructure/repository/route_map_layer/route_map_layer_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/settings/app_data_repo.dart';
 import 'package:etc_meisai/infrastructure/repository/statements/statement_line_repo.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -61,6 +62,10 @@ void main() {
       entranceIc: '入力した',
     );
     await lines.updateVehicleNumber(blank.id!, 4321);
+    await lines.updateNote(blank.id!, memo: '出張', tags: ['仕事', '東京']);
+    await RouteMapLayerRepo(
+      db,
+    ).save(const RouteMapLayerEntity(layerCode: 'network', visible: false));
     await IcMappingRepo(
       db,
     ).save(const IcMappingEntity(icName: '北', pointId: 'p-1'));
@@ -80,6 +85,7 @@ void main() {
       expect(data.icMappings, isEmpty);
       expect(data.icPositions, isEmpty);
       expect(data.operatorColors, isEmpty);
+      expect(data.routeMapLayers, isEmpty);
     });
 
     test(
@@ -108,6 +114,13 @@ void main() {
         expect(data.icPositions.single.latitude, 35.5);
         expect(data.operatorColors.single.operatorName, '首都高速道路');
         expect(data.operatorColors.single.color, 0xFF123456);
+        expect(data.routeMapLayers.single.layerCode, 'network');
+        expect(data.routeMapLayers.single.visible, isFalse);
+        // The note of the user, and none for a line without one.
+        expect(blank.memo, '出張');
+        expect(blank.tags, ['仕事', '東京']);
+        expect(csv.memo, '');
+        expect(csv.tags, isEmpty);
       },
     );
 
@@ -157,6 +170,10 @@ void main() {
         expect(back.enteredEntranceAt, line.enteredEntranceAt);
         expect(back.enteredEntranceIc, line.enteredEntranceIc);
         expect(back.vehicleNumber, line.vehicleNumber);
+        expect(back.memo, line.memo);
+        expect(back.tags, line.tags);
+        // The layers are back too.
+        expect(after.routeMapLayers.single.layerCode, 'network');
         expect(back.status, line.status);
         expect(back.discountTypes, line.discountTypes);
       }
@@ -189,7 +206,14 @@ void main() {
 
       await repo.replaceAll(
         AppDataEntity(
-          statementLines: [fakeRecord(id: 'new', duplicateKey: 'new-key')],
+          statementLines: [
+            fakeRecord(
+              id: 'new',
+              duplicateKey: 'new-key',
+              memo: 'メモ',
+              tags: const ['タグ'],
+            ),
+          ],
           icMappings: const [IcMappingEntity(icName: '南', pointId: 'p-9')],
           icPositions: const [],
           operatorColors: const [
@@ -203,11 +227,15 @@ void main() {
 
       final data = await repo.readAll();
       expect(data.statementLines.single.id, 'new');
+      expect(data.statementLines.single.memo, 'メモ');
+      expect(data.statementLines.single.tags, ['タグ']);
       expect(data.icMappings.single.icName, '南');
       expect(data.icPositions, isEmpty);
       // The color that was stored is gone, and the new one is stored.
       expect(data.operatorColors.single.operatorName, 'NEXCO東日本');
       expect(data.operatorColors.single.color, 0xFF0A0B0C);
+      expect(data.routeMapLayers.single.layerCode, 'markers');
+      expect(data.routeMapLayers.single.visible, isFalse);
     });
 
     test('can replace everything with nothing', () async {

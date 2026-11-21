@@ -8,6 +8,7 @@ import 'package:etc_meisai/userinterface/statements/statement_detail_strings.dar
 import 'package:etc_meisai/userinterface/common/data_revision.dart';
 import 'package:etc_meisai/userinterface/statements/statement_detail_providers.dart';
 import 'package:etc_meisai/userinterface/statements/entrance_dialogs.dart';
+import 'package:etc_meisai/userinterface/statements/line_note_dialog.dart';
 import 'package:etc_meisai/userinterface/statements/statement_list_controller.dart';
 import 'package:etc_meisai/userinterface/statements/vehicle_number_dialog.dart';
 import 'package:flutter/material.dart';
@@ -53,6 +54,35 @@ class _StatementDetailScreenState extends ConsumerState<StatementDetailScreen> {
     // The list, the map and the aggregation read the lines again.
     ref.read(dataRevisionProvider.notifier).changed();
     // The screen shows the line again when the lines have been read again.
+  }
+
+  /// OP-6: asks for the memo and the tags, saves them, and shows them.
+  Future<void> _editNote() async {
+    final line = _line;
+    final id = line?.id;
+    if (line == null || id == null) return;
+    final choices = ref.read(statementListProvider).value?.tagChoices ?? [];
+    final input = await showLineNoteDialog(
+      context,
+      memo: line.memo,
+      tags: line.tags,
+      choices: choices,
+    );
+    if (input == null || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref
+          .read(saveLineNoteUCProvider)
+          .execute(id: id, memo: input.memo, tags: input.tags);
+    } catch (_) {
+      // The details are not shown: they could contain personal data.
+      messenger.showSnackBar(
+        const SnackBar(content: Text(StatementDetailStrings.saveNoteFailed)),
+      );
+      return;
+    }
+    // The list, the map and the aggregation read the lines again.
+    ref.read(dataRevisionProvider.notifier).changed();
   }
 
   /// OP-4: asks for the entrance date and time, saves it, and shows it.
@@ -258,6 +288,24 @@ class _StatementDetailScreenState extends ConsumerState<StatementDetailScreen> {
                       ? StatementDetailStrings.none
                       : line.discountTypes.join('・'),
                 ),
+                _item(
+                  StatementDetailStrings.tags,
+                  line.tags.isEmpty
+                      ? StatementDetailStrings.none
+                      : line.tags.join('・'),
+                ),
+                _item(
+                  StatementDetailStrings.memo,
+                  line.memo.isEmpty ? StatementDetailStrings.blank : line.memo,
+                ),
+                if (line.id != null)
+                  ListTile(
+                    key: const ValueKey('edit-note'),
+                    dense: true,
+                    title: const Text(StatementDetailStrings.noteEdit),
+                    trailing: const Icon(Icons.edit),
+                    onTap: _editNote,
+                  ),
               ],
             ),
     );

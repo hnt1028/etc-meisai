@@ -27,6 +27,7 @@ import 'package:etc_meisai/application/usecase/statements/list_entrance_candidat
 import 'package:etc_meisai/application/usecase/statements/list_statement_lines_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/estimate_entrance_at_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_entrance_uc.dart';
+import 'package:etc_meisai/application/usecase/statements/save_line_note_uc.dart';
 import 'package:etc_meisai/application/usecase/statements/save_vehicle_number_uc.dart';
 import 'package:etc_meisai/infrastructure/repository/database/app_database.dart';
 import 'package:etc_meisai/infrastructure/repository/ic_mapping/ic_mapping_repo.dart';
@@ -150,6 +151,9 @@ void main() {
         ),
         saveVehicleNumberUCProvider.overrideWithValue(
           SaveVehicleNumberUC(statementLines: statementLines),
+        ),
+        saveLineNoteUCProvider.overrideWithValue(
+          SaveLineNoteUC(statementLines: statementLines),
         ),
         listEntranceCandidatesUCProvider.overrideWithValue(
           ListEntranceCandidatesUC(

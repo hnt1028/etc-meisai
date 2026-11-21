@@ -130,6 +130,8 @@ class AppDataRepo implements AppDataIF {
       discountTypes: row.discountTypes.isEmpty
           ? const []
           : row.discountTypes.split(';'),
+      memo: row.memo,
+      tags: row.tags.isEmpty ? const [] : row.tags.split(';'),
     );
   }
 
@@ -153,6 +155,8 @@ class AppDataRepo implements AppDataIF {
       cardNumber: line.cardNumber,
       status: line.status,
       discountTypes: line.discountTypes.join(';'),
+      memo: Value(line.memo),
+      tags: Value(line.tags.join(';')),
     );
   }
 }

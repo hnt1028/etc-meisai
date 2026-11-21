@@ -391,6 +391,57 @@ void main() {
       expect(twice.message, contains('layer'));
     });
 
+    test('keeps the memo and the tags of a line', () {
+      final data = AppDataEntity(
+        statementLines: [
+          fakeRecord(memo: '出張', tags: const ['仕事', '東京']),
+        ],
+        icMappings: const [],
+        icPositions: const [],
+        operatorColors: const [],
+        routeMapLayers: const [],
+      );
+
+      final line = repo
+          .decode(repo.encode(data, DateTime.now()))
+          .statementLines
+          .single;
+
+      expect(line.memo, '出張');
+      expect(line.tags, ['仕事', '東京']);
+    });
+
+    test('reads a line without a memo and tags as having none', () {
+      // A file written before the notes were added.
+      final line = repo.decode(_bytes(_file(lines: [_line()]))).statementLines;
+
+      expect(line.single.memo, '');
+      expect(line.single.tags, isEmpty);
+    });
+
+    test('rejects a wrong memo or tags', () {
+      for (final bad in [
+        {'memo': 5},
+        {'memo': null},
+        {'tags': 'x'},
+        {
+          'tags': [1],
+        },
+        {
+          'tags': [''],
+        },
+        {
+          'tags': ['a;b'],
+        },
+        {
+          'tags': ['a\nb'],
+        },
+      ]) {
+        final error = _decodeError(_file(lines: [_line(bad)]));
+        expect(error.message, contains('明細行'));
+      }
+    });
+
     test('rejects the same operator twice', () {
       final error = _decodeError(
         _file(

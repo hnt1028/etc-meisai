@@ -22,6 +22,8 @@ abstract final class AggregationStrings {
 
   static const operatorNote = '路線名からの推定です';
 
+  static const tagNote = 'タグが複数ある明細行は、それぞれのタグに数えます（合計は、全体と一致しません）';
+
   /// The slice of the pie for the routes and ICs outside the top 10.
   static const other = 'その他';
   static const noPieValues = '表示できる値がありません';
@@ -33,6 +35,7 @@ abstract final class AggregationStrings {
   static String kind(AggregationKind kind) => switch (kind) {
     AggregationKind.period => '期間',
     AggregationKind.operator => '事業者',
+    AggregationKind.tag => 'タグ',
     AggregationKind.route => '路線',
     AggregationKind.ic => 'IC',
     AggregationKind.hour => '時間帯',

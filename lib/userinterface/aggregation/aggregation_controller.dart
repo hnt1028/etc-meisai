@@ -17,11 +17,12 @@ final aggregationProvider = FutureProvider<AggregationDTO>((ref) {
         to: filter.to,
         vehicleNumber: filter.vehicleNumber,
         cardNumberSuffix: filter.cardNumberSuffix,
+        tag: filter.tag,
       );
 }, retry: (_, _) => null);
 
 /// What is aggregated.
-enum AggregationKind { period, operator, route, ic, hour, discount }
+enum AggregationKind { period, operator, tag, route, ic, hour, discount }
 
 /// The unit of the period aggregation.
 enum AggregationUnit { week, month, year }
@@ -66,6 +67,7 @@ List<AggregationRowDTO> rowsOf(
     AggregationUnit.year => data.years,
   },
   AggregationKind.operator => data.operators,
+  AggregationKind.tag => data.tags,
   AggregationKind.route => data.routes,
   AggregationKind.ic => data.ics,
   AggregationKind.hour => data.hours,
