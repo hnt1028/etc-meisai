@@ -46,5 +46,6 @@ Flutter / Riverpod / go_router / drift(SQLite) / flutter_map。Android優先。�
 - [docs/systems.md](docs/systems.md): 設計書（画面・処理・テーブル）の作り方、IDの付け方、台帳。実装時に確認
 - [docs/vehicle-types.md](docs/vehicle-types.md): 車種区分（車種番号の名前が事業者ごとに違う）のマスタと、名前の決め方。車種を扱う作業時
 - [docs/testing.md](docs/testing.md): テスト方針（単体・ウィジェット・結合）。テストを書くとき
+- [docs/release.md](docs/release.md): リリースの自動化（`release/*` の push でタグ・Release・APK）と、署名の鍵。リリース作業の前に確認
 - [docs/git.md](docs/git.md): ブランチ、コミット、マージ、PRの運用。Git操作の前に確認
 - [docs/ubiquitous-language.md](docs/ubiquitous-language.md): ユビキタス言語（日本語と英語の対応）。名前を付けるときに確認
