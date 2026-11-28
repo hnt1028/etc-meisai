@@ -7,20 +7,20 @@
 | 層 | ディレクトリ | 役割 |
 |---|---|---|
 | Userinterface | `lib/userinterface/` | 画面と表示。Flutterのウィジェットを置く。業務の判断はしない |
-| Usecase | `lib/usecase/` | 画面から呼ばれる業務処理（取り込み、絞り込み、合計計算など）。Entity から DTO を作る。Flutterに依存しない |
-| Interface | `lib/interface/` | Usecaseが使う保存・取得の窓口を定めた抽象クラス。実装は Repository が持つ |
-| Repository | `lib/repository/` | Interfaceの実装。drift（DB）、CSVパーサー、地図タイルの取得など。Entityを作る |
+| Usecase | `lib/application/usecase/` | 画面から呼ばれる業務処理（取り込み、絞り込み、合計計算など）。Entity から DTO を作る。Flutterに依存しない |
+| Interface | `lib/application/interface/` | Usecaseが使う保存・取得の窓口を定めた抽象クラス。実装は Repository が持つ |
+| Repository | `lib/infrastructure/repository/` | Interfaceの実装。drift（DB）、CSVパーサー、地図タイルの取得など。Entityを作る |
 
 ## データ型
 
 | 種類 | ディレクトリ | 作る主体 | 役割 |
 |---|---|---|---|
-| Entity | `lib/domain/entity/` | Repository | 業務の対象（利用 `TripEntity` など）。値を保存するだけ |
+| Entity | `lib/domain/entity/` | Repository | 業務の対象（明細行 `StatementLineEntity` など）。値を保存するだけ |
 | Value | `lib/domain/value/` | - | 列挙型のデータ（確定・確認中など）。他に依存しない |
 | DTO | `lib/application/dto/` | Usecase | 画面に渡すデータ。表示に必要な値だけを持つ |
 
 - Entity は値を保存するだけで、メソッドを定義しない。計算や判定は Usecase に置く
-- Entity は Value を使ってよい（例: `TripEntity` の状態に `ConfirmationStatusValue` を持つ）
+- Entity は Value を使ってよい（例: `StatementLineEntity` の状態に `ConfirmationStatusValue` を持つ）
 - DTO は Entity に依存しない。Entity の値は Usecase が DTO に詰め替える
 - DTO は値を保存するだけで、メソッドを定義しない
 - ETCカード番号のマスクなど、画面に出す形の加工は Usecase で行い、DTO に入れる
@@ -44,15 +44,15 @@
 
 | 種類 | クラス名の接尾辞 | ファイル名の接尾辞 | 例 |
 |---|---|---|---|
-| Entity | `Entity` | `_entity` | `TripEntity` / `trip_entity.dart` |
+| Entity | `Entity` | `_entity` | `StatementLineEntity` / `statement_line_entity.dart` |
 | Value | `Value` | `_value` | `ConfirmationStatusValue` / `confirmation_status_value.dart` |
-| DTO | `DTO` | `_dto` | `TripDTO` / `trip_dto.dart` |
-| Interface | `IF` | `_if` | `TripIF` / `trip_if.dart` |
-| Repository | `Repo` | `_repo` | `TripRepo` / `trip_repo.dart` |
+| DTO | `DTO` | `_dto` | `StatementLineDTO` / `statement_line_dto.dart` |
+| Interface | `IF` | `_if` | `StatementLineIF` / `statement_line_if.dart` |
+| Repository | `Repo` | `_repo` | `StatementLineRepo` / `statement_line_repo.dart` |
 | Usecase | `UC` | `_uc` | `ImportStatementUC` / `import_statement_uc.dart` |
 
-- 語幹は [ubiquitous-language.md](ubiquitous-language.md) の英語に従う（`Trip` → `TripEntity`）
-- Interface と、それを実装する Repository は、接尾辞を除いた語幹を同じにする（`TripIF` を実装するのは `TripRepo`）。実装を差し替えるときは `TripRepo` を置き換え、別名の実装を並べない
+- 語幹は [ubiquitous-language.md](ubiquitous-language.md) の英語に従う（`StatementLine` → `StatementLineEntity`）
+- Interface と、それを実装する Repository は、接尾辞を除いた語幹を同じにする（`StatementLineIF` を実装するのは `StatementLineRepo`）。実装を差し替えるときは `StatementLineRepo` を置き換え、別名の実装を並べない
 - Userinterface の命名は、ここでは定めない
 
 ## ディレクトリ内の分け方
